@@ -1,0 +1,167 @@
+{
+  "_id": {
+    "$oid": "6834becdfd404b61b54a136c"
+  },
+  "name": "USIU Elections 2026",
+  "startsOn": null,
+  "endsOn": null,
+  "description": "",
+  "dockets": [
+    {
+      "docket": "Chair",
+      "description": "Description about role",
+      "candidates": [
+        {
+          "firstName": "Musa",
+          "middleName": "Mutetwi",
+          "lastName": "Muliro",
+          "phoneNumber": "+254716342160",
+          "age": 31,
+          "nationality": "Kenyan",
+          "idNumber": "30404862",
+          "party": "Uwezo Party",
+          "photo": "https://images.generated.photos/6Rvff04erBdpLhPXyV-GZE500SIzKI-YCBtlLykuZog/rs:fit:256:256/czM6Ly9pY29uczgu/Z3Bob3Rvcy1wcm9k/LnBob3Rvcy92M18w/NzYxODI0LmpwZw.jpg",
+          "isDisqualified": false,
+          "voters": [
+            {
+              "id": "34532",
+              "name": "Test Voter 3",
+              "feedback": "awesome",
+              "timestamp": {
+                "$date": "2025-05-26T23:23:35.000Z"
+              },
+              "_id": {
+                "$oid": "6834f7f781ab3df38b338d98"
+              }
+            },
+            {
+              "id": "34532",
+              "name": "Test Voter 3",
+              "feedback": "awesome",
+              "timestamp": {
+                "$date": "2025-05-26T23:23:35.000Z"
+              },
+              "_id": {
+                "$oid": "6834f82c81ab3df38b338da3"
+              }
+            },
+            {
+              "id": "34532",
+              "name": "Test Voter 3",
+              "feedback": "awesome",
+              "timestamp": {
+                "$date": "2025-05-26T23:34:30.000Z"
+              },
+              "_id": {
+                "$oid": "6834fa8681ab3df38b338dbf"
+              }
+            }
+          ],
+          "votes": 3,
+          "nickName": "Musasoft"
+        },
+        {
+          "firstName": "Angela",
+          "middleName": "Kieni",
+          "lastName": "Kitavi",
+          "phoneNumber": "+254716342160",
+          "age": 31,
+          "nationality": "Kenyan",
+          "idNumber": "30404862",
+          "party": "Gen See",
+          "photo": "https://images.generated.photos/J5eOIHtZfWgOzaYK3X6-V9rya1VpPhiiBmjgvo3PXPo/rs:fit:256:256/czM6Ly9pY29uczgu/Z3Bob3Rvcy1wcm9k/LnBob3Rvcy92Ml8w/NzA0MDQ2LmpwZw.jpg",
+          "isDisqualified": false,
+          "nickName": "Nat"
+        },
+        {
+          "firstName": "Sylvia",
+          "middleName": "Anne",
+          "lastName": "Njeri",
+          "phoneNumber": "+254716342160",
+          "age": 31,
+          "nationality": "Kenyan",
+          "idNumber": "30404862",
+          "party": "SKRR Party",
+          "photo": "https://images.generated.photos/C14S7QsFDlIZ4dDXzO_1zWPa3wxrnt6byT-BBdSdgh4/rs:fit:256:256/czM6Ly9pY29uczgu/Z3Bob3Rvcy1wcm9k/LnBob3Rvcy92M18w/MDM1MTk5LmpwZw.jpg",
+          "isDisqualified": false,
+          "nickName": "Sly"
+        }
+      ]
+    },
+    {
+      "docket": "Vice Chair",
+      "description": "Description about role",
+      "candidates": [
+        {
+          "firstName": "Abel",
+          "middleName": "",
+          "lastName": "Kiruto",
+          "phoneNumber": "+254716342160",
+          "age": 31,
+          "nationality": "Kenyan",
+          "idNumber": "30404862",
+          "party": "Uwezo Party",
+          "photo": "https://",
+          "isDisqualified": false,
+          "nickName": "Musasoft"
+        }
+      ]
+    },
+    {
+      "docket": "Treasurer",
+      "description": "Description about role",
+      "candidates": [
+        {
+          "firstName": "Abel",
+          "middleName": "",
+          "lastName": "Kiruto",
+          "phoneNumber": "+254716342160",
+          "age": 31,
+          "nationality": "Kenyan",
+          "idNumber": "30404862",
+          "party": "Uwezo Party",
+          "photo": "https://",
+          "isDisqualified": false,
+          "nickName": "Musasoft"
+        }
+      ]
+    }
+  ],
+  "updatedAt": {
+    "$date": "2025-05-26T23:57:32.950Z"
+  },
+  "ballot": "usiu26se",
+  "authType": "Student Id",
+  "logo": "http://75.119.137.255:3333/usiu26se/logo.png",
+  "backdrop": "http://75.119.137.255:3333/usiu26se/bg.jpg",
+  "infographic": "http://75.119.137.255:3333/usiu26se/bg.jpg",
+  "voters": [
+    {
+      "authId": "637260",
+      "name": "Musa",
+      "phoneNumber": "0716342160",
+      "emailAddress": "musasoftlabx@gmail.com",
+      "loginTime": "",
+      "logs": {
+        "10/2/25 10:04pm": "Logged in"
+      },
+      "logoutTime": "",
+      "feedback": "",
+      "passcode": "abcde",
+      "voted": ["Chair_", "Ambassador"]
+    }
+  ],
+  "clerks": [
+    {
+      "username": "mmuliro",
+      "password": "test",
+      "firstName": "Musa",
+      "middleName": "Mutetwi",
+      "lastName": "Muliro",
+      "phoneNumber": "+254716342160",
+      "emailAddress": "musasoftlabx@gmail.com",
+      "role": "Manager"
+    }
+  ],
+  "themeColor": "#00c478"
+}

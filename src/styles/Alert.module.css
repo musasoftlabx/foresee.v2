@@ -1,0 +1,25 @@
+.dividerTop {
+  _background-color: white;
+  overflow: hidden;
+  position: absolute;
+  top: -1px;
+  width: 100%;
+  height: 300px;
+  line-height: 0;
+  left: 0;
+  transform: scale(-1, -1);
+  z-index: -1;
+}
+.dividerTop svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.dividerFill {
+  transform-origin: bottom;
+  transform: rotateY(0deg);
+  fill: url("#MyGradient");
+}

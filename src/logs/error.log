@@ -1,0 +1,72 @@
+{
+  errno: 500,
+  code: undefined,
+  message: '500 | esfr',
+  file: 'route.js',
+  http: {
+    url: 'undefinedundefinedundefined',
+    protocol: undefined,
+    username: undefined,
+    password: undefined,
+    host: undefined,
+    port: undefined,
+    body: undefined,
+    headers: undefined,
+    method: undefined,
+    timings: {
+      start: '15/06/2025 17:27:00 pm',
+      end: '15/06/2025 17:27:00 pm',
+      duration: '0ms'
+    }
+  },
+  level: 'error',
+  timestamp: '2025-06-15T14:27:00.410Z'
+}
+{
+  errno: 500,
+  code: undefined,
+  message: '500 | esfr',
+  file: 'route.js',
+  http: {
+    url: 'undefinedundefinedundefined',
+    protocol: undefined,
+    username: undefined,
+    password: undefined,
+    host: undefined,
+    port: undefined,
+    body: undefined,
+    headers: undefined,
+    method: undefined,
+    timings: {
+      start: '15/06/2025 17:40:57 pm',
+      end: '15/06/2025 17:40:57 pm',
+      duration: '-1ms'
+    }
+  },
+  level: 'error',
+  timestamp: '2025-06-15T14:40:57.725Z'
+}
+{
+  errno: 500,
+  code: undefined,
+  message: '500 | esfr',
+  file: 'route.js',
+  http: {
+    url: 'undefinedundefinedundefined',
+    protocol: undefined,
+    username: undefined,
+    password: undefined,
+    host: undefined,
+    port: undefined,
+    body: undefined,
+    headers: undefined,
+    method: undefined,
+    timings: {
+      start: '15/06/2025 23:33:52 pm',
+      end: '15/06/2025 23:33:52 pm',
+      duration: '-2ms'
+    }
+  },
+  level: 'error',
+  timestamp: '2025-06-15T20:33:52.638Z'
+}
