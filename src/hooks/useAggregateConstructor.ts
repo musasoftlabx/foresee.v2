@@ -1,6 +1,3 @@
-import { clientsCollection } from "@/db/schema";
-import { AggregateOptions, PipelineStage } from "mongoose";
-
 export type TQueryOptions = {
   filterModel: {
     items: { field: string; value: string; operator: string; id: number }[];
@@ -20,7 +17,7 @@ export type TAggregation = [
   { $project: { id: Number; fieldToExclude: Number } },
 ];
 
-export default async function sharedFilterOptions({
+export default async function useAggregateConstructor({
   limit,
   offset,
   options,
@@ -224,9 +221,5 @@ export default async function sharedFilterOptions({
     }
   }
 
-  const dataset = await clientsCollection.aggregate(aggregation as any);
-  console.log(aggregation);
-  console.log(dataset);
-
-  return dataset;
+  return aggregation;
 }

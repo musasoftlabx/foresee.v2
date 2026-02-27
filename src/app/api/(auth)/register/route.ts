@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // * Schema
-import { clientsCollection } from "@/db/schema";
+import { accountCollection } from "@/db/schema";
 
 // * NPM
 import advancedFormat from "dayjs/plugin/advancedFormat";
@@ -14,6 +14,8 @@ import useAggregateConstructor from "@/hooks/useAggregateConstructor";
 // * Extensions
 dayjs.extend(advancedFormat);
 
+const organization = "4c";
+
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const { limit, offset, options, scope, view } = Object.fromEntries(
@@ -21,51 +23,11 @@ export async function GET(req: NextRequest) {
   );
 
   if (scope === "__DEFAULT__") {
-    // const test = await clientsCollection.aggregate([
-    //   {
-    //     $addFields: {
-    //       id: { $toString: "$_id" },
-    //       searchFields: {
-    //         $concat: ["$client", " ", "$added.by", " ", "$modified.by"],
-    //       },
-    //     },
-    //   },
-    //   {
-    //     $match: {
-    //       $or: [
-    //         { searchFields: { $regex: "", $options: "i" } },
-    //         { id: { $regex: "698b9c36802c5c281c1c6276", $options: "i" } },
-    //         { client: { $regex: "abc", $options: "i" } },
-    //         { "added.by": { $regex: "brian", $options: "i" } },
-    //       ],
-    //     },
-    //   },
-    //   // {
-    //   //   $addFields: {
-    //   //     test: {
-    //   //       $function: {
-    //   //         body: function (arg: string) {
-    //   //           return arg;
-    //   //         },
-    //   //         args: ["$added.on"],
-    //   //         lang: "js",
-    //   //       },
-    //   //     },
-    //   //   },
-    //   // },
-    //   { $sort: { _id: -1 } },
-    //   {
-    //     $project: {
-    //       id: 0,
-    //       fieldToExclude: 0,
-    //     },
-    //   },
-    // ]);
     const dataset = await useAggregateConstructor({
       limit,
       offset,
       options,
-      searchFields: ["client", "added.by", "modified.by"],
+      searchFields: ["code", "name"],
     });
 
     if (view === "__DISPLAY__") {
@@ -74,15 +36,9 @@ export async function GET(req: NextRequest) {
           count: dataset.length,
           dataset: dataset.map((field) => ({
             ...field,
-            added: {
-              ...field.added,
-              on: dayjs(field.added.on).format(
-                "ddd, Do MMM YYYY [at] hh:mm:ss a",
-              ),
-            },
-            modified: {
-              ...field.modified,
-              on: dayjs(field.modified.on).format(
+            scanned: {
+              ...field.scanned,
+              on: dayjs(field.scanned.on).format(
                 "ddd, Do MMM YYYY [at] hh:mm:ss a",
               ),
             },
@@ -100,22 +56,36 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(request: Request) {
-  const { client } = await request.json();
+  const { firstName, lastName, emailAddress, phoneNumber } =
+    await request.json();
 
   try {
-    const clientExists = await clientsCollection.countDocuments({ client });
+    const userExists = await accountCollection.countDocuments({
+      emailAddress,
+    });
 
-    if (clientExists > 0)
+    if (userExists > 0)
       return NextResponse.json(
         { icon: "", error: "Duplicate found", message: "Duplicate found" },
         { status: 400 },
       );
     else
       return NextResponse.json(
-        await clientsCollection.insertOne({
-          client,
-          added: { by: "musa" },
+        await accountCollection.insertOne({
+          name: `${firstName}'s organization`,
+          created: { by: "musa" },
           modified: { by: "musa" },
+          users: [
+            {
+              firstName,
+              lastName,
+              emailAddress,
+              password: "xxxxxxxx",
+              roles: ["Admin"],
+              added: { by: "system" },
+              modified: { by: "system" },
+            },
+          ],
         }),
         { status: 201 },
       );
@@ -138,7 +108,7 @@ export async function PATCH(request: NextRequest) {
     const { _id, field, value } = await request.json();
     try {
       return NextResponse.json(
-        await clientsCollection.findByIdAndUpdate(
+        await accountCollection.findByIdAndUpdate(
           { _id },
           { [field]: value, modified: { by: "musa1", on: new Date() } },
         ),
@@ -164,39 +134,7 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   const {} = request.json();
 
-  await clientsCollection.deleteMany({});
+  await accountCollection.deleteMany({});
 
   return Response.json({ user: 1 }, { status: 204 });
 }
-
-// dataset: (
-//   await clientsCollection
-//     //.find(filter)
-//     .find({
-//       $or: [
-//         { client: { $regex: "abc" } },
-//         { "added.by": { $regex: "brian" } },
-//       ],
-//       // $and: [
-//       //   { client: { $regex: "abc1234" } },
-//       //   { "added.by": { $regex: "brian", $options: "i" } },
-//       // ],
-//     })
-//     .sort({ _id: -1 })
-//     .skip(__offset)
-//     .limit(__limit)
-// ).map((client) => ({
-//   ...client._doc,
-//   added: {
-//     ...client._doc.added,
-//     on: dayjs(client.added.on).format(
-//       "ddd, Do MMM YYYY [at] hh:mm:ss a",
-//     ),
-//   },
-//   modified: {
-//     ...client._doc.modified,
-//     on: dayjs(client.modified.on).format(
-//       "ddd, Do MMM YYYY [at] hh:mm:ss a",
-//     ),
-//   },
-// })),

@@ -15,7 +15,7 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/reui/popover";
+} from "@/components/ui/shadcn/popover";
 import { Separator } from "@/components/ui/shadcn/separator";
 import { Column } from "@tanstack/react-table";
 import { Check, CirclePlus } from "lucide-react";

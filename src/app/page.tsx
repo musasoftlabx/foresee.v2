@@ -1,6 +1,8 @@
+"use client";
+
 import { type VariantProps } from "class-variance-authority";
 import { GlobeIcon, Menu, User, Users } from "lucide-react";
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -134,6 +136,7 @@ const features = [
 
 import React from "react";
 import KineticTestimonial from "@/components/ui/kinetic-testimonials";
+import CreateAccount from "@/components/admin/clients/create-account";
 
 const testimonials = [
   {
@@ -359,8 +362,14 @@ export default function Home({
   ],
   className,
 }: NavbarProps) {
+  const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
   return (
     <>
+      <CreateAccount
+        isOpen={isCreateAccountOpen}
+        setIsOpen={setIsCreateAccountOpen}
+      />
+
       <section className={cn(className)}>
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-12">
           {(title || description) && (

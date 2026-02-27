@@ -2,459 +2,386 @@
 
 import Portal from "../page";
 
-import { useMemo, useState } from "react";
-import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/reui/badge";
-import { Button } from "@/components/ui/reui/button";
-import {
-  Card,
-  CardFooter,
-  CardHeader,
-  CardTable,
-  CardTitle,
-  CardToolbar,
-} from "@/components/ui/reui/card";
-import { DataGrid } from "@/components/ui/reui/data-grid";
-import { DataGridColumnHeader } from "@/components/ui/reui/data-grid-column-header";
-import { DataGridPagination } from "@/components/ui/reui/data-grid-pagination";
-import { DataGridTable } from "@/components/ui/reui/data-grid-table";
-import { ScrollArea, ScrollBar } from "@/components/ui/reui/scroll-area";
-import { Skeleton } from "@/components/ui/reui/skeleton";
-import {
-  ColumnDef,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  PaginationState,
-  SortingState,
-  useReactTable,
-} from "@tanstack/react-table";
-import { AddClient } from "@/components/admin/clients/add-client";
+// * React
+import { useEffect, useState } from "react";
 
-// * Icons
-import { Plus } from "lucide-react";
+// * NPM
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-interface IData {
-  id: string;
-  name: string;
-  availability: "online" | "away" | "busy" | "offline";
-  avatar: string;
-  status: "active" | "inactive";
-  flag: string; // Emoji flags
-  email: string;
-  company: string;
-  role: string;
-  joined: string;
-  location: string;
-  balance: number;
-}
+// * HUI
+import { Avatar, Button } from "@heroui/react";
 
-const demoData: IData[] = [
-  {
-    id: "1",
-    name: "Kathryn Campbell",
-    availability: "online",
-    avatar: "1.png",
-    status: "active",
-    flag: "🇺🇸",
-    email: "kathryn@apple.com",
-    company: "Apple",
-    role: "CEO",
-    joined: "2021-04-15",
-    location: "San Francisco, USA",
-    balance: 5143.03,
-  },
-  {
-    id: "2",
-    name: "Robert Smith",
-    availability: "away",
-    avatar: "2.png",
-    status: "inactive",
-    flag: "🇬🇧",
-    email: "robert@openai.com",
-    company: "OpenAI",
-    role: "CTO",
-    joined: "2020-07-20",
-    location: "London, UK",
-    balance: 4321.87,
-  },
-  {
-    id: "3",
-    name: "Sophia Johnson",
-    availability: "busy",
-    avatar: "3.png",
-    status: "active",
-    flag: "🇨🇦",
-    email: "sophia@meta.com",
-    company: "Meta",
-    role: "Designer",
-    joined: "2019-03-12",
-    location: "Toronto, Canada",
-    balance: 7654.98,
-  },
-  {
-    id: "4",
-    name: "Lucas Walker",
-    availability: "offline",
-    avatar: "4.png",
-    status: "inactive",
-    flag: "🇦🇺",
-    email: "lucas@tesla.com",
-    company: "Tesla",
-    role: "Developer",
-    joined: "2022-01-18",
-    location: "Sydney, Australia",
-    balance: 3456.45,
-  },
-  {
-    id: "5",
-    name: "Emily Davis",
-    availability: "online",
-    avatar: "5.png",
-    status: "active",
-    flag: "🇩🇪",
-    email: "emily@sap.com",
-    company: "SAP",
-    role: "Lawyer",
-    joined: "2023-05-23",
-    location: "Berlin, Germany",
-    balance: 9876.54,
-  },
-  {
-    id: "6",
-    name: "James Lee",
-    availability: "away",
-    avatar: "6.png",
-    status: "active",
-    flag: "🇲🇾",
-    email: "james@keenthemes.com",
-    company: "Keenthemes",
-    role: "Director",
-    joined: "2018-11-30",
-    location: "Kuala Lumpur, MY",
-    balance: 6214.22,
-  },
-  {
-    id: "7",
-    name: "Isabella Martinez",
-    availability: "busy",
-    avatar: "7.png",
-    status: "inactive",
-    flag: "🇪🇸",
-    email: "isabella@bbva.es",
-    company: "BBVA",
-    role: "Product Manager",
-    joined: "2021-06-14",
-    location: "Barcelona, Spain",
-    balance: 5321.77,
-  },
-  {
-    id: "8",
-    name: "Benjamin Harris",
-    availability: "offline",
-    avatar: "8.png",
-    status: "active",
-    flag: "🇯🇵",
-    email: "benjamin@sony.jp",
-    company: "Sony",
-    role: "Marketing Lead",
-    joined: "2020-10-22",
-    location: "Tokyo, Japan",
-    balance: 8452.39,
-  },
-  {
-    id: "9",
-    name: "Olivia Brown",
-    availability: "online",
-    avatar: "9.png",
-    status: "active",
-    flag: "🇫🇷",
-    email: "olivia@lvmh.fr",
-    company: "LVMH",
-    role: "Data Scientist",
-    joined: "2019-09-17",
-    location: "Paris, France",
-    balance: 7345.1,
-  },
-  {
-    id: "10",
-    name: "Michael Clark",
-    availability: "away",
-    avatar: "10.png",
-    status: "inactive",
-    flag: "🇮🇹",
-    email: "michael@eni.it",
-    company: "ENI",
-    role: "Engineer",
-    joined: "2023-02-11",
-    location: "Milan, Italy",
-    balance: 5214.88,
-  },
-  {
-    id: "11",
-    name: "Ava Wilson",
-    availability: "busy",
-    avatar: "11.png",
-    status: "active",
-    flag: "🇧🇷",
-    email: "ava@vale.br",
-    company: "Vale",
-    role: "Software Engineer",
-    joined: "2022-12-01",
-    location: "Rio de Janeiro, Brazil",
-    balance: 9421.5,
-  },
-  {
-    id: "12",
-    name: "David Young",
-    availability: "offline",
-    avatar: "12.png",
-    status: "active",
-    flag: "🇮🇳",
-    email: "david@tata.in",
-    company: "Tata",
-    role: "Sales Manager",
-    joined: "2020-03-27",
-    location: "Mumbai, India",
-    balance: 4521.67,
-  },
-];
+// * SCNUI
+import { Button as ButtonShadCN } from "@/components/ui/shadcn/button";
 
-export default function DataGridDemo() {
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 5,
-  });
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "name", desc: true },
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
+// * RUI
 
-  const handleToggleLoading = () => {
-    setIsLoading((prev) => !prev);
+import CreateStore from "@/components/admin/clients/create-store";
+
+// * MUI
+import {
+  DataGridPro,
+  GRID_CHECKBOX_SELECTION_COL_DEF,
+  GridPreProcessEditCellProps,
+  GridRowModel,
+  GridValidRowModel,
+  useGridApiRef,
+} from "@mui/x-data-grid-pro";
+
+// * Components
+import {
+  DataGridSlotProps,
+  DataGridSlots,
+} from "@/components/DataTable/DataGridSlots";
+
+// * Icons
+import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
+
+// * Constants
+const apiUrl = "stores";
+
+// * Hooks
+import useCustomDataGrid from "@/hooks/useCustomDataGrid";
+
+import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
+import DataGridPagination from "@/components/DataTable/DataGridPagination";
+
+import { useDialogStore } from "@/store/useDialogStore";
+import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
+import { dateFilter } from "@/components/DataTable/DataGridFilters";
+
+type TResponse = {
+  count: number;
+  dataset: {
+    _id: string;
+    client: string;
+    createdAt: string;
+    updatedAt: string;
   };
+};
 
-  const columns = useMemo<ColumnDef<IData>[]>(
-    () => [
-      {
-        accessorKey: "name",
-        id: "name",
-        header: ({ column }) => (
-          <DataGridColumnHeader
-            title="User"
-            visibility={true}
-            column={column}
-          />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="flex items-center gap-3">
-              <Avatar className="size-8">
-                <AvatarImage
-                  src={`/media/avatars/${row.original.avatar}`}
-                  alt={row.original.name}
-                />
-                <AvatarFallback>N</AvatarFallback>
-              </Avatar>
-              <div className="space-y-px">
-                <div className="font-medium text-foreground">
-                  {row.original.name}
-                </div>
-                <div className="text-muted-foreground">
-                  {row.original.email}
-                </div>
-              </div>
-            </div>
-          );
-        },
-        meta: {
-          skeleton: (
-            <div className="flex items-center gap-3 h-[41px]">
-              <Skeleton className="size-8 rounded-full" />
-              <div className="space-y-1">
-                <Skeleton className="h-5 w-24" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            </div>
-          ),
-        },
-        size: 200,
-        enableSorting: true,
-        enableHiding: false,
-        enableResizing: true,
-      },
-      {
-        accessorKey: "email",
-        id: "email",
-        header: ({ column }) => (
-          <DataGridColumnHeader
-            title="Email"
-            visibility={true}
-            column={column}
-          />
-        ),
-        cell: (info) => (
-          <Link
-            href={`mailto:${info.getValue()}`}
-            className="hover:text-primary hover:underline"
-          >
-            {info.getValue() as string}
-          </Link>
-        ),
-        size: 150,
-        meta: {
-          headerClassName: "",
-          cellClassName: "text-left",
-          skeleton: <Skeleton className="w-28 h-7" />,
-        },
-        enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
-      },
-      {
-        accessorKey: "location",
-        id: "location",
-        header: ({ column }) => (
-          <DataGridColumnHeader
-            title="Location"
-            visibility={true}
-            column={column}
-          />
-        ),
-        cell: ({ row }) => {
-          return (
-            <div className="flex items-center gap-1.5">
-              {row.original.flag}
-              <div className="font-medium text-foreground">
-                {row.original.location}
-              </div>
-            </div>
-          );
-        },
-        size: 160,
-        meta: {
-          headerClassName: "",
-          cellClassName: "text-start",
-          skeleton: <Skeleton className="w-28 h-7" />,
-        },
-        enableSorting: true,
-        enableHiding: true,
-        enableResizing: true,
-      },
-      {
-        accessorKey: "status",
-        id: "status",
-        header: ({ column }) => (
-          <DataGridColumnHeader
-            title="Status"
-            visibility={true}
-            column={column}
-          />
-        ),
-        cell: ({ row }) => {
-          const status = row.original.status;
+export default function Stores() {
+  // ? Refs
+  const apiRef = useGridApiRef();
 
-          if (status == "active") {
-            return (
-              <Badge variant="primary" appearance="outline">
-                Approved
-              </Badge>
-            );
-          } else {
-            return (
-              <Badge variant="destructive" appearance="outline">
-                Pending
-              </Badge>
-            );
-          }
-        },
-        meta: {
-          skeleton: <Skeleton className="w-16 h-7" />,
-        },
-        size: 100,
-        enableSorting: true,
-        enableHiding: true,
-        enableResizing: false,
-      },
+  const showConfirm = useDialogStore((state) => state.confirm);
+
+  // ? States
+  const [isExporting, setIsExporting] = useState(false);
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const {
+    initialState,
+    columnVisibilityModel,
+    filters,
+    filterModel,
+    paginationModel,
+    pinnedColumnsModel,
+    rowSelectionModel,
+    sortModel,
+    stats,
+    syncState,
+    clearRowSelection,
+    changeRowSelection,
+    changeVisibleColumns,
+    changeFilters,
+    clearFilters,
+    changePagination,
+    changePinnedColumns,
+    changeSorting,
+    changeStats,
+    handleGetData,
+    updateCell,
+  } = useCustomDataGrid({
+    apiRef,
+    apiUrl,
+    columnsToHide: [
+      "_id",
+      "created.by",
+      "created.on",
+      "modified.by",
+      "modified.on",
     ],
-    [],
-  );
-
-  const [columnOrder, setColumnOrder] = useState<string[]>(
-    columns.map((column) => column.id as string),
-  );
-
-  const table = useReactTable({
-    columns,
-    data: demoData,
-    pageCount: Math.ceil((demoData?.length || 0) / pagination.pageSize),
-    getRowId: (row: IData) => row.id,
-    state: {
-      pagination,
-      sorting,
-      columnOrder,
+    columnsToSort: [{ field: "_id", sort: "desc" }],
+    toPin: {
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id"],
+      right: ["actions"],
     },
-    onPaginationChange: setPagination,
-    onSortingChange: setSorting,
-    onColumnOrderChange: setColumnOrder,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
-  const { data: clients } = useQuery({
-    queryKey: ["clients"],
-    queryFn: ({ queryKey }) => axios(queryKey[0]),
+  // ? Queries
+  const { data, isLoading } = useQuery({
+    queryKey: [
+      apiUrl,
+      paginationModel?.pageSize,
+      paginationModel?.page,
+      "__DISPLAY__",
+      encodeURI(JSON.stringify({ filterModel, sortModel })),
+    ],
+    queryFn: ({ queryKey }) =>
+      axios<GridValidRowModel>(
+        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&options=${queryKey[4]}&scope=__DEFAULT__`,
+      ),
     select: ({ data }) => data,
+    enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
   });
 
-  //console.log(clients);
+  // ? Effects
+  useEffect(() => {
+    apiRef.current?.restoreState({
+      columns: {
+        dimensions: initialState?.columns?.dimensions,
+        orderedFields: initialState?.columns?.orderedFields,
+      },
+    });
+  });
 
   return (
     <Portal>
-      <DataGrid
-        table={table}
-        recordCount={demoData?.length || 0}
-        isLoading={isLoading}
-        tableClassNames={{
-          edgeCell: "px-5",
-        }}
-        tableLayout={{
-          columnsPinnable: true,
-          columnsMovable: true,
-          columnsVisibility: true,
-        }}
-      >
-        <Card>
-          <CardHeader className="py-3.5">
-            <CardTitle>Clients</CardTitle>
-            <CardToolbar>
-              <AddClient>
-                <Button variant="outline" size="sm">
-                  <Plus /> Create client
+      <CreateStore
+        isAddItemOpen={isAddItemOpen}
+        setIsAddItemOpen={setIsAddItemOpen}
+      />
+
+      <div className="flex flex-1 flex-col">
+        <DataGridPro
+          apiRef={apiRef}
+          rows={data?.dataset ?? []}
+          rowCount={data?.count ?? 0}
+          initialState={initialState}
+          columns={[
+            {
+              field: GRID_CHECKBOX_SELECTION_COL_DEF.field,
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              filterable: false,
+              hideable: false,
+              resizable: false,
+              sortable: false,
+              maxWidth: 40,
+            },
+            {
+              field: "_id",
+              headerName: "Id.",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: false,
+              filterable: false,
+              hideable: true,
+              pinnable: false,
+              resizable: false,
+              minWidth: 220,
+              flex: 1,
+            },
+            {
+              field: "name",
+              headerName: "Name",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              editable: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 250,
+              flex: 1,
+              preProcessEditCellProps: (
+                params: GridPreProcessEditCellProps,
+              ) => ({
+                ...params.props,
+                error: !params.props.value || params.props.value.length > 50,
+              }),
+            },
+            {
+              field: "created",
+              headerName: "Created",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              filterable: false,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              sortable: false,
+              minWidth: 300,
+              flex: 1,
+              renderCell: ({
+                row: {
+                  created: { by, on },
+                },
+              }) => (
+                <div className="flex gap-3 items-center">
+                  <Avatar
+                    isBordered
+                    radius="sm"
+                    size="sm"
+                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
+                  />
+                  <div className="flex-col">
+                    <div>by {by}</div>
+                    <div className="text-xs">on {on}</div>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              field: "modified",
+              headerName: "Modified",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              filterable: false,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              sortable: false,
+              minWidth: 300,
+              flex: 1,
+              renderCell: ({
+                row: {
+                  modified: { by, on },
+                },
+              }) => (
+                <div className="flex gap-3 items-center">
+                  <Avatar
+                    isBordered
+                    radius="sm"
+                    size="sm"
+                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
+                  />
+                  <div className="flex-col">
+                    <div>by {by}</div>
+                    <div className="text-xs">on {on}</div>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              field: "actions",
+              headerName: "Delete",
+              headerAlign: "center",
+              align: "center",
+              sortable: false,
+              filterable: false,
+              hideable: false,
+              pinnable: false,
+              disableColumnMenu: true,
+              width: 70,
+              renderCell: ({ row: { _id, name } }) => (
+                <Button
+                  isIconOnly
+                  isLoading={false}
+                  isDisabled={false}
+                  radius="full"
+                  className="flex flex-1 align-middle self-center align-center justify-center"
+                  onPress={() => {
+                    //changeRowSelection([_id]);
+                    showConfirm({
+                      operation: "delete",
+                      status: "info",
+                      subject: `Confirm deletion of ${name}`,
+                      body: `Are you sure you intend to delete this store?`,
+                    });
+                  }}
+                >
+                  <DeleteIcon size={20} />
                 </Button>
-              </AddClient>
-              {/* <Button variant="outline" size="sm" onClick={handleToggleLoading}>
-                {isLoading ? "Disable Loading" : "Enable Loading"}
-              </Button> */}
-            </CardToolbar>
-          </CardHeader>
-          <CardTable>
-            <ScrollArea>
-              <DataGridTable />
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
-          </CardTable>
-          <CardFooter>
-            <DataGridPagination />
-          </CardFooter>
-        </Card>
-      </DataGrid>
+              ),
+            },
+            { field: "created.by", headerName: "Created By", hideable: false },
+            {
+              field: "created.on",
+              headerName: "Created On",
+              hideable: false,
+              filterOperators: dateFilter,
+            },
+          ]}
+          getRowId={({ _id }) => _id}
+          getRowHeight={() => "auto"}
+          density="compact"
+          pagination
+          checkboxSelection
+          keepNonExistentRowsSelected
+          disableRowSelectionOnClick
+          disableRowSelectionExcludeModel
+          showCellVerticalBorder={false}
+          showColumnVerticalBorder={false}
+          showToolbar
+          hideFooter
+          hideFooterPagination
+          hideFooterSelectedRowCount
+          filterMode="server"
+          paginationMode="server"
+          sortingMode="server"
+          loading={isLoading}
+          columnVisibilityModel={columnVisibilityModel}
+          onColumnVisibilityModelChange={(model) => changeVisibleColumns(model)}
+          filterModel={filterModel}
+          onFilterModelChange={(model) => changeFilters(model)}
+          paginationModel={paginationModel}
+          onPaginationModelChange={(model) => changePagination(model)}
+          pinnedColumns={pinnedColumnsModel}
+          onPinnedColumnsChange={(model) => changePinnedColumns(model)}
+          rowSelectionModel={rowSelectionModel}
+          onRowSelectionModelChange={(model) => changeRowSelection(model)}
+          sortModel={sortModel}
+          onSortModelChange={(model) => changeSorting(model)}
+          onColumnOrderChange={syncState}
+          onColumnResize={syncState}
+          processRowUpdate={(newRow: GridRowModel, oldRow: GridRowModel) =>
+            updateCell({ newRow, oldRow, url: `${apiUrl}?scope=editCell` })
+          }
+          slots={DataGridSlots({
+            apiRef,
+            apiUrl: `${apiUrl}?scope=users`,
+            changeFilters,
+            clearFilters,
+            changeRowSelection,
+            clearRowSelection,
+            changeVisibleColumns,
+            //exclude: ["multiApprove", "multiReject"],
+            exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+              paginationModel?.page
+            }&view=__EXPORT__&options=${encodeURI(
+              JSON.stringify({ filterModel, sortModel }),
+            )}`,
+            handleGetData,
+            isExporting,
+            isLoading,
+            search: {
+              fields: "Id, Username, Dealer, Names, Phone etc ...",
+              width: 450,
+            },
+            setIsExporting,
+            stats,
+            changeStats,
+            setIsAddItemOpen,
+            extraActions: (
+              <>
+                <ButtonShadCN variant="secondary" size="icon">
+                  <EllipsisHorizontalIcon data-icon="inline-start" />
+                </ButtonShadCN>
+                <ButtonShadCN variant="secondary" size="icon">
+                  <EllipsisHorizontalIcon data-icon="inline-start" />
+                </ButtonShadCN>
+              </>
+            ),
+          })}
+          // <Button
+          //   size="small"
+          //   startIcon={<FaUsersCog />}
+          //   onPress={() => setIsAddClientOpen(true)}
+          //   sx={sx}
+          // >
+          //   Manage Roles
+          // </Button>
+          slotProps={DataGridSlotProps}
+          sx={DataGridStyles}
+        />
+
+        <DataGridPagination
+          data={data}
+          paginationModel={paginationModel!}
+          changePagination={changePagination}
+        />
+      </div>
     </Portal>
   );
 }

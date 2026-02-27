@@ -41,6 +41,7 @@ export default function __FileUploader__(
     columnspan?: {};
     dimensions?: { height: number; width: number };
     field: Pick<ControllerRenderProps, "name" | "value">;
+    maxFileSize: string;
     setValue: UseFormSetValue<any>;
   },
 ) {
@@ -70,15 +71,15 @@ export default function __FileUploader__(
         variant="outlined"
         sx={[
           (theme) => ({
-            borderWidth: caption ? 1 : 0,
+            borderWidth: caption ? 2 : 0,
             borderRadius: 3,
             margin: "auto",
             width: dimensions?.width,
             p: caption ? 2 : 0,
-            pt: caption ? 0 : 0.3,
+            //pt: caption ? 0 : 0.3,
             ".filepond--root": {
               backgroundColor: theme.vars.palette.grey[100],
-              border: `1px solid ${theme.vars.palette.grey[300]}`,
+              border: `2px dashed ${theme.vars.palette.grey[300]}`,
               borderRadius: circular ? 9999 : 3,
               // height: circular
               //   ? "170px !important"
@@ -121,7 +122,7 @@ export default function __FileUploader__(
             theme.applyStyles("dark", {
               ".filepond--root": {
                 backgroundColor: "rgba(43, 43, 43, 0.95)",
-                border: `1px solid ${theme.vars.palette.action.disabledBackground}`,
+                border: `2px dashed ${theme.vars.palette.action.disabledBackground}`,
                 ":hover": { backgroundColor: theme.vars.palette.grey[900] },
               },
               ".filepond--drop-label": {
@@ -155,7 +156,6 @@ export default function __FileUploader__(
               );
             }}
             credits={false}
-            maxFileSize="5MB"
             name="file"
             server={{
               url: process.env.NEXT_PUBLIC_API,
@@ -203,7 +203,24 @@ export default function __FileUploader__(
             }}
             labelIdle={`<div>
                           <div style="display: flex; justify-content: center; height: 35px; text-align: center">
-                            <svg version="1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" enable-background="new 0 0 48 48">
+                            <img src="/icons/filepond/excel.png" />
+                          </div>
+                          <div style="font-size: 16px; font-weight: 600; color: ${"green"}; opacity: .9">${field.value.label ?? "Upload file"}</div>
+                          <div style="color: ${grey[500]}; font-size: 11px; font-weight: 600;">Only ${acceptedFileTypes.join(", ")} allowed</div>
+                          <b style="color: ${grey[500]}; font-size: 11px; margin-top: 2px">(Max of ${props.maxFileSize} allowed)</b>
+                        </div>`}
+          />
+          {caption && (
+            <p className=" text-xs text-muted-foreground ml-2">{caption}</p>
+          )}
+        </Stack>
+      </Paper>
+    </Grid>
+  );
+}
+
+{
+  /* <svg version="1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" enable-background="new 0 0 48 48">
                             <g fill="#FF9800">
                               <rect x="36.1" y="8.1" transform="matrix(.707 .707 -.707 .707 21.201 -25.184)" width="9.9" height="9.9"/>
                               <rect x="36" y="8" width="10" height="10"/>
@@ -211,21 +228,7 @@ export default function __FileUploader__(
                             <circle fill="#FFEB3B" cx="41" cy="13" r="3"/>
                             <polygon fill="#2E7D32" points="16.5,18 0,42 33,42"/>
                             <polygon fill="#4CAF50" points="33.6,24 19.2,42 48,42"/>
-                            </svg>
-                          </div>
-                          <div style="font-size: 15px; font-weight: 600; color: ${"green"}; opacity: .9">${field.value.label ?? "Upload file"}</div>
-                          <div style="color: ${grey[500]}; font-size: 11px; font-weight: 600;">Only ${acceptedFileTypes.join(", ")} allowed</div>
-                        </div>`}
-          />
-          {caption && (
-            <Typography variant="caption" mx={1}>
-              {caption}
-            </Typography>
-          )}
-        </Stack>
-      </Paper>
-    </Grid>
-  );
+                            </svg> */
 }
 
 {

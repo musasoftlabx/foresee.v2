@@ -149,7 +149,7 @@ export default function Clients() {
       apiUrl,
       paginationModel?.pageSize,
       paginationModel?.page,
-      "display",
+      "__DISPLAY__",
       encodeURI(JSON.stringify({ filterModel, sortModel })),
     ],
     queryFn: ({ queryKey }) =>
@@ -166,10 +166,6 @@ export default function Clients() {
       columns: {
         dimensions: initialState?.columns?.dimensions,
         orderedFields: initialState?.columns?.orderedFields,
-        //columnVisibilityModel: initialState?.columns?.columnVisibilityModel,
-        // columnVisibilityModel: {
-        //   _id: false,
-        // },
       },
     });
   });
@@ -208,7 +204,7 @@ export default function Clients() {
               hideable: true,
               pinnable: false,
               resizable: false,
-              maxWidth: 220,
+              minWidth: 220,
               flex: 1,
             },
             {
@@ -397,7 +393,7 @@ export default function Clients() {
             //exclude: ["multiApprove", "multiReject"],
             exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
               paginationModel?.page
-            }&view=export&options=${encodeURI(
+            }&view=__EXPORT__&options=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
             )}`,
             handleGetData,

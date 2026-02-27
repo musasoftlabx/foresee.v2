@@ -33,13 +33,14 @@ export default function __DatePicker__(
   props: DateTimePickerProps & {
     columnspan?: {};
     field: string;
+    variant?: "flat" | "faded" | "bordered" | "underlined";
     helperText?: string;
     label: string;
     dirty: Partial<Readonly<FieldNamesMarkedBoolean<FieldValues>>>;
     setValue: SetFieldValue<FieldValues>;
   },
 ) {
-  const { columnspan, field, helperText, label, setValue } = props;
+  const { columnspan, field, variant, helperText, label, setValue } = props;
 
   return (
     <Grid size={columnspan}>
@@ -83,6 +84,7 @@ export default function __DatePicker__(
                   ref={handleRef}
                   isRequired
                   isReadOnly
+                  variant={variant ?? "faded"}
                   label={label}
                   description={helperText}
                   placeholder={parsedFormat}
@@ -94,9 +96,9 @@ export default function __DatePicker__(
                     !props.disabled && (
                       <Button
                         isIconOnly
-                        variant="ghost"
+                        variant="light"
                         radius="full"
-                        className="top-1"
+                        className="top-0.5 -right-2.5"
                         onPress={() => pickerContext.setOpen((prev) => !prev)}
                       >
                         <HiOutlineCalendarDateRange className="text-xl" />
