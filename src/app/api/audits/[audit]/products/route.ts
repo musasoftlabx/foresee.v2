@@ -33,27 +33,9 @@ export async function GET(req: NextRequest) {
       extraPipelines: [
         { $unwind: "$stores" },
         { $replaceRoot: { newRoot: "$stores" } },
-        { $unwind: "$audits" },
-        {
-          $addFields: {
-            "audits.locationsCount": { $size: "$audits.locations" },
-            "audits.productsCount": { $size: "$audits.products" },
-          },
-        },
-        {
-          $group: {
-            _id: "$_id",
-            stores: { $mergeObjects: "$$ROOT" },
-            audits: { $push: "$$ROOT.audits" },
-          },
-        },
-        { $addFields: { "stores.audits": "$audits" } },
-        { $replaceRoot: { newRoot: "$stores" } },
       ],
       project: { "audits.locations": 0, "audits.products": 0 },
     });
-
-    //console.log(aggregation);
 
     const dataset = await accountCollection.aggregate(aggregation);
 
@@ -202,64 +184,3 @@ export async function DELETE(request: Request) {
 
   return Response.json({ user: 1 }, { status: 204 });
 }
-
-// {
-//   $addFields: {
-//     "audits.idp": "$audits._id",
-//     "audits.idf": "$$CURRENT.audits.audit",
-//     "audits.locationsCount": {
-//       $let: {
-//         vars: {
-//           //idd: {$toString: "$audit._id" },
-//           idd: {
-//            	$indexOfArray: [
-//                 "$$CURRENT.audits._id",
-//                 {$toString: "_id.$" }
-//               ]
-//           },
-//           locations: {
-//             $map: {
-//               input: "$audits",
-//               as: "audit",
-//               in: {
-//                 id: {
-//                   $toString: "$$audit._id"
-//                 },
-//                 size: {
-//                   $size: "$$audit.locations"
-//                 }
-//               }
-//             }
-//           }
-//         },
-//         in: {
-//           //{$toString:"$$idd"}
-//           $arrayElemAt: [
-//             "$$locations.size",
-//             "$$idd"
-//             // {
-//             //   $indexOfArray: [
-//             //     "$$locations.id",
-//             //     {
-//             //       $toString: {
-//             //         $first:
-//             //           "$$CURRENT.audits._id"
-//             //       }
-//             //     }
-//             //   ]
-//             // }
-//           ]
-//         }
-//       }
-//     }
-//     // "audits.productsCount": {
-//     //   $first: {
-//     //     $map: {
-//     //       input: "$audits",
-//     //       as: "audit",
-//     //       in: { $size: "$$audit.products" }
-//     //     }
-//     //   }
-//     // }
-//   }
-// }

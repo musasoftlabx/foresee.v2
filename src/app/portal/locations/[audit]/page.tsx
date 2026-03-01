@@ -1,11 +1,12 @@
 "use client";
 
-import Portal from "../page";
+import Portal from "../../page";
 
 // * React
 import { useEffect, useState } from "react";
 
-import Link from "next/link";
+// * Next
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 // * NPM
 import { useQuery } from "@tanstack/react-query";
@@ -15,7 +16,7 @@ import axios from "axios";
 import { Avatar, Button } from "@heroui/react";
 
 // * SCNUI
-import { Button as ButtonShadcn } from "@/components/ui/shadcn/button";
+import { Button as ButtonShadCN } from "@/components/ui/shadcn/button";
 import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
 import {
   Sheet,
@@ -56,7 +57,7 @@ import {
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Constants
-const apiUrl = "stores";
+const apiUrl = "audits";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -76,7 +77,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/shadcn/card";
-import { ExternalLinkIcon, FileSymlinkIcon, PackageIcon } from "lucide-react";
+import { ExternalLinkIcon, Link, PackageIcon } from "lucide-react";
 import dayjs from "dayjs";
 import {
   Table,
@@ -87,8 +88,8 @@ import {
   TableRow,
 } from "@/components/ui/shadcn/table";
 import { Badge } from "@/components/ui/shadcn/badge";
-import { BoxesIcon } from "@/components/ui/lucide-animated/boxes";
-import { Separator } from "@/components/ui/shadcn/separator";
+import { Switch } from "@/components/ui/shadcn/switch";
+import { Checkbox } from "@/components/ui/shadcn/checkbox";
 
 type TResponse = {
   count: number;
@@ -100,9 +101,10 @@ type TResponse = {
   };
 };
 
-export default function Stores() {
-  // ? Refs
+export default function Locations() {
+  // ? Hooks
   const apiRef = useGridApiRef();
+  const { audit } = useParams();
 
   const showConfirm = useDialogStore((state) => state.confirm);
 
@@ -143,7 +145,7 @@ export default function Stores() {
     ],
     columnsToSort: [{ field: "_id", sort: "desc" }],
     toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id", "code", "audits"],
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id", "code"],
       right: ["actions"],
     },
   });
@@ -151,7 +153,7 @@ export default function Stores() {
   // ? Queries
   const { data, isLoading } = useQuery({
     queryKey: [
-      apiUrl,
+      `${apiUrl}/${audit}/locations/`,
       paginationModel?.pageSize,
       paginationModel?.page,
       "__DISPLAY__",
@@ -176,7 +178,7 @@ export default function Stores() {
   });
 
   const [isAuditsSheetOpen, setIsAuditsSheetOpen] = useState(false);
-  const [rowDetails, setRowDetails] = useState<GridValidRowModel>();
+  const [audits, setAudits] = useState<GridValidRowModel>();
 
   return (
     <Portal>
@@ -184,85 +186,6 @@ export default function Stores() {
         isAddItemOpen={isAddItemOpen}
         setIsAddItemOpen={setIsAddItemOpen}
       />
-
-      <div className="flex items-center justify-center">
-        <Sheet open={isAuditsSheetOpen} onOpenChange={setIsAuditsSheetOpen}>
-          <SheetContent className="flex flex-col gap-0 space-y-0">
-            <SheetHeader>
-              <SheetTitle>{rowDetails?.name}</SheetTitle>
-              <SheetDescription>
-                Audits done under {rowDetails?.name} for {rowDetails?.client}
-              </SheetDescription>
-            </SheetHeader>
-            <ScrollArea className="h-[calc(100vh-230px)] flex-1 grow">
-              <div className={`flex w-full`}>
-                <Table className="border-x-0 border-y-1 border-dashed">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Audit</TableHead>
-                      <TableHead>Locations</TableHead>
-                      <TableHead>Products</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rowDetails?.audits.map(
-                      ({
-                        _id,
-                        date,
-                        locationsCount,
-                        productsCount,
-                      }: {
-                        _id: string;
-                        date: string;
-                        locationsCount: number;
-                        productsCount: number;
-                      }) => (
-                        <TableRow key={_id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="bg-muted rounded-md flex size-9 shrink-0 items-center justify-center">
-                                <PackageIcon className="text-muted-foreground size-4" />
-                              </div>
-                              <div className="flex flex-col">
-                                {`Audit ${dayjs(date).format("DD/MM/YY")}`}
-                                <div className="flex gap-3">
-                                  <Link
-                                    href={`/portal/locations/${_id}`}
-                                    className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
-                                  >
-                                    Locations
-                                  </Link>
-                                  <span>/</span>
-                                  <Link
-                                    href={`/portal/products/${_id}`}
-                                    className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
-                                  >
-                                    Products
-                                  </Link>
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center text-muted-foreground text-sm">
-                              {locationsCount}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center text-muted-foreground text-sm">
-                              {productsCount}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ),
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
-      </div>
 
       <div className="flex flex-1 flex-col">
         <DataGridPro
@@ -306,85 +229,60 @@ export default function Stores() {
               flex: 1,
             },
             {
-              field: "audits",
-              headerName: "Audits",
+              field: "physicalCount",
+              headerName: "Physical Count",
               headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              editable: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 115,
+              flex: 1,
+              preProcessEditCellProps: (
+                params: GridPreProcessEditCellProps,
+              ) => ({
+                ...params.props,
+                error: !params.props.value || params.props.value.length > 3,
+              }),
+            },
+            {
+              field: "systemCount",
+              headerName: "System Count",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              editable: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 110,
+              flex: 1,
+              preProcessEditCellProps: (
+                params: GridPreProcessEditCellProps,
+              ) => ({
+                ...params.props,
+                error: !params.props.value || params.props.value.length > 3,
+              }),
+            },
+            {
+              field: "isVerified",
+              headerName: "Is Verified?",
+              headerAlign: "center",
+              align: "center",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 140,
+              minWidth: 100,
               flex: 1,
-              renderCell: ({ row }) => (
-                <ButtonShadcn
-                  variant="secondary"
-                  onClick={() => {
-                    setRowDetails(row);
-                    setIsAuditsSheetOpen(true);
-                  }}
-                >
-                  <span className="text-xs">View Audits</span>
-                  <FileSymlinkIcon
-                    size={20}
-                    className="text-muted-foreground"
-                  />
-                </ButtonShadcn>
+              renderCell: ({ row: { isVerified } }) => (
+                <Checkbox checked={isVerified} disabled />
               ),
-            },
-            {
-              field: "name",
-              headerName: "Name",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              editable: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 250,
-              flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
-              }),
-            },
-            {
-              field: "country",
-              headerName: "Country",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              editable: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 150,
-              flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
-              }),
-            },
-            {
-              field: "client",
-              headerName: "Client",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              editable: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 150,
-              flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
-              }),
             },
             {
               field: "created",
@@ -552,12 +450,12 @@ export default function Stores() {
             setIsAddItemOpen,
             extraActions: (
               <>
-                <ButtonShadcn variant="secondary" size="icon">
+                <ButtonShadCN variant="secondary" size="icon">
                   <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadcn>
-                <ButtonShadcn variant="secondary" size="icon">
+                </ButtonShadCN>
+                <ButtonShadCN variant="secondary" size="icon">
                   <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadcn>
+                </ButtonShadCN>
               </>
             ),
           })}

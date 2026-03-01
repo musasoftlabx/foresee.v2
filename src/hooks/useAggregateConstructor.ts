@@ -18,27 +18,34 @@ export type TAggregation = [
 ];
 
 export default async function useAggregateConstructor({
+  match,
   limit,
   offset,
-  options,
+  sortsAndFilters,
   searchFields,
+  extraPipelines,
+  project,
 }: {
+  match: {};
   limit: string;
   offset: string;
-  options: string;
+  sortsAndFilters: string;
   searchFields: string[];
+  extraPipelines: unknown[];
+  project?: {};
 }) {
-  const queryOptions = <TQueryOptions>JSON.parse(options);
+  const queryOptions = <TQueryOptions>JSON.parse(sortsAndFilters);
   const $limit = Number(limit);
   const $skip = $limit * Number(offset);
 
   const aggregation: any = [
     { $addFields: { id: { $toString: "$_id" }, search: { $concat: [] } } },
-    { $match: {} },
+    { $match: match },
     { $limit },
     { $skip },
     { $sort: { _id: -1 } },
-    { $project: { id: 0, fieldToExclude: 0 } },
+    ...extraPipelines,
+    { $project: { id: 0, fieldToExclude: 0, ...project } },
   ];
 
   if (JSON.stringify(queryOptions) !== "{}") {
