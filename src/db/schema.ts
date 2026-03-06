@@ -5,6 +5,22 @@ import { Schema } from "./mongoDB";
 //mongoose.pluralize(null);
 //const Schema = mongoose.Schema;
 
+const inventorySchema = new Schema(
+  { barcode: { type: String, index: true, unique: true, required: true } },
+  { strict: false },
+);
+
+const scansSchema = new Schema(
+  {
+    location: { type: String, index: true },
+    barcode: { type: String, index: true },
+    scanned: [
+      { on: { type: Date, default: Date.now }, by: String, device: Object },
+    ],
+  },
+  { strict: false },
+);
+
 const accountSchema = new Schema(
   {
     name: { type: String, required: true, index: true, unique: true },
@@ -42,20 +58,8 @@ const accountSchema = new Schema(
                 modified: { on: { type: Date, default: Date.now }, by: String },
               },
             ],
-            products: [
-              {
-                barcode: { type: String, index: true, unique: true },
-                location: { type: String, maxLength: 20 },
-                attributes: Object,
-                scanned: [
-                  {
-                    on: { type: Date, default: Date.now },
-                    by: String,
-                    device: String,
-                  },
-                ],
-              },
-            ],
+            inventory: [inventorySchema],
+            scans: [scansSchema],
           },
         ],
         created: { on: { type: Date, default: Date.now }, by: String },
@@ -115,9 +119,24 @@ const clientsSchema = new Schema(
   { autoIndex: false, autoCreate: false, strict: true },
 );
 
+const excelImportSchema = new Schema(
+  { entity: String, fields: [{ field: String, sample: String }] },
+  { _id: false, autoIndex: false, versionKey: false },
+);
+
 let clientsCollection =
   mongoose.models.client || mongoose.model("client", clientsSchema);
 let accountCollection =
   mongoose.models.account || mongoose.model("account", accountSchema);
+let excelImportCollection =
+  mongoose.models.excelImport ||
+  mongoose.model("excelImport", excelImportSchema);
 
-export { clientsSchema, clientsCollection, accountSchema, accountCollection };
+export {
+  clientsSchema,
+  clientsCollection,
+  accountSchema,
+  accountCollection,
+  excelImportSchema,
+  excelImportCollection,
+};

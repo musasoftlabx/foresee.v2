@@ -5,9 +5,6 @@ import Portal from "../../page";
 // * React
 import { useEffect, useState } from "react";
 
-// * Next
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-
 // * NPM
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
@@ -17,34 +14,20 @@ import { Avatar, Button } from "@heroui/react";
 
 // * SCNUI
 import { Button as ButtonShadCN } from "@/components/ui/shadcn/button";
-import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/shadcn/sheet";
 
 // * RUI
 
-import CreateStore from "@/components/admin/clients/create-store";
+import { AddClient } from "@/components/admin/clients/add-client";
 
 // * MUI
 import {
   DataGridPro,
+  DEFAULT_GRID_AUTOSIZE_OPTIONS,
   GRID_CHECKBOX_SELECTION_COL_DEF,
-  gridDimensionsSelector,
   GridPreProcessEditCellProps,
   GridRowModel,
-  GridRowParams,
   GridValidRowModel,
-  useGridApiContext,
   useGridApiRef,
-  useGridSelector,
 } from "@mui/x-data-grid-pro";
 
 // * Components
@@ -57,7 +40,7 @@ import {
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Constants
-const apiUrl = "locations";
+const apiUrl = "inventory";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -68,28 +51,7 @@ import DataGridPagination from "@/components/DataTable/DataGridPagination";
 import { useDialogStore } from "@/store/useDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import React from "react";
-import Stack from "@mui/material/Stack";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/shadcn/card";
-import { ExternalLinkIcon, Link, PackageIcon } from "lucide-react";
-import dayjs from "dayjs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/shadcn/table";
-import { Badge } from "@/components/ui/shadcn/badge";
-import { Switch } from "@/components/ui/shadcn/switch";
-import { Checkbox } from "@/components/ui/shadcn/checkbox";
+import { useParams } from "next/navigation";
 
 type TResponse = {
   count: number;
@@ -101,7 +63,7 @@ type TResponse = {
   };
 };
 
-export default function Locations() {
+export default function Scans() {
   // ? Hooks
   const apiRef = useGridApiRef();
   const { audit } = useParams();
@@ -110,7 +72,8 @@ export default function Locations() {
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
+  const [isManageUserRolesOpen, setIsManageUserRolesOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -136,16 +99,10 @@ export default function Locations() {
   } = useCustomDataGrid({
     apiRef,
     apiUrl,
-    columnsToHide: [
-      "_id",
-      "created.by",
-      "created.on",
-      "modified.by",
-      "modified.on",
-    ],
+    columnsToHide: ["_id", "scanned.by", "scanned.on"],
     columnsToSort: [{ field: "_id", sort: "desc" }],
     toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id", "code"],
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id"],
       right: ["actions"],
     },
   });
@@ -161,7 +118,7 @@ export default function Locations() {
     ],
     queryFn: ({ queryKey }) =>
       axios<GridValidRowModel>(
-        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&sortsAndFilters=${queryKey[4]}&scope=__DEFAULT__`,
+        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&options=${queryKey[4]}&scope=__DEFAULT__`,
       ),
     select: ({ data }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
@@ -177,14 +134,11 @@ export default function Locations() {
     });
   });
 
-  const [isAuditsSheetOpen, setIsAuditsSheetOpen] = useState(false);
-  const [audits, setAudits] = useState<GridValidRowModel>();
-
   return (
     <Portal>
-      <CreateStore
-        isAddItemOpen={isAddItemOpen}
-        setIsAddItemOpen={setIsAddItemOpen}
+      <AddClient
+        isAddClientOpen={isAddClientOpen}
+        setIsAddClientOpen={setIsAddClientOpen}
       />
 
       <div className="flex flex-1 flex-col">
@@ -218,74 +172,26 @@ export default function Locations() {
               flex: 1,
             },
             {
-              field: "code",
-              headerName: "Code",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 100,
-              flex: 1,
-            },
-            {
-              field: "physicalCount",
-              headerName: "Physical Count",
-              headerAlign: "center",
-              align: "center",
+              field: "barcode",
+              headerName: "Barcode",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               editable: true,
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 115,
+              minWidth: 250,
               flex: 1,
               preProcessEditCellProps: (
                 params: GridPreProcessEditCellProps,
               ) => ({
                 ...params.props,
-                error: !params.props.value || params.props.value.length > 3,
+                error: !params.props.value || params.props.value.length > 50,
               }),
             },
             {
-              field: "systemCount",
-              headerName: "System Count",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 110,
-              flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 3,
-              }),
-            },
-            {
-              field: "isVerified",
-              headerName: "Is Verified?",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 100,
-              flex: 1,
-              renderCell: ({ row: { isVerified } }) => (
-                <Checkbox checked={isVerified} disabled />
-              ),
-            },
-            {
-              field: "created",
-              headerName: "Created",
+              field: "scanned",
+              headerName: "Scanned",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               filterable: false,
@@ -297,38 +203,7 @@ export default function Locations() {
               flex: 1,
               renderCell: ({
                 row: {
-                  created: { by, on },
-                },
-              }) => (
-                <div className="flex gap-3 items-center">
-                  <Avatar
-                    isBordered
-                    radius="sm"
-                    size="sm"
-                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
-                  />
-                  <div className="flex-col">
-                    <div>by {by}</div>
-                    <div className="text-xs">on {on}</div>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              field: "modified",
-              headerName: "Modified",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              sortable: false,
-              minWidth: 300,
-              flex: 1,
-              renderCell: ({
-                row: {
-                  modified: { by, on },
+                  scanned: { by, on },
                 },
               }) => (
                 <div className="flex gap-3 items-center">
@@ -356,7 +231,7 @@ export default function Locations() {
               pinnable: false,
               disableColumnMenu: true,
               width: 70,
-              renderCell: ({ row: { _id, name } }) => (
+              renderCell: ({ row: { _id, client } }) => (
                 <Button
                   isIconOnly
                   isLoading={false}
@@ -368,8 +243,8 @@ export default function Locations() {
                     showConfirm({
                       operation: "delete",
                       status: "info",
-                      subject: `Confirm deletion of ${name}`,
-                      body: `Are you sure you intend to delete this store?`,
+                      subject: `Confirm deletion of ${client}`,
+                      body: `Are you sure you intend to delete this client?`,
                     });
                   }}
                 >
@@ -377,16 +252,14 @@ export default function Locations() {
                 </Button>
               ),
             },
-            { field: "created.by", headerName: "Created By", hideable: false },
+            { field: "scanned.by", headerName: "Scanned By", hideable: false },
             {
-              field: "created.on",
-              headerName: "Created On",
+              field: "scanned.on",
+              headerName: "Scanned On",
               hideable: false,
               filterOperators: dateFilter,
             },
           ]}
-          //getDetailPanelHeight={() => "auto"}
-          //getDetailPanelContent={getDetailPanelContent}
           getRowId={({ _id }) => _id}
           getRowHeight={() => "auto"}
           density="compact"
@@ -433,7 +306,7 @@ export default function Locations() {
             //exclude: ["multiApprove", "multiReject"],
             exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
               paginationModel?.page
-            }&view=__EXPORT__&sortsAndFilters=${encodeURI(
+            }&view=__EXPORT__&options=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
             )}`,
             handleGetData,
@@ -446,7 +319,7 @@ export default function Locations() {
             setIsExporting,
             stats,
             changeStats,
-            setIsAddItemOpen,
+            setIsAddItemOpen: setIsAddClientOpen,
             extraActions: (
               <>
                 <ButtonShadCN variant="secondary" size="icon">

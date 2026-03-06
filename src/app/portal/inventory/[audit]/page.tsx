@@ -1,6 +1,6 @@
 "use client";
 
-import Portal from "../page";
+import Portal from "../../page";
 
 // * React
 import { useEffect, useState } from "react";
@@ -36,11 +36,8 @@ import {
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
 
-// * Icons
-import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
-
 // * Constants
-const apiUrl = "products";
+const apiUrl = "inventory";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -50,7 +47,7 @@ import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
 import { useDialogStore } from "@/store/useDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
-import { dateFilter } from "@/components/DataTable/DataGridFilters";
+import { useParams } from "next/navigation";
 
 type TResponse = {
   count: number;
@@ -62,16 +59,16 @@ type TResponse = {
   };
 };
 
-export default function Products() {
-  // ? Refs
+export default function Inventory() {
+  // ? Hooks
   const apiRef = useGridApiRef();
+  const { audit } = useParams();
 
   const showConfirm = useDialogStore((state) => state.confirm);
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [isManageUserRolesOpen, setIsManageUserRolesOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -97,10 +94,10 @@ export default function Products() {
   } = useCustomDataGrid({
     apiRef,
     apiUrl,
-    columnsToHide: ["_id", "scanned.by", "scanned.on"],
+    columnsToHide: ["_id"],
     columnsToSort: [{ field: "_id", sort: "desc" }],
     toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id"],
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id", "barcode"],
       right: ["actions"],
     },
   });
@@ -108,7 +105,7 @@ export default function Products() {
   // ? Queries
   const { data, isLoading } = useQuery({
     queryKey: [
-      apiUrl,
+      `${apiUrl}/${audit}`,
       paginationModel?.pageSize,
       paginationModel?.page,
       "__DISPLAY__",
@@ -116,7 +113,7 @@ export default function Products() {
     ],
     queryFn: ({ queryKey }) =>
       axios<GridValidRowModel>(
-        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&options=${queryKey[4]}&scope=__DEFAULT__`,
+        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&sortsAndFilters=${queryKey[4]}&scope=__DEFAULT__`,
       ),
     select: ({ data }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
@@ -147,17 +144,6 @@ export default function Products() {
           initialState={initialState}
           columns={[
             {
-              field: GRID_CHECKBOX_SELECTION_COL_DEF.field,
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              resizable: false,
-              sortable: false,
-              maxWidth: 40,
-            },
-            {
               field: "_id",
               headerName: "Id.",
               cellClassName: "vertical-center-cell",
@@ -174,95 +160,67 @@ export default function Products() {
               headerName: "Barcode",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              editable: true,
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 250,
+              minWidth: 180,
               flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
-              }),
             },
             {
-              field: "scanned",
-              headerName: "Scanned",
+              field: "name",
+              headerName: "Name",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              sortable: false,
-              minWidth: 300,
+              hideable: true,
+              pinnable: true,
+              resizable: true,
+              minWidth: 250,
               flex: 1,
-              renderCell: ({
-                row: {
-                  scanned: { by, on },
-                },
-              }) => (
-                <div className="flex gap-3 items-center">
-                  <Avatar
-                    isBordered
-                    radius="sm"
-                    size="sm"
-                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
-                  />
-                  <div className="flex-col">
-                    <div>by {by}</div>
-                    <div className="text-xs">on {on}</div>
-                  </div>
-                </div>
-              ),
             },
             {
-              field: "actions",
-              headerName: "Delete",
+              field: "color",
+              headerName: "Color",
               headerAlign: "center",
               align: "center",
-              sortable: false,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
+              cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              width: 70,
-              renderCell: ({ row: { _id, client } }) => (
-                <Button
-                  isIconOnly
-                  isLoading={false}
-                  isDisabled={false}
-                  radius="full"
-                  className="flex flex-1 align-middle self-center align-center justify-center"
-                  onPress={() => {
-                    //changeRowSelection([_id]);
-                    showConfirm({
-                      operation: "delete",
-                      status: "info",
-                      subject: `Confirm deletion of ${client}`,
-                      body: `Are you sure you intend to delete this client?`,
-                    });
-                  }}
-                >
-                  <DeleteIcon size={20} />
-                </Button>
-              ),
+              hideable: true,
+              pinnable: true,
+              resizable: true,
+              minWidth: 50,
+              flex: 1,
             },
-            { field: "scanned.by", headerName: "Scanned By", hideable: false },
             {
-              field: "scanned.on",
-              headerName: "Scanned On",
-              hideable: false,
-              filterOperators: dateFilter,
+              field: "length",
+              headerName: "Length",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: true,
+              pinnable: true,
+              resizable: true,
+              minWidth: 50,
+              flex: 1,
+            },
+            {
+              field: "specialCode",
+              headerName: "Special Code",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: true,
+              pinnable: true,
+              resizable: true,
+              minWidth: 50,
+              flex: 1,
             },
           ]}
           getRowId={({ _id }) => _id}
-          getRowHeight={() => "auto"}
+          getRowHeight={() => 30}
           density="compact"
           pagination
-          checkboxSelection
           keepNonExistentRowsSelected
           disableRowSelectionOnClick
           disableRowSelectionExcludeModel
@@ -295,14 +253,14 @@ export default function Products() {
           }
           slots={DataGridSlots({
             apiRef,
-            apiUrl: `${apiUrl}?scope=users`,
+            apiUrl: `${apiUrl}?scope=__DEFAULT__`,
             changeFilters,
             clearFilters,
             changeRowSelection,
             clearRowSelection,
             changeVisibleColumns,
             //exclude: ["multiApprove", "multiReject"],
-            exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+            exportURL: `${apiUrl}?scope=__DEFAULT__&limit=${data?.count}&offset=${
               paginationModel?.page
             }&view=__EXPORT__&options=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
@@ -329,14 +287,6 @@ export default function Products() {
               </>
             ),
           })}
-          // <Button
-          //   size="small"
-          //   startIcon={<FaUsersCog />}
-          //   onPress={() => setIsAddClientOpen(true)}
-          //   sx={sx}
-          // >
-          //   Manage Roles
-          // </Button>
           slotProps={DataGridSlotProps}
           sx={DataGridStyles}
         />

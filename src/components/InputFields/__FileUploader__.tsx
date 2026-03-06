@@ -1,10 +1,17 @@
+// * React
+import { Fragment } from "react";
+
 // * NPM
-import { ControllerRenderProps, UseFormSetValue } from "react-hook-form";
+import {
+  Controller,
+  ControllerRenderProps,
+  useFieldArray,
+  UseFormSetValue,
+  useWatch,
+} from "react-hook-form";
 import { FilePond, FilePondProps, registerPlugin } from "react-filepond";
 import { FilePondStyleProps } from "filepond";
-import { Grid, Paper, Stack, Typography } from "@mui/material";
 import { getCookie } from "cookies-next";
-import { grey } from "@mui/material/colors";
 import { useMutation } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
@@ -12,6 +19,24 @@ import FilePondPluginImageValidateSize from "filepond-plugin-image-validate-size
 import FilePondPluginFileValidateSize from "filepond-plugin-file-validate-size";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
 import mime from "mime";
+
+// * MUI
+import { grey } from "@mui/material/colors";
+import { Grid, Paper, Stack } from "@mui/material";
+
+// * HUI
+import { Select, SelectItem } from "@heroui/react";
+
+// * SUI
+import { Card, CardContent } from "../ui/shadcn/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/shadcn/table";
 
 // * Store
 import { useAlertStore } from "@/store/useAlertStore";
@@ -38,6 +63,8 @@ export default function __FileUploader__(
     acceptedFileTypes: Pick<FilePondProps, "acceptedFileTypes"> | any;
     caption?: string;
     circular?: boolean;
+    control?: any;
+    register?: any;
     columnspan?: {};
     dimensions?: { height: number; width: number };
     field: Pick<ControllerRenderProps, "name" | "value">;
@@ -50,11 +77,21 @@ export default function __FileUploader__(
     columnspan,
     caption,
     circular,
+    control,
+    register,
     dimensions,
     field,
     stylePanelLayout,
     setValue,
   } = props;
+
+  const { filename, sheetFields, systemFields, sheets } = field.value.file;
+
+  // ? Hooks
+  const sheetFieldsWatcher = useWatch({
+    control,
+    name: "audit.inventory.file.sheetFields",
+  });
 
   // ? State Actions
   const showAlert = useAlertStore((state) => state.alert);
@@ -137,10 +174,10 @@ export default function __FileUploader__(
         ]}
       >
         <Stack gap={1}>
-          {field.value?.filename && (
-            <Typography fontWeight="bold" mt={0} textAlign="center">
+          {field.value?.file && (
+            <div className="text-md font-bold text-center">
               {field.value?.label}
-            </Typography>
+            </div>
           )}
           <FilePond
             {...props}
@@ -148,11 +185,12 @@ export default function __FileUploader__(
               mime.getType(type!),
             )}
             onprocessfile={(e, file) => {
+              console.log(file);
               const { serverId } = file;
               setValue(
                 field.name,
-                { ...field.value, filename: serverId, files: [serverId] },
-                { shouldDirty: true, shouldTouch: true },
+                { ...field.value, file: serverId },
+                { shouldDirty: true, shouldTouch: true, shouldValidate: true },
               );
             }}
             credits={false}
@@ -161,7 +199,7 @@ export default function __FileUploader__(
               url: process.env.NEXT_PUBLIC_API,
               process: {
                 headers: {
-                  Authorization: `Bearer ${getCookie("__e_ballot_aT")}`,
+                  Authorization: `Bearer ${getCookie("__foresee_aT")}`,
                 },
                 method: "POST",
                 url: "upload",
@@ -175,7 +213,7 @@ export default function __FileUploader__(
                   );
                   return formData;
                 },
-                onload: (data) => data,
+                onload: (data) => JSON.parse(data),
                 onerror: (err) => {
                   if (err) {
                     const { error, message } = JSON.parse(err);
@@ -183,13 +221,24 @@ export default function __FileUploader__(
                   }
                 },
               },
-              revert: (file) =>
-                deleteFile(file, {
+              revert: ({ filename }) =>
+                deleteFile(filename, {
                   onSuccess: () =>
                     setValue(
                       field.name,
-                      { ...field.value, filename: "", files: [] },
-                      { shouldDirty: true },
+                      {
+                        ...field.value,
+                        file: {
+                          filename: "",
+                          sheetFields: [],
+                          systemFields: [],
+                        },
+                      },
+                      {
+                        shouldDirty: true,
+                        shouldTouch: true,
+                        shouldValidate: true,
+                      },
                     ),
                   onError: (error) => {
                     if (error instanceof AxiosError)
@@ -205,35 +254,93 @@ export default function __FileUploader__(
                           <div style="display: flex; justify-content: center; height: 35px; text-align: center">
                             <img src="/icons/filepond/excel.png" />
                           </div>
-                          <div style="font-size: 16px; font-weight: 600; color: ${"green"}; opacity: .9">${field.value.label ?? "Upload file"}</div>
+                          <div style="font-size: 16px; font-weight: 600; color: ${"green"}; opacity: .9">Upload ${field.value.label ?? "Upload file"}</div>
                           <div style="color: ${grey[500]}; font-size: 11px; font-weight: 600;">Only ${acceptedFileTypes.join(", ")} allowed</div>
                           <b style="color: ${grey[500]}; font-size: 11px; margin-top: 2px">(Max of ${props.maxFileSize} allowed)</b>
                         </div>`}
           />
+
           {caption && (
             <p className=" text-xs text-muted-foreground ml-2">{caption}</p>
+          )}
+
+          {sheetFieldsWatcher && sheetFieldsWatcher.length > 0 && (
+            <Fragment>
+              <div className="text-md font-bold text-center mt-3">
+                Field Mapping
+              </div>
+              <Card className="p-0">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="*:border-border hover:bg-transparent [&>:not(:last-child)]:border-r">
+                        <TableHead className="font-bold">
+                          Worksheet field
+                        </TableHead>
+                        <TableHead className="font-bold text-center">
+                          Maps to
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sheetFieldsWatcher.map(
+                        ({ field }: { field: string }, index: number) => (
+                          <TableRow
+                            key={index}
+                            className="*:border-border hover:bg-transparent [&>:not(:last-child)]:border-r"
+                          >
+                            <TableCell className="bg-muted/50 w-40 py-2 text-sm font-medium">
+                              {field}
+                            </TableCell>
+                            <TableCell className="bg-muted/50 w-40 py-2 text-sm font-medium">
+                              <Controller
+                                control={control}
+                                name={`audit.inventory.file.sheetFields.${index}.mapsTo`}
+                                render={() => (
+                                  <Select
+                                    size="sm"
+                                    variant="underlined"
+                                    selectionMode="single"
+                                    // selectedKeys={
+                                    //   field.value?.file?.sheetFields[key].field
+                                    // }
+                                    {...register(
+                                      `audit.inventory.file.sheetFields.${index}.mapsTo`,
+                                    )}
+                                    onSelectionChange={(value) =>
+                                      setValue(
+                                        `audit.inventory.file.sheetFields.${index}.mapsTo`,
+                                        value.currentKey,
+                                        {
+                                          shouldDirty: true,
+                                          shouldTouch: true,
+                                          shouldValidate: true,
+                                        },
+                                      )
+                                    }
+                                  >
+                                    {systemFields.map(
+                                      ({ field }: { field: string }) => (
+                                        <SelectItem key={field}>
+                                          {field}
+                                        </SelectItem>
+                                      ),
+                                    )}
+                                  </Select>
+                                )}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ),
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </Fragment>
           )}
         </Stack>
       </Paper>
     </Grid>
   );
-}
-
-{
-  /* <svg version="1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" enable-background="new 0 0 48 48">
-                            <g fill="#FF9800">
-                              <rect x="36.1" y="8.1" transform="matrix(.707 .707 -.707 .707 21.201 -25.184)" width="9.9" height="9.9"/>
-                              <rect x="36" y="8" width="10" height="10"/>
-                            </g>
-                            <circle fill="#FFEB3B" cx="41" cy="13" r="3"/>
-                            <polygon fill="#2E7D32" points="16.5,18 0,42 33,42"/>
-                            <polygon fill="#4CAF50" points="33.6,24 19.2,42 48,42"/>
-                            </svg> */
-}
-
-{
-  /* <FilePondLabel
-  acceptedFileTypes={acceptedFileTypes}
-  field={field}
-/> */
 }

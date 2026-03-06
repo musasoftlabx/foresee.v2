@@ -1,5 +1,5 @@
 // * Node
-import fs from "fs";
+import { readFileSync } from "fs";
 
 // * Next
 import { NextRequest, NextResponse } from "next/server";
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const extension = filename?.split(".").pop();
   const path = `${cwd?.join("/")}/src/app${filepath}`;
 
-  return new NextResponse(fs.readFileSync(path), {
+  return new NextResponse(readFileSync(path), {
     headers: { "Content-Type": `${mime.getType(extension!)}` },
   });
 }

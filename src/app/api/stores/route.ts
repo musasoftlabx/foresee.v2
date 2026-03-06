@@ -1,16 +1,24 @@
 // * Server
 import { NextRequest, NextResponse } from "next/server";
 
+// * Node
+import { existsSync } from "fs";
+
 // * Schema
 import { accountCollection } from "@/db/schema";
 
 // * NPM
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
+import ExcelJS, { CellValue } from "@protobi/exceljs";
+import trim from "lodash/trim";
 
 // * Hooks
 import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
 import useAggregateConstructor from "@/hooks/useAggregateConstructor";
+
+// * Helpers
+import { tempPath } from "@/helpers/configurePaths";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -37,7 +45,9 @@ export async function GET(req: NextRequest) {
         {
           $addFields: {
             "audits.locationsCount": { $size: "$audits.locations" },
-            "audits.productsCount": { $size: "$audits.products" },
+            "audits.inventoryCount": {
+              $size: { $ifNull: ["$audits.inventory", "$audits.products"] },
+            },
           },
         },
         {
@@ -50,7 +60,7 @@ export async function GET(req: NextRequest) {
         { $addFields: { "stores.audits": "$audits" } },
         { $replaceRoot: { newRoot: "$stores" } },
       ],
-      project: { "audits.locations": 0, "audits.products": 0 },
+      project: { "audits.locations": 0, "audits.inventory": 0 },
     });
 
     //console.log(aggregation);
@@ -93,42 +103,85 @@ export async function POST(request: Request) {
       date,
       barcode: { mode, characters },
       locations,
-      products: { filename },
+      inventory: {
+        file: { filename, sheetFields },
+      },
     },
   } = await request.json();
 
   try {
-    return NextResponse.json(
-      await accountCollection.updateOne(
-        {
-          _id: "69a08fdd299c12466e5c7ed8",
-        },
-        {
-          $push: {
-            stores: {
-              code: "sfefe",
-              name,
-              country,
-              client,
-              added: { by: "musa" },
-              modified: { by: "musa" },
-              audits: [
-                {
-                  date: new Date(date),
-                  barcode: { mode, characters: characters[0] },
-                  locations: Array.from({ length: locations }).map(() => ({
-                    code: "tm-001",
-                    created: { by: "musa" },
-                    modified: { by: "musa" },
-                  })),
-                },
-              ],
+    //const { file, files } = req.body;
+
+    const path = `${tempPath}/${filename}`;
+
+    if (existsSync(path)) {
+      const workbookReader: ExcelJS.stream.xlsx.WorkbookReader =
+        new ExcelJS.stream.xlsx.WorkbookReader(path, {});
+
+      let inventory = [];
+
+      const fields = [
+        "", // ? Included to align to excel's initial empty row cell
+        ...sheetFields.map(({ mapsTo }: { mapsTo: string }) => mapsTo),
+      ];
+
+      for await (const worksheetReader of workbookReader) {
+        if (worksheetReader.id === 1) {
+          for await (const row of worksheetReader) {
+            if (row.number > 1) {
+              let obj = {};
+              // console.log(row.values.filter((row)=> ({
+              //   fields[0]: row[0]
+              // })));
+              row.values.forEach((cell, i: number) => {
+                return (obj[fields[i]] =
+                  typeof cell === "object" ? trim(cell.result) : trim(cell));
+              });
+
+              inventory.push(obj);
+            }
+          }
+        }
+      }
+
+      return NextResponse.json(
+        await accountCollection.updateOne(
+          {
+            _id: "69a08fdd299c12466e5c7ed8",
+          },
+          {
+            $push: {
+              stores: {
+                code: "LZAXC",
+                name,
+                country,
+                client,
+                added: { by: "musa" },
+                modified: { by: "musa" },
+                audits: [
+                  {
+                    date: new Date(date),
+                    barcode: {
+                      mode,
+                      characters: mode === "strict" ? characters[0] : 0,
+                    },
+                    locations: Array.from({ length: locations }).map(() => ({
+                      code: "tm-001",
+                      created: { by: "musa" },
+                      modified: { by: "musa" },
+                    })),
+                    inventory,
+                  },
+                ],
+              },
             },
           },
-        },
-      ),
-      { status: 201 },
-    );
+        ),
+        { status: 201 },
+      );
+    } else throw Error("hgyt");
+
+    //return NextResponse.json({ a: 1 }, { status: 201 });
 
     // const storeExists = await accountCollection.findOne({
     //   stores: { $elemMatch: { name: "abc" } },

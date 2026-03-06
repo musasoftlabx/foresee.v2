@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# server-mock
+/server
+
 # next.js
 /.next/
 /out/

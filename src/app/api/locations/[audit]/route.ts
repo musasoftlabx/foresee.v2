@@ -41,7 +41,11 @@ export async function GET(req: NextRequest) {
         { $unwind: "$locations" },
         { $replaceRoot: { newRoot: "$locations" } },
       ],
-      project: { "audits.locations": 0, "audits.products": 0 },
+      project: {
+        "audits.locations": 0,
+        "audits.inventory": 0,
+        "audits.scans": 0,
+      },
     });
 
     const dataset = await accountCollection.aggregate(aggregation);

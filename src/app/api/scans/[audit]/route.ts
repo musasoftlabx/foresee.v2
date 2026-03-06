@@ -2,31 +2,55 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // * Schema
-import { productsCollection } from "@/db/schema";
+import { accountCollection } from "@/db/schema";
 
 // * NPM
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
+import { ObjectId } from "mongodb";
 
 // * Hooks
+import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
 import useAggregateConstructor from "@/hooks/useAggregateConstructor";
+import mongoose from "mongoose";
 
 // * Extensions
 dayjs.extend(advancedFormat);
 
+const id = "69a08fdd299c12466e5c7ed8";
+
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
-  const { limit, offset, options, scope, view } = Object.fromEntries(
+  const auditId = req.nextUrl.pathname.split("/")[3];
+  const { limit, offset, sortsAndFilters, scope, view } = Object.fromEntries(
     searchParams.entries(),
   );
 
   if (scope === "__DEFAULT__") {
-    const dataset = await useAggregateConstructor({
+    const aggregation = await useAggregateConstructor({
+      match: { id },
       limit,
       offset,
-      options,
-      searchFields: ["barcode", "location", "attributes.name", "scanned.by"],
+      sortsAndFilters,
+      searchFields: ["code", "name"],
+      extraPipelines: [
+        { $unwind: "$stores" },
+        { $replaceRoot: { newRoot: "$stores" } },
+        { $unwind: "$audits" },
+        { $replaceRoot: { newRoot: "$audits" } },
+        { $addFields: { id: { $toString: "$_id" } } },
+        { $match: { id: auditId } },
+        { $unwind: "$scans" },
+        { $replaceRoot: { newRoot: "$scans" } },
+      ],
+      project: {
+        "audits.locations": 0,
+        "audits.inventory": 0,
+        "audits.scans": 0,
+      },
     });
+
+    const dataset = await accountCollection.aggregate(aggregation);
 
     if (view === "__DISPLAY__") {
       try {
@@ -36,9 +60,7 @@ export async function GET(req: NextRequest) {
             ...field,
             scanned: {
               ...field.scanned,
-              on: dayjs(field.scanned.on).format(
-                "ddd, Do MMM YYYY [at] hh:mm:ss a",
-              ),
+              on: useDayjsDayFormatter(field.scanned.on),
             },
           })),
         });
@@ -53,26 +75,35 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(request: Request) {
-  const { client } = await request.json();
+export async function POST(request: NextRequest) {
+  const auditId = request.nextUrl.pathname.split("/")[3];
+  const { storeId } = await request.json();
 
   try {
-    const clientExists = await productsCollection.countDocuments({ client });
-
-    if (clientExists > 0)
-      return NextResponse.json(
-        { icon: "", error: "Duplicate found", message: "Duplicate found" },
-        { status: 400 },
-      );
-    else
-      return NextResponse.json(
-        await productsCollection.insertOne({
-          client,
-          added: { by: "musa" },
-          modified: { by: "musa" },
-        }),
-        { status: 201 },
-      );
+    return NextResponse.json(
+      await accountCollection.updateOne(
+        { _id: id },
+        {
+          $push: {
+            "stores.$[store].audits.$[audit].scans": {
+              location: "TM-R389",
+              barcode: "3434577",
+              scanned: {
+                by: "musa",
+                device: { model: "test", serialNo: 7667865 },
+              },
+            },
+          },
+        },
+        {
+          arrayFilters: [
+            { "store._id": new ObjectId(storeId) },
+            { "audit._id": new ObjectId(auditId) },
+          ],
+        },
+      ),
+      { status: 201 },
+    );
   } catch (error) {
     if (error instanceof Error) {
       // logIt({code: 1, error: error.name, message: error.message})
@@ -92,7 +123,7 @@ export async function PATCH(request: NextRequest) {
     const { _id, field, value } = await request.json();
     try {
       return NextResponse.json(
-        await productsCollection.findByIdAndUpdate(
+        await accountCollection.findByIdAndUpdate(
           { _id },
           { [field]: value, modified: { by: "musa1", on: new Date() } },
         ),
@@ -118,7 +149,7 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   const {} = request.json();
 
-  await productsCollection.deleteMany({});
+  await accountCollection.deleteOne({ "stores._id": id });
 
   return Response.json({ user: 1 }, { status: 204 });
 }

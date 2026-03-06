@@ -10,15 +10,15 @@ const cwd = processcwd.split("/"); // ? Transform to array ["Users", "mmuliro", 
 
 // ? Keep files within working directory under server directory
 const fsPath = `${processcwd}/server`; // ? Formulate fs directory (/Users/mmuliro/Documents/projects/e-ballot/server)
-const ballotsPath = `${fsPath}/ballots`;
+const productListPath = `${fsPath}/productsList`;
 const logsPath = `${fsPath}/logs`;
 const tempPath = `${fsPath}/temp`;
 
 // ? Create directory if not exists only in development, in production, they are created by Gitlab Actions
 if (process.env.NODE_ENV === "development") {
-  !existsSync(ballotsPath) &&
-    mkdirSync(ballotsPath, { recursive: true }) &&
-    chmodSync(ballotsPath, 0o777);
+  !existsSync(productListPath) &&
+    mkdirSync(productListPath, { recursive: true }) &&
+    chmodSync(productListPath, 0o777);
   !existsSync(logsPath) &&
     mkdirSync(logsPath, { recursive: true }) &&
     chmodSync(logsPath, 0o777);
@@ -51,7 +51,7 @@ if (process.env.NODE_ENV === "development" && !existsSync(hardLinkPath)) {
   });
 }
 
-export { cwd, ballotsPath, fsPath, logsPath, tempPath };
+export { cwd, productListPath, fsPath, logsPath, tempPath };
 
 // ? Keep files outside working directory
 // cwd.splice(-1); // ? Remove last element to move an upper directory ["Users", "mmuliro", "Documents", "projects"]

@@ -14,7 +14,7 @@ import axios from "axios";
 // * HUI
 import { Avatar, Button } from "@heroui/react";
 
-// * SCNUI
+// * SUI
 import { Button as ButtonShadcn } from "@/components/ui/shadcn/button";
 import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
 import {
@@ -201,7 +201,7 @@ export default function Stores() {
                     <TableRow>
                       <TableHead>Audit</TableHead>
                       <TableHead>Locations</TableHead>
-                      <TableHead>Products</TableHead>
+                      <TableHead>Inventory</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -210,12 +210,12 @@ export default function Stores() {
                         _id,
                         date,
                         locationsCount,
-                        productsCount,
+                        inventoryCount,
                       }: {
                         _id: string;
                         date: string;
                         locationsCount: number;
-                        productsCount: number;
+                        inventoryCount: number;
                       }) => (
                         <TableRow key={_id}>
                           <TableCell>
@@ -234,10 +234,10 @@ export default function Stores() {
                                   </Link>
                                   <span>/</span>
                                   <Link
-                                    href={`/portal/products/${_id}`}
+                                    href={`/portal/inventory/${_id}`}
                                     className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
                                   >
-                                    Products
+                                    Inventory
                                   </Link>
                                 </div>
                               </div>
@@ -250,7 +250,7 @@ export default function Stores() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center text-muted-foreground text-sm">
-                              {productsCount}
+                              {inventoryCount}
                             </div>
                           </TableCell>
                         </TableRow>

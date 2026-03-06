@@ -8,26 +8,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { filesize } from "filesize";
 import { fileTypeFromBlob } from "file-type";
 import dayjs from "dayjs";
+import ExcelJS, { CellValue } from "@protobi/exceljs";
 import mime from "mime";
 
 // * Helpers
 import { tempPath } from "@/helpers/configurePaths";
+import { excelImportCollection } from "@/db/schema";
+
+const entity = "inventory";
 
 const MAX_FILE_SIZE: number = 5 * 1024 * 1024;
 const FILE_WHITELIST: string[] = [
   "png",
   "jpg",
-  "gif",
   "pdf",
   "docx",
-  "xlsx",
   "doc",
+  "csv",
   "xls",
+  "xlsx",
 ];
+const SPREADSHEETS: string[] = ["csv", "xls", "xlsx"];
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
-
   const prefix = formData.get("prefix");
   const file = formData
     .getAll("file")
@@ -36,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (!file) {
     return NextResponse.json(
       { error: "File blob is required." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -47,7 +51,7 @@ export async function POST(req: NextRequest) {
         error: "File size exceeded!",
         message: `File should not be more than ${filesize(process.env.MAX_FILE_SIZE, { round: 0 })}`,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -58,7 +62,7 @@ export async function POST(req: NextRequest) {
         error: "File not allowed!",
         message: `File of type ${file.type} cannot be processed.`,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -71,24 +75,54 @@ export async function POST(req: NextRequest) {
         error: "Invalid file!",
         message: `File is not a valid ${mime.getExtension(file.type)}.`,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   try {
     // ? Create filename
     const filename = `${prefix}.${dayjs().format(
-      "YYYY.MM.DD-HH.mm.ss"
+      "YYYY.MM.DD-HH.mm.ss",
     )}.${mime.getExtension(file.type)}`;
 
-    // ? Write file to disk
-    writeFileSync(
-      `${tempPath}/${filename}`,
-      Buffer.from(await file.arrayBuffer())
-    );
+    // ? Create path constant
+    const path = `${tempPath}/${filename}`;
 
-    // ? Send filename to client as identifier
-    return new NextResponse(filename, { status: 201 });
+    // ? Write file to disk
+    writeFileSync(path, Buffer.from(await file.arrayBuffer()));
+
+    if (SPREADSHEETS.includes(verifyFileType?.ext!)) {
+      const workbookReader: ExcelJS.stream.xlsx.WorkbookReader =
+        new ExcelJS.stream.xlsx.WorkbookReader(path, {});
+
+      let fields: CellValue[] | { [key: string]: CellValue } = [];
+      let sheets: ExcelJS.WorksheetModel[] = [];
+
+      for await (const worksheetReader of workbookReader) {
+        sheets = workbookReader.model.sheets;
+
+        for await (const row of worksheetReader) {
+          if (row.number === 1) fields = row.values;
+        }
+      }
+
+      return NextResponse.json(
+        {
+          filename,
+          sheetFields: (fields as NonNullable<CellValue>[])
+            .filter((field) => field) // ? Remove nulls
+            .map((field, index) => ({
+              field: typeof field === "object" ? `A${index + 1}` : field,
+              mapsTo: "",
+            })),
+          sheets,
+          systemFields: (
+            await excelImportCollection.findOne({ entity }, { fields: 1 })
+          ).fields,
+        },
+        { status: 201 },
+      );
+    } else return NextResponse.json({ filename }, { status: 201 }); // ? Send filename to client as identifier
   } catch (error) {
     return NextResponse.json({ error }, { status: 500 });
   }
@@ -107,7 +141,7 @@ export function DELETE(req: NextRequest) {
           error: "Deletion failure!",
           message: error.message ?? "File was not deleted!",
         },
-        { status: 400 }
+        { status: 400 },
       );
   }
 }
