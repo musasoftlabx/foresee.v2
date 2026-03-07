@@ -40,7 +40,7 @@ import {
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Constants
-const apiUrl = "inventory";
+const apiUrl = "scans";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -102,7 +102,7 @@ export default function Scans() {
     columnsToHide: ["_id", "scanned.by", "scanned.on"],
     columnsToSort: [{ field: "_id", sort: "desc" }],
     toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id"],
+      left: ["_id", "barcode"],
       right: ["actions"],
     },
   });
@@ -118,7 +118,7 @@ export default function Scans() {
     ],
     queryFn: ({ queryKey }) =>
       axios<GridValidRowModel>(
-        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&options=${queryKey[4]}&scope=__DEFAULT__`,
+        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&sortsAndFilters=${queryKey[4]}&scope=__DEFAULT__`,
       ),
     select: ({ data }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
@@ -176,18 +176,22 @@ export default function Scans() {
               headerName: "Barcode",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              editable: true,
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 250,
+              minWidth: 180,
               flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
-              }),
+            },
+            {
+              field: "location",
+              headerName: "Location",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 150,
+              flex: 1,
             },
             {
               field: "scanned",
@@ -199,14 +203,14 @@ export default function Scans() {
               pinnable: false,
               resizable: false,
               sortable: false,
-              minWidth: 300,
+              minWidth: 280,
               flex: 1,
               renderCell: ({
                 row: {
                   scanned: { by, on },
                 },
               }) => (
-                <div className="flex gap-3 items-center">
+                <div className="flex gap-3 items-center py-1">
                   <Avatar
                     isBordered
                     radius="sm"
@@ -221,35 +225,30 @@ export default function Scans() {
               ),
             },
             {
-              field: "actions",
-              headerName: "Delete",
-              headerAlign: "center",
-              align: "center",
-              sortable: false,
+              field: "device",
+              headerName: "Device",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
               filterable: false,
               hideable: false,
               pinnable: false,
-              disableColumnMenu: true,
-              width: 70,
-              renderCell: ({ row: { _id, client } }) => (
-                <Button
-                  isIconOnly
-                  isLoading={false}
-                  isDisabled={false}
-                  radius="full"
-                  className="flex flex-1 align-middle self-center align-center justify-center"
-                  onPress={() => {
-                    //changeRowSelection([_id]);
-                    showConfirm({
-                      operation: "delete",
-                      status: "info",
-                      subject: `Confirm deletion of ${client}`,
-                      body: `Are you sure you intend to delete this client?`,
-                    });
-                  }}
-                >
-                  <DeleteIcon size={20} />
-                </Button>
+              resizable: false,
+              sortable: false,
+              minWidth: 200,
+              flex: 1,
+              renderCell: ({
+                row: {
+                  scanned: {
+                    device: { model, serialNo },
+                  },
+                },
+              }) => (
+                <div className="flex gap-3 items-center">
+                  <div className="flex-col">
+                    <div>Model {model}</div>
+                    <div className="text-xs">SerialNo {serialNo}</div>
+                  </div>
+                </div>
               ),
             },
             { field: "scanned.by", headerName: "Scanned By", hideable: false },
@@ -264,7 +263,6 @@ export default function Scans() {
           getRowHeight={() => "auto"}
           density="compact"
           pagination
-          checkboxSelection
           keepNonExistentRowsSelected
           disableRowSelectionOnClick
           disableRowSelectionExcludeModel
@@ -303,7 +301,7 @@ export default function Scans() {
             changeRowSelection,
             clearRowSelection,
             changeVisibleColumns,
-            //exclude: ["multiApprove", "multiReject"],
+            exclude: ["add", "columns"],
             exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
               paginationModel?.page
             }&view=__EXPORT__&options=${encodeURI(

@@ -260,12 +260,19 @@ export default function Locations() {
               resizable: false,
               minWidth: 110,
               flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 3,
-              }),
+            },
+            {
+              field: "discrepancies",
+              headerName: "Discrepancies",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 110,
+              flex: 1,
             },
             {
               field: "isVerified",

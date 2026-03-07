@@ -12,7 +12,15 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 // * HUI
-import { Avatar, Button } from "@heroui/react";
+import {
+  Avatar,
+  Button,
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+} from "@heroui/react";
 
 // * SUI
 import { Button as ButtonShadcn } from "@/components/ui/shadcn/button";
@@ -186,7 +194,7 @@ export default function Stores() {
       />
 
       <div className="flex items-center justify-center">
-        <Sheet open={isAuditsSheetOpen} onOpenChange={setIsAuditsSheetOpen}>
+        {/* <Sheet open={isAuditsSheetOpen} onOpenChange={setIsAuditsSheetOpen}>
           <SheetContent className="flex flex-col gap-0 space-y-0">
             <SheetHeader>
               <SheetTitle>{rowDetails?.name}</SheetTitle>
@@ -195,13 +203,14 @@ export default function Stores() {
               </SheetDescription>
             </SheetHeader>
             <ScrollArea className="h-[calc(100vh-230px)] flex-1 grow">
-              <div className={`flex w-full`}>
+              <div className="w-full">
                 <Table className="border-x-0 border-y-1 border-dashed">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Audit</TableHead>
                       <TableHead>Locations</TableHead>
                       <TableHead>Inventory</TableHead>
+                      <TableHead>Scans</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -211,11 +220,13 @@ export default function Stores() {
                         date,
                         locationsCount,
                         inventoryCount,
+                        scansCount,
                       }: {
                         _id: string;
                         date: string;
                         locationsCount: number;
                         inventoryCount: number;
+                        scansCount: number;
                       }) => (
                         <TableRow key={_id}>
                           <TableCell>
@@ -239,6 +250,13 @@ export default function Stores() {
                                   >
                                     Inventory
                                   </Link>
+                                  <span>/</span>
+                                  <Link
+                                    href={`/portal/scans/${_id}`}
+                                    className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
+                                  >
+                                    Scans
+                                  </Link>
                                 </div>
                               </div>
                             </div>
@@ -253,6 +271,11 @@ export default function Stores() {
                               {inventoryCount}
                             </div>
                           </TableCell>
+                          <TableCell>
+                            <div className="flex items-center justify-center text-muted-foreground text-sm">
+                              {scansCount}
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ),
                     )}
@@ -261,7 +284,120 @@ export default function Stores() {
               </div>
             </ScrollArea>
           </SheetContent>
-        </Sheet>
+        </Sheet> */}
+
+        <Drawer
+          isOpen={isAuditsSheetOpen}
+          onOpenChange={setIsAuditsSheetOpen}
+          backdrop="blur"
+          size="xl"
+        >
+          <DrawerContent>
+            {(onClose) => (
+              <>
+                <DrawerHeader className="flex flex-col gap-1">
+                  <h4>{rowDetails?.name}</h4>
+                  <h6 className="text-sm text-foreground-500">
+                    Audits done under {rowDetails?.name} for{" "}
+                    {rowDetails?.client}
+                  </h6>
+                </DrawerHeader>
+                <DrawerBody>
+                  <ScrollArea className="h-[calc(100vh-230px)] flex-1 grow">
+                    <div className="w-full">
+                      <Table className="border-x-0 border-y-1 border-dashed">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Audit</TableHead>
+                            <TableHead>Locations</TableHead>
+                            <TableHead>Inventory</TableHead>
+                            <TableHead>Scans</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {rowDetails?.audits.map(
+                            ({
+                              _id,
+                              date,
+                              locationsCount,
+                              inventoryCount,
+                              scansCount,
+                            }: {
+                              _id: string;
+                              date: string;
+                              locationsCount: number;
+                              inventoryCount: number;
+                              scansCount: number;
+                            }) => (
+                              <TableRow key={_id}>
+                                <TableCell>
+                                  <div className="flex items-center gap-3">
+                                    <div className="bg-muted rounded-md flex size-9 shrink-0 items-center justify-center">
+                                      <PackageIcon className="text-muted-foreground size-4" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                      {`Audit ${dayjs(date).format("DD/MM/YY")}`}
+                                      <div className="flex gap-3">
+                                        <Link
+                                          href={`/portal/locations/${_id}`}
+                                          className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
+                                        >
+                                          Locations
+                                        </Link>
+                                        <span>/</span>
+                                        <Link
+                                          href={`/portal/inventory/${_id}`}
+                                          className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
+                                        >
+                                          Inventory
+                                        </Link>
+                                        <span>/</span>
+                                        <Link
+                                          href={`/portal/scans/${_id}`}
+                                          className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
+                                        >
+                                          Scans
+                                        </Link>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center justify-center text-muted-foreground text-sm">
+                                    {locationsCount}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center justify-center text-muted-foreground text-sm">
+                                    {inventoryCount}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center justify-center text-muted-foreground text-sm">
+                                    {scansCount}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ),
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </ScrollArea>
+                </DrawerBody>
+                <DrawerFooter>
+                  <Button
+                    color="danger"
+                    variant="light"
+                    onPress={() => setIsAuditsSheetOpen(false)}
+                  >
+                    Close
+                  </Button>
+                </DrawerFooter>
+              </>
+            )}
+          </DrawerContent>
+        </Drawer>
       </div>
 
       <div className="flex flex-1 flex-col">

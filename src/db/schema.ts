@@ -59,7 +59,17 @@ const accountSchema = new Schema(
               },
             ],
             inventory: [inventorySchema],
-            scans: [scansSchema],
+            scans: [
+              {
+                location: { type: String, index: true },
+                barcode: { type: String, index: true },
+                scanned: {
+                  on: { type: Date, default: Date.now },
+                  by: String,
+                  device: Object,
+                },
+              },
+            ],
           },
         ],
         created: { on: { type: Date, default: Date.now }, by: String },

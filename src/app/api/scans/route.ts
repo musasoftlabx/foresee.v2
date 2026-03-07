@@ -7,9 +7,9 @@ import { accountCollection } from "@/db/schema";
 // * NPM
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
+import { ObjectId } from "mongodb";
 
 // * Hooks
-import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
 import useAggregateConstructor from "@/hooks/useAggregateConstructor";
 
 // * Extensions
@@ -38,15 +38,8 @@ export async function GET(req: NextRequest) {
         { $replaceRoot: { newRoot: "$audits" } },
         { $addFields: { id: { $toString: "$_id" } } },
         { $match: { id: auditId } },
-        { $unwind: "$locations" },
-        { $replaceRoot: { newRoot: "$locations" } },
-        {
-          $addFields: {
-            discrepancies: {
-              $abs: { $subtract: ["$physicalCount", "$systemCount"] },
-            },
-          },
-        },
+        { $unwind: "$scans" },
+        { $replaceRoot: { newRoot: "$scans" } },
       ],
       project: {
         "audits.locations": 0,
@@ -61,17 +54,13 @@ export async function GET(req: NextRequest) {
       try {
         return Response.json({
           count: dataset.length,
-          dataset: dataset.map((field) => ({
-            ...field,
-            created: {
-              ...field.created,
-              on: useDayjsDayFormatter(field.created.on),
-            },
-            modified: {
-              ...field.modified,
-              on: useDayjsDayFormatter(field.modified.on),
-            },
-          })),
+          // dataset: dataset.map((field) => ({
+          //   ...field,
+          //   scanned: {
+          //     ...field.scanned,
+          //     on: useDayjsDayFormatter(field.scanned.on),
+          //   },
+          // })),
         });
       } catch (err) {
         if (err instanceof Error)
@@ -84,75 +73,37 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const {
-    name,
-    country,
-    client,
-    audit: {
-      date,
-      barcode: { mode, characters },
-      locations,
-      products: { filename },
-    },
+    storeId,
+    auditId,
+    location,
+    barcode,
+    scanned: { device },
   } = await request.json();
 
   try {
     return NextResponse.json(
       await accountCollection.updateOne(
-        {
-          _id: "69a08fdd299c12466e5c7ed8",
-        },
+        { _id: id },
         {
           $push: {
-            stores: {
-              code: "sfefe",
-              name,
-              country,
-              client,
-              added: { by: "musa" },
-              modified: { by: "musa" },
-              audits: [
-                {
-                  date: new Date(date),
-                  barcode: { mode, characters: characters[0] },
-                  locations: Array.from({ length: locations }).map(() => ({
-                    code: "tm-001",
-                    created: { by: "musa" },
-                    modified: { by: "musa" },
-                  })),
-                },
-              ],
+            "stores.$[store].audits.$[audit].scans": {
+              location,
+              barcode,
+              scanned: { by: "musa", device },
             },
           },
+        },
+        {
+          arrayFilters: [
+            { "store._id": new ObjectId(storeId) },
+            { "audit._id": new ObjectId(auditId) },
+          ],
         },
       ),
       { status: 201 },
     );
-
-    // const storeExists = await accountCollection.findOne({
-    //   stores: { $elemMatch: { name: "abc" } },
-    // });
-    // return NextResponse.json(storeExists, { status: 400 });
-    // const storeExists = await accountCollection.aggregate([
-    //   { $addFields: { stores: { $unwind: "$name" } } },
-    //   { $match: { stores: { $in: "$name" } } },
-    //   {project}
-    // ]);
-    // if (storeExists > 0)
-    //   return NextResponse.json(
-    //     { icon: "", error: "Duplicate found", message: "Duplicate found" },
-    //     { status: 400 },
-    //   );
-    // else
-    //   return NextResponse.json(
-    //     await accountCollection.insertOne({
-    //       client,
-    //       added: { by: "musa" },
-    //       modified: { by: "musa" },
-    //     }),
-    //     { status: 201 },
-    //   );
   } catch (error) {
     if (error instanceof Error) {
       // logIt({code: 1, error: error.name, message: error.message})
@@ -195,10 +146,51 @@ export async function PUT(request: Request) {
   return NextResponse.json(body, { status: 201 });
 }
 
-export async function DELETE(request: Request) {
-  const {} = request.json();
+export async function DELETE(request: NextRequest) {
+  const { storeId, auditId, auditIds, scanId, howMany } = await request.json();
 
-  await accountCollection.deleteOne({ "stores._id": id });
+  const prepareDeletions = () => {
+    switch (howMany) {
+      case "__ONE__":
+        return {
+          $pull: {
+            "stores.$[store].audits.$[audit].scans": {
+              _id: new ObjectId(scanId),
+            },
+          },
+        };
+      case "__MANY__":
+        return {
+          $pull: {
+            "stores.$[store].audits.$[audit].scans": {
+              _id: { $in: auditIds },
+            },
+          },
+        };
+      case "__ALL__":
+        return { $set: { "stores.$[store].audits.$[audit].scans": [] } };
+    }
+  };
 
-  return Response.json({ user: 1 }, { status: 204 });
+  if (howMany === "__ONE__") {
+    try {
+      return NextResponse.json(
+        await accountCollection.updateOne({ _id: id }, prepareDeletions(), {
+          arrayFilters: [
+            { "store._id": new ObjectId(storeId) },
+            { "audit._id": new ObjectId(auditId) },
+          ],
+        }),
+        { status: 201 },
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        // logIt({code: 1, error: error.name, message: error.message})
+        return NextResponse.json(
+          { icon: "", error: error.name, message: error.message },
+          { status: 400 },
+        );
+      }
+    }
+  }
 }

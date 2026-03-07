@@ -48,6 +48,7 @@ export async function GET(req: NextRequest) {
             "audits.inventoryCount": {
               $size: { $ifNull: ["$audits.inventory", "$audits.products"] },
             },
+            "audits.scansCount": { $size: "$audits.scans" },
           },
         },
         {
@@ -60,7 +61,11 @@ export async function GET(req: NextRequest) {
         { $addFields: { "stores.audits": "$audits" } },
         { $replaceRoot: { newRoot: "$stores" } },
       ],
-      project: { "audits.locations": 0, "audits.inventory": 0 },
+      project: {
+        "audits.locations": 0,
+        "audits.inventory": 0,
+        "audits.scans": 0,
+      },
     });
 
     //console.log(aggregation);

@@ -12,7 +12,6 @@ import { ObjectId } from "mongodb";
 // * Hooks
 import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
 import useAggregateConstructor from "@/hooks/useAggregateConstructor";
-import mongoose from "mongoose";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -38,8 +37,7 @@ export async function GET(req: NextRequest) {
         { $replaceRoot: { newRoot: "$stores" } },
         { $unwind: "$audits" },
         { $replaceRoot: { newRoot: "$audits" } },
-        { $addFields: { id: { $toString: "$_id" } } },
-        { $match: { id: auditId } },
+        { $match: { _id: new ObjectId(auditId) } },
         { $unwind: "$scans" },
         { $replaceRoot: { newRoot: "$scans" } },
       ],
@@ -73,83 +71,4 @@ export async function GET(req: NextRequest) {
     if (view === "__EXPORT__") {
     }
   }
-}
-
-export async function POST(request: NextRequest) {
-  const auditId = request.nextUrl.pathname.split("/")[3];
-  const { storeId } = await request.json();
-
-  try {
-    return NextResponse.json(
-      await accountCollection.updateOne(
-        { _id: id },
-        {
-          $push: {
-            "stores.$[store].audits.$[audit].scans": {
-              location: "TM-R389",
-              barcode: "3434577",
-              scanned: {
-                by: "musa",
-                device: { model: "test", serialNo: 7667865 },
-              },
-            },
-          },
-        },
-        {
-          arrayFilters: [
-            { "store._id": new ObjectId(storeId) },
-            { "audit._id": new ObjectId(auditId) },
-          ],
-        },
-      ),
-      { status: 201 },
-    );
-  } catch (error) {
-    if (error instanceof Error) {
-      // logIt({code: 1, error: error.name, message: error.message})
-      return NextResponse.json(
-        { icon: "", error: error.name, message: error.message },
-        { status: 400 },
-      );
-    }
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const { scope } = Object.fromEntries(searchParams.entries());
-
-  if (scope === "editCell") {
-    const { _id, field, value } = await request.json();
-    try {
-      return NextResponse.json(
-        await accountCollection.findByIdAndUpdate(
-          { _id },
-          { [field]: value, modified: { by: "musa1", on: new Date() } },
-        ),
-        { status: 201 },
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        // logIt({code: 1, error: error.name, message: error.message})
-        return NextResponse.json(
-          { icon: "", error: error.name, message: error.message },
-          { status: 400 },
-        );
-      }
-    }
-  }
-}
-
-export async function PUT(request: Request) {
-  const body = await request.json();
-  return NextResponse.json(body, { status: 201 });
-}
-
-export async function DELETE(request: Request) {
-  const {} = request.json();
-
-  await accountCollection.deleteOne({ "stores._id": id });
-
-  return Response.json({ user: 1 }, { status: 204 });
 }
