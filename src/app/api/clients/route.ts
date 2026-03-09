@@ -2,101 +2,34 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // * Schema
-import { clientsCollection } from "@/db/schema";
+import { accountCollection } from "@/db/schema";
 
 // * NPM
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
 
-// * Hooks
-import useAggregateConstructor from "@/hooks/useAggregateConstructor";
-
 // * Extensions
 dayjs.extend(advancedFormat);
 
+const accountId = "69a08fdd299c12466e5c7ed8";
+
+import padStart from "lodash/padStart";
+
 export async function GET(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams;
-  const { limit, offset, options, scope, view } = Object.fromEntries(
-    searchParams.entries(),
+  console.log(
+    Array.from({ length: 5 }).map((_, i) => ({
+      code: `L${padStart((i + 1).toString(), 4, "0")}`,
+    })),
   );
 
-  if (scope === "__DEFAULT__") {
-    // const test = await clientsCollection.aggregate([
-    //   {
-    //     $addFields: {
-    //       id: { $toString: "$_id" },
-    //       searchFields: {
-    //         $concat: ["$client", " ", "$added.by", " ", "$modified.by"],
-    //       },
-    //     },
-    //   },
-    //   {
-    //     $match: {
-    //       $or: [
-    //         { searchFields: { $regex: "", $options: "i" } },
-    //         { id: { $regex: "698b9c36802c5c281c1c6276", $options: "i" } },
-    //         { client: { $regex: "abc", $options: "i" } },
-    //         { "added.by": { $regex: "brian", $options: "i" } },
-    //       ],
-    //     },
-    //   },
-    //   // {
-    //   //   $addFields: {
-    //   //     test: {
-    //   //       $function: {
-    //   //         body: function (arg: string) {
-    //   //           return arg;
-    //   //         },
-    //   //         args: ["$added.on"],
-    //   //         lang: "js",
-    //   //       },
-    //   //     },
-    //   //   },
-    //   // },
-    //   { $sort: { _id: -1 } },
-    //   {
-    //     $project: {
-    //       id: 0,
-    //       fieldToExclude: 0,
-    //     },
-    //   },
-    // ]);
-    const dataset = await useAggregateConstructor({
-      limit,
-      offset,
-      options,
-      searchFields: ["client", "added.by", "modified.by"],
-    });
-
-    if (view === "__DISPLAY__") {
-      try {
-        return Response.json({
-          count: dataset.length,
-          dataset: dataset.map((field) => ({
-            ...field,
-            added: {
-              ...field.added,
-              on: dayjs(field.added.on).format(
-                "ddd, Do MMM YYYY [at] hh:mm:ss a",
-              ),
-            },
-            modified: {
-              ...field.modified,
-              on: dayjs(field.modified.on).format(
-                "ddd, Do MMM YYYY [at] hh:mm:ss a",
-              ),
-            },
-          })),
-        });
-      } catch (err) {
-        if (err instanceof Error)
-          return Response.json({ error: err.message }, { status: 500 });
-      }
-    }
-
-    if (view === "__EXPORT__") {
-    }
-  }
+  return NextResponse.json(
+    (
+      await accountCollection.findOne(
+        { _id: accountId },
+        { _id: 0, clients: 1 },
+      )
+    ).clients.map(({ name }: { name: string }) => name),
+  );
 }
 
 export async function POST(request: Request) {
@@ -168,35 +101,3 @@ export async function DELETE(request: Request) {
 
   return Response.json({ user: 1 }, { status: 204 });
 }
-
-// dataset: (
-//   await clientsCollection
-//     //.find(filter)
-//     .find({
-//       $or: [
-//         { client: { $regex: "abc" } },
-//         { "added.by": { $regex: "brian" } },
-//       ],
-//       // $and: [
-//       //   { client: { $regex: "abc1234" } },
-//       //   { "added.by": { $regex: "brian", $options: "i" } },
-//       // ],
-//     })
-//     .sort({ _id: -1 })
-//     .skip(__offset)
-//     .limit(__limit)
-// ).map((client) => ({
-//   ...client._doc,
-//   added: {
-//     ...client._doc.added,
-//     on: dayjs(client.added.on).format(
-//       "ddd, Do MMM YYYY [at] hh:mm:ss a",
-//     ),
-//   },
-//   modified: {
-//     ...client._doc.modified,
-//     on: dayjs(client.modified.on).format(
-//       "ddd, Do MMM YYYY [at] hh:mm:ss a",
-//     ),
-//   },
-// })),

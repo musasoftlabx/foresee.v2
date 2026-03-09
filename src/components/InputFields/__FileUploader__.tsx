@@ -90,7 +90,7 @@ export default function __FileUploader__(
   // ? Hooks
   const sheetFieldsWatcher = useWatch({
     control,
-    name: "audit.inventory.file.sheetFields",
+    name: "inventory.file.sheetFields",
   });
 
   // ? State Actions
@@ -295,7 +295,7 @@ export default function __FileUploader__(
                             <TableCell className="bg-muted/50 w-40 py-2 text-sm font-medium">
                               <Controller
                                 control={control}
-                                name={`audit.inventory.file.sheetFields.${index}.mapsTo`}
+                                name={`inventory.file.sheetFields.${index}.mapsTo`}
                                 render={() => (
                                   <Select
                                     size="sm"
@@ -305,11 +305,11 @@ export default function __FileUploader__(
                                     //   field.value?.file?.sheetFields[key].field
                                     // }
                                     {...register(
-                                      `audit.inventory.file.sheetFields.${index}.mapsTo`,
+                                      `inventory.file.sheetFields.${index}.mapsTo`,
                                     )}
                                     onSelectionChange={(value) =>
                                       setValue(
-                                        `audit.inventory.file.sheetFields.${index}.mapsTo`,
+                                        `inventory.file.sheetFields.${index}.mapsTo`,
                                         value.currentKey,
                                         {
                                           shouldDirty: true,

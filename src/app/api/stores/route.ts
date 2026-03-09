@@ -8,9 +8,11 @@ import { existsSync } from "fs";
 import { accountCollection } from "@/db/schema";
 
 // * NPM
+import { ObjectId } from "mongodb";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
 import ExcelJS, { CellValue } from "@protobi/exceljs";
+import padStart from "lodash/padStart";
 import trim from "lodash/trim";
 
 // * Hooks
@@ -19,11 +21,13 @@ import useAggregateConstructor from "@/hooks/useAggregateConstructor";
 
 // * Helpers
 import { tempPath } from "@/helpers/configurePaths";
+import { UpdateQuery, UpdateWithAggregationPipeline } from "mongoose";
 
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const id = "69a08fdd299c12466e5c7ed8";
+const accountId = "69a08fdd299c12466e5c7ed8";
+const username = "mmuliro";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -33,7 +37,7 @@ export async function GET(req: NextRequest) {
 
   if (scope === "__DEFAULT__") {
     const aggregation = await useAggregateConstructor({
-      match: { id },
+      match: { id: accountId },
       limit,
       offset,
       sortsAndFilters,
@@ -41,13 +45,14 @@ export async function GET(req: NextRequest) {
       extraPipelines: [
         { $unwind: "$stores" },
         { $replaceRoot: { newRoot: "$stores" } },
+        { $size: "$stores.inventory" },
         { $unwind: "$audits" },
         {
           $addFields: {
             "audits.locationsCount": { $size: "$audits.locations" },
-            "audits.inventoryCount": {
-              $size: { $ifNull: ["$audits.inventory", "$audits.products"] },
-            },
+            // "audits.inventoryCount": {
+            //   $size: { $ifNull: ["$audits.inventory", "$audits.products"] },
+            // },
             "audits.scansCount": { $size: "$audits.scans" },
           },
         },
@@ -62,8 +67,8 @@ export async function GET(req: NextRequest) {
         { $replaceRoot: { newRoot: "$stores" } },
       ],
       project: {
+        "stores.inventory": 0,
         "audits.locations": 0,
-        "audits.inventory": 0,
         "audits.scans": 0,
       },
     });
@@ -102,21 +107,19 @@ export async function GET(req: NextRequest) {
 export async function POST(request: Request) {
   const {
     name,
-    country,
+    country: { code, name: country },
     client,
+    inventory: {
+      file: { filename, sheetFields },
+    },
     audit: {
       date,
       barcode: { mode, characters },
       locations,
-      inventory: {
-        file: { filename, sheetFields },
-      },
     },
   } = await request.json();
 
   try {
-    //const { file, files } = req.body;
-
     const path = `${tempPath}/${filename}`;
 
     if (existsSync(path)) {
@@ -149,33 +152,86 @@ export async function POST(request: Request) {
         }
       }
 
+      // ? Check if the incoming client exists
+      const clientExists = await accountCollection.findOne({
+        _id: accountId,
+        clients: { $elemMatch: { name: client } },
+      });
+
+      // ?  If client doesn't exist, add the client
+      if (!clientExists)
+        await accountCollection.updateOne(
+          { _id: accountId },
+          {
+            $push: {
+              clients: {
+                name: client,
+                added: { by: username },
+                modified: { by: username },
+              },
+            },
+          },
+        );
+
+      // ? Get number of stores with similar country codes
+      // TODO: Investigate
+      const storeCount = (
+        await accountCollection.findOne(
+          { _id: accountId, "stores.code": { $regex: `^${code}` } },
+          { _id: 0, stores: { $size: "$stores" } },
+        )
+      ).stores[0];
+
+      //return NextResponse.json(storeCount, { status: 400 });
+
+      // ? If no stores, skip to 1 to start store count at 1
+      const storePadding = storeCount === 0 ? 1 : storeCount + 1;
+
+      // ? Add padding to store count if less than 2 characters
+      const storeCode = `${code}${padStart(storePadding.toString(), 2, "0")}`;
+
+      // ? Get number of audits
+      const auditCount = (
+        await accountCollection.findOne(
+          { _id: accountId },
+          { _id: 0, stores: { $size: "$stores.audits" } },
+        )
+      ).stores[0];
+
+      // ? If no audits, skip to 1 to start store count at 1
+      const auditPadding = auditCount === 0 ? 1 : auditCount + 1;
+
+      // ? Add padding to audit count if less than 5 characters
+      const auditCode = `A-${padStart(auditPadding.toString(), 5, "0")}`;
+
       return NextResponse.json(
         await accountCollection.updateOne(
-          {
-            _id: "69a08fdd299c12466e5c7ed8",
-          },
+          { _id: accountId },
           {
             $push: {
               stores: {
-                code: "LZAXC",
+                code: storeCode,
                 name,
                 country,
                 client,
-                added: { by: "musa" },
-                modified: { by: "musa" },
+                added: { by: username },
+                modified: { by: username },
+                inventory,
                 audits: [
                   {
+                    name: auditCode,
                     date: new Date(date),
                     barcode: {
                       mode,
                       characters: mode === "strict" ? characters[0] : 0,
                     },
-                    locations: Array.from({ length: locations }).map(() => ({
-                      code: "tm-001",
-                      created: { by: "musa" },
-                      modified: { by: "musa" },
-                    })),
-                    inventory,
+                    locations: Array.from({ length: locations }).map(
+                      (_, i) => ({
+                        code: `L${padStart((i + 1).toString(), 4, "0")}-${storeCode}-${dayjs(date).format("YYYYMMDD")}`,
+                        created: { by: username },
+                        modified: { by: username },
+                      }),
+                    ),
                   },
                 ],
               },
@@ -185,8 +241,6 @@ export async function POST(request: Request) {
         { status: 201 },
       );
     } else throw Error("hgyt");
-
-    //return NextResponse.json({ a: 1 }, { status: 201 });
 
     // const storeExists = await accountCollection.findOne({
     //   stores: { $elemMatch: { name: "abc" } },
@@ -253,12 +307,37 @@ export async function PUT(request: Request) {
   return NextResponse.json(body, { status: 201 });
 }
 
-export async function DELETE(request: Request) {
-  const {} = request.json();
+export async function DELETE(request: NextRequest) {
+  const { storeIds } = await request.json();
 
-  await accountCollection.deleteOne({ "stores._id": id });
+  const updateQuery = () => {
+    if (storeIds.length === 0) return { $set: { stores: [] } };
+    else
+      return {
+        $pull: {
+          stores: {
+            _id: {
+              $in: storeIds.map((storeId: string) => new ObjectId(storeId)),
+            },
+          },
+        },
+      };
+  };
 
-  return Response.json({ user: 1 }, { status: 204 });
+  try {
+    return NextResponse.json(
+      await accountCollection.updateOne({ _id: accountId }, updateQuery()),
+      { status: 201 },
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      // logIt({code: 1, error: error.name, message: error.message})
+      return NextResponse.json(
+        { icon: "", error: error.name, message: error.message },
+        { status: 400 },
+      );
+    }
+  }
 }
 
 // {

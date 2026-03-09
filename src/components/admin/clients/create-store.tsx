@@ -80,8 +80,20 @@ import countries from "../../../../public/data/countries.json";
 const schema = z.object({
   clients: z.array(z.string()),
   name: z.string().min(2, "Min. 2 chars.").max(50, "Max. 50 chars."),
-  country: z.string(),
+  country: z.object({ code: z.string(), name: z.string() }),
   client: z.string(),
+  inventory: z.strictObject({
+    label: z.string(),
+    file: z.object({
+      filename: z.string().nonempty(),
+      sheetFields: z.array(
+        z.strictObject({ field: z.string(), mapsTo: z.string().nonempty() }),
+      ),
+      systemFields: z.array(
+        z.strictObject({ field: z.string(), sample: z.string() }),
+      ),
+    }),
+  }),
   audit: z.object({
     date: z.date().or(z.string().nonempty()),
     barcode: z.object({
@@ -91,18 +103,6 @@ const schema = z.object({
       max: z.number(),
     }),
     locations: z.number().min(1),
-    inventory: z.strictObject({
-      label: z.string(),
-      file: z.object({
-        filename: z.string().nonempty(),
-        sheetFields: z.array(
-          z.strictObject({ field: z.string(), mapsTo: z.string().nonempty() }),
-        ),
-        systemFields: z.array(
-          z.strictObject({ field: z.string(), sample: z.string() }),
-        ),
-      }),
-    }),
   }),
 });
 
@@ -128,22 +128,22 @@ export default function CreateStore({
   } = useForm({
     defaultValues: async () => ({
       // ? Pre-fetch clients
-      //clients: (await axios("authTypes").then(({ data: { types } }) => types,)) as TSchema["clients"],
-      clients: ["LC Waikiki", "FLO"],
+      clients: (await axios("clients").then(
+        ({ data }) => data,
+      )) as TSchema["clients"],
 
       // ? Form fields
       name: "",
-      country: "",
+      country: { code: "", name: "" },
       client: "",
+      inventory: {
+        label: "Inventory",
+        file: { filename: "", sheetFields: [], systemFields: [] },
+      },
       audit: {
         date: "",
         barcode: { mode: "strict", characters: [13], min: 0, max: 30 },
         locations: 1,
-        inventory: {
-          label: "Inventory",
-          file: { filename: "", sheetFields: [], systemFields: [] },
-          //files: [],
-        },
       },
     }),
     mode: "onChange",
@@ -151,7 +151,7 @@ export default function CreateStore({
   });
 
   // ? Form Watchers
-  //watch("audit.barcode.mode");
+  watch("audit.barcode.mode");
 
   // ? Hooks
   const queryClient = useQueryClient();
@@ -261,7 +261,7 @@ export default function CreateStore({
                     <div className="flex flex-row gap-3">
                       <Controller
                         control={control}
-                        name="country"
+                        name="country.name"
                         render={({ field: { value } }) => (
                           <Autocomplete
                             isRequired
@@ -278,21 +278,30 @@ export default function CreateStore({
                               />
                             }
                             color={
-                              dirty.country && !errors?.country
+                              dirty.country?.name && !errors?.country?.name
                                 ? "success"
-                                : errors.country
+                                : errors.country?.name
                                   ? "danger"
                                   : "default"
                             }
                             isInvalid={
-                              dirty.country && Boolean(errors.country?.message)
+                              dirty.country?.name &&
+                              Boolean(errors.country?.name?.message)
                             }
                             errorMessage={
-                              dirty.country && errors.country?.message
+                              dirty.country?.name &&
+                              errors.country?.name?.message
                             }
-                            {...register(`country`)}
+                            {...register(`country.name`)}
                             onInputChange={(value) =>
-                              setValue(`country`, value, {
+                              setValue(`country.name`, value, {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true,
+                              })
+                            }
+                            onSelectionChange={(value) =>
+                              setValue(`country.code`, value as string, {
                                 shouldDirty: true,
                                 shouldTouch: true,
                                 shouldValidate: true,
@@ -324,40 +333,72 @@ export default function CreateStore({
                         )}
                       />
 
-                      <Controller
-                        control={control}
-                        name="client"
-                        render={() => (
-                          <Autocomplete
-                            allowsCustomValue
-                            isRequired
-                            isClearable
-                            label="Client"
-                            variant="faded"
-                            size="sm"
-                            isInvalid={
-                              dirty.client && Boolean(errors.client?.message)
+                      {!isLoading && (
+                        <Controller
+                          control={control}
+                          name="client"
+                          render={() => {
+                            if (getValues().clients.length === 0) {
+                              return (
+                                <Input
+                                  label="Client"
+                                  size="sm"
+                                  maxLength={20}
+                                  isRequired
+                                  variant="faded"
+                                  color={
+                                    dirty.client && !errors?.client
+                                      ? "success"
+                                      : errors.client
+                                        ? "danger"
+                                        : "default"
+                                  }
+                                  isInvalid={
+                                    dirty.client && Boolean(errors.client)
+                                  }
+                                  errorMessage={
+                                    dirty.client && errors.client?.message
+                                  }
+                                  {...register("client")}
+                                />
+                              );
+                            } else {
+                              return (
+                                <Autocomplete
+                                  allowsCustomValue
+                                  isRequired
+                                  isClearable
+                                  label="Client"
+                                  variant="faded"
+                                  size="sm"
+                                  isInvalid={
+                                    dirty.client &&
+                                    Boolean(errors.client?.message)
+                                  }
+                                  errorMessage={
+                                    dirty.client &&
+                                    Boolean(errors.client?.message)
+                                  }
+                                  {...register("client")}
+                                  onInputChange={(value) =>
+                                    setValue("client", value, {
+                                      shouldDirty: true,
+                                      shouldTouch: true,
+                                      shouldValidate: true,
+                                    })
+                                  }
+                                >
+                                  {getValues().clients?.map((docket) => (
+                                    <AutocompleteItem key={docket}>
+                                      {docket}
+                                    </AutocompleteItem>
+                                  ))}
+                                </Autocomplete>
+                              );
                             }
-                            errorMessage={
-                              dirty.client && Boolean(errors.client?.message)
-                            }
-                            {...register("client")}
-                            onInputChange={(value) =>
-                              setValue("client", value, {
-                                shouldDirty: true,
-                                shouldTouch: true,
-                                shouldValidate: true,
-                              })
-                            }
-                          >
-                            {getValues().clients?.map((docket) => (
-                              <AutocompleteItem key={docket}>
-                                {docket}
-                              </AutocompleteItem>
-                            ))}
-                          </Autocomplete>
-                        )}
-                      />
+                          }}
+                        />
+                      )}
                     </div>
 
                     <div className="flex flex-row items-center gap-3 mt-3">
@@ -565,7 +606,7 @@ export default function CreateStore({
 
                     <Controller
                       control={control}
-                      name="audit.inventory"
+                      name="inventory"
                       render={({ field }) => (
                         <__FileUploader__
                           control={control}

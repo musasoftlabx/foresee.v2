@@ -7,7 +7,7 @@ import { Schema } from "./mongoDB";
 
 const inventorySchema = new Schema(
   { barcode: { type: String, index: true, unique: true, required: true } },
-  { strict: false },
+  { _id: false, strict: false },
 );
 
 const scansSchema = new Schema(
@@ -37,12 +37,14 @@ const accountSchema = new Schema(
     ],
     stores: [
       {
-        code: { type: String, required: true, index: true, unique: true },
+        code: { type: String, index: true, unique: true },
         name: { type: String, required: true, index: true },
         country: String,
         client: String,
+        inventory: [inventorySchema],
         audits: [
           {
+            code: { type: String, index: true, unique: true },
             date: Date,
             barcode: {
               mode: { type: String, default: "strict" },
@@ -58,7 +60,6 @@ const accountSchema = new Schema(
                 modified: { on: { type: Date, default: Date.now }, by: String },
               },
             ],
-            inventory: [inventorySchema],
             scans: [
               {
                 location: { type: String, index: true },
