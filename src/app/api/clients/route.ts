@@ -16,12 +16,6 @@ const accountId = "69a08fdd299c12466e5c7ed8";
 import padStart from "lodash/padStart";
 
 export async function GET(req: NextRequest) {
-  console.log(
-    Array.from({ length: 5 }).map((_, i) => ({
-      code: `L${padStart((i + 1).toString(), 4, "0")}`,
-    })),
-  );
-
   return NextResponse.json(
     (
       await accountCollection.findOne(

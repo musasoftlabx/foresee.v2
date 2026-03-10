@@ -3,7 +3,7 @@
 import Portal from "../page";
 
 // * React
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 import Link from "next/link";
 
@@ -14,7 +14,7 @@ import axios from "axios";
 // * HUI
 import {
   Avatar,
-  Button,
+  Badge,
   Drawer,
   DrawerBody,
   DrawerContent,
@@ -23,7 +23,7 @@ import {
 } from "@heroui/react";
 
 // * SUI
-import { Button as ButtonShadcn } from "@/components/ui/shadcn/button";
+import { Button } from "@/components/ui/shadcn/button";
 import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
 import {
   Sheet,
@@ -84,7 +84,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/shadcn/card";
-import { ExternalLinkIcon, FileSymlinkIcon, PackageIcon } from "lucide-react";
+import {
+  ExternalLinkIcon,
+  FileSymlinkIcon,
+  PackageIcon,
+  Table2,
+} from "lucide-react";
 import dayjs from "dayjs";
 import {
   Table,
@@ -94,9 +99,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/shadcn/table";
-import { Badge } from "@/components/ui/shadcn/badge";
 import { BoxesIcon } from "@/components/ui/lucide-animated/boxes";
 import { Separator } from "@/components/ui/shadcn/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/shadcn/tooltip";
+import { useRouter } from "next/navigation";
 
 type TResponse = {
   count: number;
@@ -111,6 +121,7 @@ type TResponse = {
 export default function Stores() {
   // ? Refs
   const apiRef = useGridApiRef();
+  const router = useRouter();
 
   const showConfirm = useDialogStore((state) => state.confirm);
 
@@ -151,7 +162,7 @@ export default function Stores() {
     ],
     columnsToSort: [{ field: "_id", sort: "desc" }],
     toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id", "code", "audits"],
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id", "code"],
       right: ["actions"],
     },
   });
@@ -310,7 +321,6 @@ export default function Stores() {
                           <TableRow>
                             <TableHead>Audit</TableHead>
                             <TableHead>Locations</TableHead>
-                            <TableHead>Inventory</TableHead>
                             <TableHead>Scans</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -343,13 +353,6 @@ export default function Stores() {
                                           className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
                                         >
                                           Locations
-                                        </Link>
-                                        <span>/</span>
-                                        <Link
-                                          href={`/portal/inventory/${_id}`}
-                                          className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
-                                        >
-                                          Inventory
                                         </Link>
                                         <span>/</span>
                                         <Link
@@ -386,13 +389,13 @@ export default function Stores() {
                   </ScrollArea>
                 </DrawerBody>
                 <DrawerFooter>
-                  <Button
+                  {/* <Button
                     color="danger"
                     variant="light"
                     onPress={() => setIsAuditsSheetOpen(false)}
                   >
                     Close
-                  </Button>
+                  </Button> */}
                 </DrawerFooter>
               </>
             )}
@@ -438,35 +441,8 @@ export default function Stores() {
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 100,
+              minWidth: 75,
               flex: 1,
-            },
-            {
-              field: "audits",
-              headerName: "Audits",
-              headerAlign: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 140,
-              flex: 1,
-              renderCell: ({ row }) => (
-                <ButtonShadcn
-                  variant="secondary"
-                  onClick={() => {
-                    setRowDetails(row);
-                    setIsAuditsSheetOpen(true);
-                  }}
-                >
-                  <span className="text-xs">View Audits</span>
-                  <FileSymlinkIcon
-                    size={20}
-                    className="text-muted-foreground"
-                  />
-                </ButtonShadcn>
-              ),
             },
             {
               field: "name",
@@ -491,7 +467,6 @@ export default function Stores() {
               headerName: "Country",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              editable: true,
               hideable: false,
               pinnable: false,
               resizable: false,
@@ -509,7 +484,6 @@ export default function Stores() {
               headerName: "Client",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              editable: true,
               hideable: false,
               pinnable: false,
               resizable: false,
@@ -521,6 +495,27 @@ export default function Stores() {
                 ...params.props,
                 error: !params.props.value || params.props.value.length > 50,
               }),
+            },
+            {
+              field: "inventoryCount",
+              headerName: "Inventory",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: true,
+              pinnable: true,
+              resizable: false,
+              minWidth: 120,
+              flex: 1,
+              renderCell: ({ row: { _id, inventoryCount } }) => (
+                <Button
+                  variant="link"
+                  onClick={() => router.push(`/portal/inventory/${_id}`)}
+                >
+                  {inventoryCount} items
+                </Button>
+              ),
             },
             {
               field: "created",
@@ -594,26 +589,46 @@ export default function Stores() {
               hideable: false,
               pinnable: false,
               disableColumnMenu: true,
-              width: 70,
-              renderCell: ({ row: { _id, name } }) => (
-                <Button
-                  isIconOnly
-                  isLoading={false}
-                  isDisabled={false}
-                  radius="full"
-                  className="flex flex-1 align-middle self-center align-center justify-center"
-                  onPress={() => {
-                    //changeRowSelection([_id]);
-                    showConfirm({
-                      operation: "delete",
-                      status: "info",
-                      subject: `Confirm deletion of ${name}`,
-                      body: `Are you sure you intend to delete this store?`,
-                    });
-                  }}
-                >
-                  <DeleteIcon size={20} />
-                </Button>
+              width: 100,
+              renderCell: ({ row }) => (
+                <div className="flex items-center justify-center gap-3 mt-0.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="default"
+                        onClick={() => {
+                          setRowDetails(row);
+                          setIsAuditsSheetOpen(true);
+                        }}
+                      >
+                        <FileSymlinkIcon aria-hidden="true" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">View Audits</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        onClick={() => {
+                          //changeRowSelection([_id]);
+                          showConfirm({
+                            operation: "delete",
+                            status: "info",
+                            subject: `Confirm deletion of ${row.name}`,
+                            body: `Are you sure you intend to delete this store?`,
+                          });
+                        }}
+                      >
+                        <DeleteIcon />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Delete</TooltipContent>
+                  </Tooltip>
+                </div>
               ),
             },
             { field: "created.by", headerName: "Created By", hideable: false },
@@ -688,12 +703,12 @@ export default function Stores() {
             setIsAddItemOpen,
             extraActions: (
               <>
-                <ButtonShadcn variant="secondary" size="icon">
+                <Button variant="secondary" size="icon">
                   <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadcn>
-                <ButtonShadcn variant="secondary" size="icon">
+                </Button>
+                <Button variant="secondary" size="icon">
                   <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadcn>
+                </Button>
               </>
             ),
           })}

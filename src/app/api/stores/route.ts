@@ -44,15 +44,16 @@ export async function GET(req: NextRequest) {
       searchFields: ["code", "name"],
       extraPipelines: [
         { $unwind: "$stores" },
+        {
+          $addFields: {
+            "stores.inventoryCount": { $size: "$stores.inventory" },
+          },
+        },
         { $replaceRoot: { newRoot: "$stores" } },
-        { $size: "$stores.inventory" },
         { $unwind: "$audits" },
         {
           $addFields: {
             "audits.locationsCount": { $size: "$audits.locations" },
-            // "audits.inventoryCount": {
-            //   $size: { $ifNull: ["$audits.inventory", "$audits.products"] },
-            // },
             "audits.scansCount": { $size: "$audits.scans" },
           },
         },
@@ -173,19 +174,22 @@ export async function POST(request: Request) {
           },
         );
 
-      // ? Get number of stores with similar country codes
-      // TODO: Investigate
-      const storeCount = (
-        await accountCollection.findOne(
-          { _id: accountId, "stores.code": { $regex: `^${code}` } },
-          { _id: 0, stores: { $size: "$stores" } },
-        )
-      ).stores[0];
-
-      //return NextResponse.json(storeCount, { status: 400 });
+      // ? Get number of stores with similar country codes (Used aggregation as find does not support non existent field projection)
+      const storeCount = await accountCollection.aggregate([
+        {
+          $match: {
+            $and: [
+              { _id: new ObjectId(accountId) },
+              { "stores.code": { $regex: `^${code}` } },
+            ],
+          },
+        },
+        { $project: { _id: 0, storeCount: { $size: "$stores" } } },
+      ]);
 
       // ? If no stores, skip to 1 to start store count at 1
-      const storePadding = storeCount === 0 ? 1 : storeCount + 1;
+      const storePadding =
+        storeCount.length === 0 ? 1 : storeCount[0].storeCount + 1;
 
       // ? Add padding to store count if less than 2 characters
       const storeCode = `${code}${padStart(storePadding.toString(), 2, "0")}`;
