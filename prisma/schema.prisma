@@ -1,0 +1,127 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//createdAt DateTime @default(now())
+//updatedAt DateTime @updatedAt 
+
+model Organization {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique @db.VarChar(50)
+  isActive Boolean  @default(true)
+  created  Json
+  modified Json
+  Users    Users[]
+  Stores   Stores[]
+}
+
+model Users {
+  id             Int          @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  firstName      String       @db.VarChar(20)
+  lastName       String       @db.VarChar(20)
+  emailAddress   String       @db.VarChar(50)
+  password       String       @db.VarChar(50)
+  avatar         String       @db.Text
+  isActive       Boolean      @default(true)
+  roles          Json
+  added          Json
+  modified       Json
+  activity       Json[]
+
+  @@index([emailAddress], type: BTree)
+}
+
+model Stores {
+  id             Int          @id @default(autoincrement())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  code           String       @db.VarChar(8)
+  name           String       @db.VarChar(50)
+  created        Json
+  modified       Json
+  Inventory      Inventory[]
+  Audits         Audits[]
+  Clients        Clients[]
+
+  @@index([code, name], type: BTree)
+}
+
+model Clients {
+  id       Int    @id @default(autoincrement())
+  store    Stores @relation(fields: [storeId], references: [id])
+  storeId  Int
+  name     String @db.VarChar(30)
+  added    Json
+  modified Json
+
+  @@index([name], type: BTree)
+}
+
+model Inventory {
+  id         Int    @id @default(autoincrement())
+  store      Stores @relation(fields: [storeId], references: [id])
+  storeId    Int
+  barcode    String @db.VarChar(30)
+  attributes Json
+  added      Json
+  modified   Json
+
+  @@index([barcode], type: BTree)
+}
+
+model Audits {
+  id        Int         @id @default(autoincrement())
+  store     Stores      @relation(fields: [storeId], references: [id])
+  storeId   Int
+  code      String      @db.VarChar(8)
+  date      DateTime    @db.Timestamp()
+  barcode   Json
+  Locations Locations[]
+  Scans     Scans[]
+
+  @@index([code], type: BTree)
+}
+
+model Locations {
+  id            Int     @id @default(autoincrement())
+  audit         Audits  @relation(fields: [auditId], references: [id])
+  auditId       Int
+  code          String  @db.VarChar(20)
+  physicalCount Int     @default(0)
+  systemCount   Int     @default(0)
+  isVerified    Boolean @default(false)
+  created       Json
+  modified      Json
+
+  @@index([code], type: BTree)
+}
+
+model Scans {
+  id       Int    @id @default(autoincrement())
+  audit    Audits @relation(fields: [auditId], references: [id])
+  auditId  Int
+  location String @db.VarChar(20)
+  barcode  String @db.VarChar(30)
+  scanned  Json
+
+  @@index([location, barcode], type: BTree)
+}
+
+model ExcelImport {
+  id     Int    @id @default(autoincrement())
+  entity String @db.VarChar(20)
+  fields Json[]
+}

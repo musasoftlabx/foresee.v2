@@ -37,3 +37,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 bunx --bun shadcn@latest add "https://lucide-animated.com/r/refresh-cw.json" --path src/components/ui/lucide-animated/
 bunx --bun shadcn@latest add badge --path src/components/ui/shadcn/
+
+# kill port
+
+kill -9 $(lsof -t -i:5432)
