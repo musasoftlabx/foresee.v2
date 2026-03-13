@@ -195,7 +195,7 @@ export default function useCustomDataGrid({
   };
 
   const updateCell = ({ newRow, oldRow, url }: TUpdateCell) => {
-    const _id = newRow._id;
+    const id = newRow.id;
     let field, value;
 
     Object.values(newRow).forEach((val, i) => {
@@ -207,7 +207,7 @@ export default function useCustomDataGrid({
 
     if (field !== undefined && value !== undefined)
       updateData(
-        { _id, field, value, url },
+        { id, field, value, url },
         {
           onSuccess: () =>
             addToast({
@@ -236,16 +236,16 @@ export default function useCustomDataGrid({
   // ? Mutations
   const { mutate: updateData } = useMutation({
     mutationFn: ({
-      _id,
+      id,
       field,
       value,
       url,
     }: {
-      _id: GridRowId;
+      id: GridRowId;
       field?: string;
       value?: string | number | boolean;
       url: string;
-    }) => axios.patch(url, { _id, field, value }),
+    }) => axios.patch(url, { id, field, value }),
   });
 
   return {

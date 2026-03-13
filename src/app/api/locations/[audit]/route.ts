@@ -10,7 +10,7 @@ import dayjs from "dayjs";
 
 // * Hooks
 import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
-import useAggregateConstructor from "@/hooks/useAggregateConstructor";
+import useAggregateConstructor from "@/hooks/useQueryRefiner";
 
 // * Extensions
 dayjs.extend(advancedFormat);

@@ -85,6 +85,7 @@ import {
   CardTitle,
 } from "@/components/ui/shadcn/card";
 import {
+  ExternalLink,
   ExternalLinkIcon,
   FileSymlinkIcon,
   PackageIcon,
@@ -111,7 +112,7 @@ import { useRouter } from "next/navigation";
 type TResponse = {
   count: number;
   dataset: {
-    _id: string;
+    id: string;
     client: string;
     createdAt: string;
     updatedAt: string;
@@ -154,15 +155,15 @@ export default function Stores() {
     apiRef,
     apiUrl,
     columnsToHide: [
-      "_id",
+      "id",
       "created.by",
       "created.on",
       "modified.by",
       "modified.on",
     ],
-    columnsToSort: [{ field: "_id", sort: "desc" }],
+    columnsToSort: [{ field: "id", sort: "desc" }],
     toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id", "code"],
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "id", "code"],
       right: ["actions"],
     },
   });
@@ -178,7 +179,7 @@ export default function Stores() {
     ],
     queryFn: ({ queryKey }) =>
       axios<GridValidRowModel>(
-        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&sortsAndFilters=${queryKey[4]}&scope=__DEFAULT__`,
+        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&operation=${queryKey[3]}&refines=${queryKey[4]}`,
       ),
     select: ({ data }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
@@ -227,19 +228,19 @@ export default function Stores() {
                   <TableBody>
                     {rowDetails?.audits.map(
                       ({
-                        _id,
+                        id,
                         date,
                         locationsCount,
                         inventoryCount,
                         scansCount,
                       }: {
-                        _id: string;
+                        id: string;
                         date: string;
                         locationsCount: number;
                         inventoryCount: number;
                         scansCount: number;
                       }) => (
-                        <TableRow key={_id}>
+                        <TableRow key={id}>
                           <TableCell>
                             <div className="flex items-center gap-3">
                               <div className="bg-muted rounded-md flex size-9 shrink-0 items-center justify-center">
@@ -249,21 +250,21 @@ export default function Stores() {
                                 {`Audit ${dayjs(date).format("DD/MM/YY")}`}
                                 <div className="flex gap-3">
                                   <Link
-                                    href={`/portal/locations/${_id}`}
+                                    href={`/portal/locations/${id}`}
                                     className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
                                   >
                                     Locations
                                   </Link>
                                   <span>/</span>
                                   <Link
-                                    href={`/portal/inventory/${_id}`}
+                                    href={`/portal/inventory/${id}`}
                                     className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
                                   >
                                     Inventory
                                   </Link>
                                   <span>/</span>
                                   <Link
-                                    href={`/portal/scans/${_id}`}
+                                    href={`/portal/scans/${id}`}
                                     className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
                                   >
                                     Scans
@@ -327,19 +328,19 @@ export default function Stores() {
                         <TableBody>
                           {rowDetails?.audits.map(
                             ({
-                              _id,
+                              id,
                               date,
                               locationsCount,
                               inventoryCount,
                               scansCount,
                             }: {
-                              _id: string;
+                              id: string;
                               date: string;
                               locationsCount: number;
                               inventoryCount: number;
                               scansCount: number;
                             }) => (
-                              <TableRow key={_id}>
+                              <TableRow key={id}>
                                 <TableCell>
                                   <div className="flex items-center gap-3">
                                     <div className="bg-muted rounded-md flex size-9 shrink-0 items-center justify-center">
@@ -349,14 +350,14 @@ export default function Stores() {
                                       {`Audit ${dayjs(date).format("DD/MM/YY")}`}
                                       <div className="flex gap-3">
                                         <Link
-                                          href={`/portal/locations/${_id}`}
+                                          href={`/portal/locations/${id}`}
                                           className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
                                         >
                                           Locations
                                         </Link>
                                         <span>/</span>
                                         <Link
-                                          href={`/portal/scans/${_id}`}
+                                          href={`/portal/scans/${id}`}
                                           className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
                                         >
                                           Scans
@@ -422,7 +423,7 @@ export default function Stores() {
               maxWidth: 40,
             },
             {
-              field: "_id",
+              field: "id",
               headerName: "Id.",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: false,
@@ -508,12 +509,15 @@ export default function Stores() {
               resizable: false,
               minWidth: 120,
               flex: 1,
-              renderCell: ({ row: { _id, inventoryCount } }) => (
+              renderCell: ({ row: { id, inventoryCount } }) => (
                 <Button
                   variant="link"
-                  onClick={() => router.push(`/portal/inventory/${_id}`)}
+                  onClick={() => router.push(`/portal/inventory/${id}`)}
                 >
-                  {inventoryCount} items
+                  <span className="flex gap-1 underline decoration-dashed">
+                    {inventoryCount} items
+                    <ExternalLink size={10} />
+                  </span>
                 </Button>
               ),
             },
@@ -608,26 +612,21 @@ export default function Stores() {
                     <TooltipContent side="left">View Audits</TooltipContent>
                   </Tooltip>
 
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        onClick={() => {
-                          //changeRowSelection([_id]);
-                          showConfirm({
-                            operation: "delete",
-                            status: "info",
-                            subject: `Confirm deletion of ${row.name}`,
-                            body: `Are you sure you intend to delete this store?`,
-                          });
-                        }}
-                      >
-                        <DeleteIcon />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">Delete</TooltipContent>
-                  </Tooltip>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={() => {
+                      changeRowSelection([row.id]);
+                      // showConfirm({
+                      //   operation: "delete",
+                      //   status: "info",
+                      //   subject: `Confirm deletion of ${row.name}`,
+                      //   body: `Are you sure you intend to delete this store?`,
+                      // });
+                    }}
+                  >
+                    <DeleteIcon />
+                  </Button>
                 </div>
               ),
             },
@@ -641,7 +640,6 @@ export default function Stores() {
           ]}
           //getDetailPanelHeight={() => "auto"}
           //getDetailPanelContent={getDetailPanelContent}
-          getRowId={({ _id }) => _id}
           getRowHeight={() => "auto"}
           density="compact"
           pagination

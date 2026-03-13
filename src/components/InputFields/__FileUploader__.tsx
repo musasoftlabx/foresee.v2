@@ -185,7 +185,6 @@ export default function __FileUploader__(
               mime.getType(type!),
             )}
             onprocessfile={(e, file) => {
-              console.log(file);
               const { serverId } = file;
               setValue(
                 field.name,
@@ -207,6 +206,7 @@ export default function __FileUploader__(
                 withCredentials: false,
                 ondata: (formData) => {
                   formData.append("context", field.name);
+                  formData.append("template", field.name);
                   formData.append(
                     "prefix",
                     field.value.label!.replaceAll(" ", ""),

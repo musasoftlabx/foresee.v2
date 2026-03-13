@@ -9,7 +9,7 @@ import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
 
 // * Hooks
-import useAggregateConstructor from "@/hooks/useAggregateConstructor";
+import useAggregateConstructor from "@/hooks/useQueryRefiner";
 
 // * Extensions
 dayjs.extend(advancedFormat);

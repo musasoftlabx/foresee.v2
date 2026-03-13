@@ -8,21 +8,27 @@ import { accountCollection } from "@/db/schema";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
 
+// * Libs
+import { prisma } from "@/lib/prisma";
+
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const accountId = "69a08fdd299c12466e5c7ed8";
+const organizationId = 1;
 
 import padStart from "lodash/padStart";
 
 export async function GET(req: NextRequest) {
+  // await prisma.$executeRaw`ALTER SEQUENCE "Organizations_id_seq" RESTART WITH 1;`;
+  // await prisma.$executeRaw`ALTER SEQUENCE "Clients_id_seq" RESTART WITH 1;`;
+
   return NextResponse.json(
     (
-      await accountCollection.findOne(
-        { _id: accountId },
-        { _id: 0, clients: 1 },
-      )
-    ).clients.map(({ name }: { name: string }) => name),
+      await prisma.clients.findMany({
+        where: { organizationId },
+        select: { name: true },
+      })
+    ).map(({ name }) => name),
   );
 }
 

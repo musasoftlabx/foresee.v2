@@ -40,4 +40,16 @@ bunx --bun shadcn@latest add badge --path src/components/ui/shadcn/
 
 # kill port
 
-kill -9 $(lsof -t -i:5432)
+lsof -ti:5432
+kill -9 $(lsof -ti:5432)
+
+# Install postgres macos
+
+1. brew update
+2. brew install postgresql
+3. brew list
+4. brew services start postgresql@18
+
+rm /opt/homebrew/var/postgresql@16/postmaster.pid
+
+psql -d foresee -U mmuliro -h localhost -p 5432

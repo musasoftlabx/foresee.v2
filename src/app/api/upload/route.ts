@@ -11,11 +11,11 @@ import dayjs from "dayjs";
 import ExcelJS, { CellValue } from "@protobi/exceljs";
 import mime from "mime";
 
+// * Libs
+import { prisma } from "@/lib/prisma";
+
 // * Helpers
 import { tempPath } from "@/helpers/configurePaths";
-import { excelImportCollection } from "@/db/schema";
-
-const entity = "inventory";
 
 const MAX_FILE_SIZE: number = 5 * 1024 * 1024;
 const FILE_WHITELIST: string[] = [
@@ -33,6 +33,7 @@ const SPREADSHEETS: string[] = ["csv", "xls", "xlsx"];
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const prefix = formData.get("prefix");
+  const template = <string>formData.get("template");
   const file = formData
     .getAll("file")
     .filter((field) => typeof field === "object" && field)[0] as Blob | null;
@@ -117,8 +118,11 @@ export async function POST(req: NextRequest) {
             })),
           sheets,
           systemFields: (
-            await excelImportCollection.findOne({ entity }, { fields: 1 })
-          ).fields,
+            await prisma.spreadsheetTemplates.findFirst({
+              where: { template },
+              select: { fields: true },
+            })
+          )?.fields,
         },
         { status: 201 },
       );
@@ -136,7 +140,7 @@ export function DELETE(req: NextRequest) {
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     if (error instanceof Error)
-      return Response.json(
+      return NextResponse.json(
         {
           error: "Deletion failure!",
           message: error.message ?? "File was not deleted!",

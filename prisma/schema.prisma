@@ -16,26 +16,27 @@ datasource db {
 //createdAt DateTime @default(now())
 //updatedAt DateTime @updatedAt 
 
-model Organization {
-  id       Int      @id @default(autoincrement())
-  name     String   @unique @db.VarChar(50)
-  isActive Boolean  @default(true)
+model Organizations {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique @db.VarChar(50)
+  isActive Boolean   @default(true)
   created  Json
   modified Json
   Users    Users[]
   Stores   Stores[]
+  Clients  Clients[]
 }
 
 model Users {
-  id             Int          @id @default(autoincrement())
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  id             Int           @id @default(autoincrement())
+  organization   Organizations @relation(fields: [organizationId], references: [id])
   organizationId Int
-  firstName      String       @db.VarChar(20)
-  lastName       String       @db.VarChar(20)
-  emailAddress   String       @db.VarChar(50)
-  password       String       @db.VarChar(50)
-  avatar         String       @db.Text
-  isActive       Boolean      @default(true)
+  firstName      String        @db.VarChar(20)
+  lastName       String        @db.VarChar(20)
+  emailAddress   String        @db.VarChar(50)
+  password       String        @db.VarChar(50)
+  avatar         String        @db.Text
+  isActive       Boolean       @default(true)
   roles          Json
   added          Json
   modified       Json
@@ -45,27 +46,28 @@ model Users {
 }
 
 model Stores {
-  id             Int          @id @default(autoincrement())
-  organization   Organization @relation(fields: [organizationId], references: [id])
+  id             Int           @id @default(autoincrement())
+  organization   Organizations @relation(fields: [organizationId], references: [id])
   organizationId Int
-  code           String       @db.VarChar(8)
-  name           String       @db.VarChar(50)
+  code           String        @db.VarChar(8)
+  name           String        @db.VarChar(50)
+  country        String        @db.VarChar(100)
+  client         String        @db.VarChar(50)
   created        Json
   modified       Json
   Inventory      Inventory[]
   Audits         Audits[]
-  Clients        Clients[]
 
   @@index([code, name], type: BTree)
 }
 
 model Clients {
-  id       Int    @id @default(autoincrement())
-  store    Stores @relation(fields: [storeId], references: [id])
-  storeId  Int
-  name     String @db.VarChar(30)
-  added    Json
-  modified Json
+  id             Int           @id @default(autoincrement())
+  organization   Organizations @relation(fields: [organizationId], references: [id])
+  organizationId Int
+  name           String        @db.VarChar(30)
+  added          Json
+  modified       Json
 
   @@index([name], type: BTree)
 }
@@ -89,6 +91,8 @@ model Audits {
   code      String      @db.VarChar(8)
   date      DateTime    @db.Timestamp()
   barcode   Json
+  created   Json
+  modified  Json
   Locations Locations[]
   Scans     Scans[]
 
@@ -120,8 +124,11 @@ model Scans {
   @@index([location, barcode], type: BTree)
 }
 
-model ExcelImport {
-  id     Int    @id @default(autoincrement())
-  entity String @db.VarChar(20)
-  fields Json[]
+model SpreadsheetTemplates {
+  id       Int    @id @default(autoincrement())
+  template String @unique @db.VarChar(20)
+  fields   Json[]
+  modified Json
+
+  @@index([template], type: BTree)
 }
