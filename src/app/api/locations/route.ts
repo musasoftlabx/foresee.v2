@@ -24,8 +24,9 @@ const username = "mmuliro";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
-  const { limit, offset, exportable, refines, store, audit } =
-    Object.fromEntries(searchParams.entries());
+  const { limit, offset, exportable, refines, audit } = Object.fromEntries(
+    searchParams.entries(),
+  );
 
   const { query, searchResults } = await useQueryRefiner({
     where: { auditId: Number(audit) },
@@ -96,11 +97,14 @@ export async function POST(request: Request) {
       select: { date: true },
     });
 
+    // ? Get number of locations under the audit
+    const locationsCount = await prisma.locations.count({ where: { auditId } });
+
     // ? Create locations for the audit based on the created store
     const createdLocations = await prisma.locations.createMany({
-      data: Array.from({ length: locations }).map((_id, i) => ({
+      data: Array.from({ length: locations }).map((_, i) => ({
         auditId,
-        code: `L${padStart((i + 1).toString(), 4, "0")}-${storeCode}-${dayjs(date).format("YYYYMMDD")}`,
+        code: `L${padStart((locationsCount + i + 1).toString(), 4, "0")}-${storeCode}-${dayjs(date).format("YYYYMMDD")}`,
         created: { by: username, on: new Date() },
         modified: { by: username, on: new Date() },
       })),
@@ -133,7 +137,6 @@ export async function PATCH(request: NextRequest) {
       );
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        // logIt({code: 1, error: error.name, message: error.message})
         return NextResponse.json(
           { icon: "", error: error.name, message: error.message },
           { status: 400 },

@@ -17,10 +17,6 @@ import { Avatar } from "@heroui/react";
 // * SCNUI
 import { Button } from "@/components/ui/shadcn/button";
 
-// * RUI
-
-import CreateStore from "@/components/admin/clients/create-store";
-
 // * MUI
 import {
   DataGridPro,
@@ -46,21 +42,18 @@ import {
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Constants
-const apiUrl = "locations";
+const apiUrl = "scans";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 
 import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
-
 import { useDialogStore } from "@/store/useDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import { Checkbox } from "@/components/ui/shadcn/checkbox";
-import AddLocations from "@/components/admin/clients/add-locations";
 
-export default function Locations() {
+export default function Scans() {
   // ? Hooks
   const apiRef = useGridApiRef();
   const { audit } = useParams();
@@ -104,7 +97,12 @@ export default function Locations() {
     ],
     columnsToSort: [{ field: "id", sort: "desc" }],
     toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "id", "code", "barcode"],
+      left: [
+        GRID_CHECKBOX_SELECTION_COL_DEF.field,
+        "id",
+        "location",
+        "barcode",
+      ],
       right: ["actions"],
     },
   });
@@ -137,11 +135,6 @@ export default function Locations() {
 
   return (
     <Fragment>
-      <AddLocations
-        isAddItemOpen={isAddItemOpen}
-        setIsAddItemOpen={setIsAddItemOpen}
-      />
-
       <div className="flex flex-1 flex-col">
         <DataGridPro
           apiRef={apiRef}
@@ -173,8 +166,8 @@ export default function Locations() {
               flex: 1,
             },
             {
-              field: "code",
-              headerName: "Code",
+              field: "location",
+              headerName: "Location",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               hideable: true,
@@ -194,79 +187,12 @@ export default function Locations() {
               hideable: true,
               pinnable: true,
               resizable: false,
-              minWidth: 100,
-              flex: 1,
-              renderCell: ({ row: { code } }) => (
-                <svg id={code} className="barcode-svg h-10" />
-              ),
-            },
-            {
-              field: "physicalCount",
-              headerName: "Physical Count",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              type: "number",
-              disableColumnMenu: true,
-              editable: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 115,
-              flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 3,
-              }),
-            },
-            {
-              field: "systemCount",
-              headerName: "System Count",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              type: "number",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 110,
+              minWidth: 200,
               flex: 1,
             },
             {
-              field: "discrepancy",
-              headerName: "Discrepancy",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 110,
-              flex: 1,
-            },
-            {
-              field: "isVerified",
-              headerName: "Is Verified?",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 100,
-              flex: 1,
-              renderCell: ({ row: { isVerified } }) => (
-                <Checkbox checked={isVerified} disabled />
-              ),
-            },
-            {
-              field: "created",
-              headerName: "Created",
+              field: "scanned",
+              headerName: "Scanned",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               filterable: false,
@@ -278,38 +204,7 @@ export default function Locations() {
               flex: 1,
               renderCell: ({
                 row: {
-                  created: { by, on },
-                },
-              }) => (
-                <div className="flex gap-3 items-center">
-                  <Avatar
-                    isBordered
-                    radius="sm"
-                    size="sm"
-                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
-                  />
-                  <div className="flex-col">
-                    <div>by {by}</div>
-                    <div className="text-xs">on {on}</div>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              field: "modified",
-              headerName: "Modified",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              sortable: false,
-              minWidth: 300,
-              flex: 1,
-              renderCell: ({
-                row: {
-                  modified: { by, on },
+                  scanned: { by, on },
                 },
               }) => (
                 <div className="flex gap-3 items-center">
@@ -358,21 +253,10 @@ export default function Locations() {
                 </Button>
               ),
             },
-            { field: "created.by", headerName: "Created By", hideable: false },
+            { field: "scanned.by", headerName: "Scanned By", hideable: false },
             {
-              field: "created.on",
-              headerName: "Created On",
-              hideable: false,
-              filterOperators: dateFilter,
-            },
-            {
-              field: "modified.by",
-              headerName: "Modified By",
-              hideable: false,
-            },
-            {
-              field: "modified.on",
-              headerName: "Modified On",
+              field: "scanned.on",
+              headerName: "Scanned On",
               hideable: false,
               filterOperators: dateFilter,
             },

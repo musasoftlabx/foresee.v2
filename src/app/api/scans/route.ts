@@ -1,112 +1,106 @@
 // * Server
 import { NextRequest, NextResponse } from "next/server";
 
-// * Schema
-import { accountCollection } from "@/db/schema";
-
 // * NPM
-import { ObjectId } from "mongodb";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
+import padStart from "lodash/padStart";
 
 // * Hooks
-import useAggregateConstructor from "@/hooks/useQueryRefiner";
+import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
+import useQueryRefiner from "@/hooks/useQueryRefiner";
+
+// * Libs
+import { prisma } from "@/lib/prisma";
+
+// * Types
+import { Created, Modified } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const id = "69a08fdd299c12466e5c7ed8";
+const username = "mmuliro";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
-  const auditId = req.nextUrl.pathname.split("/")[3];
-  const { limit, offset, sortsAndFilters, scope, view } = Object.fromEntries(
+  const { limit, offset, exportable, refines, audit } = Object.fromEntries(
     searchParams.entries(),
   );
 
-  if (scope === "__DEFAULT__") {
-    const aggregation = await useAggregateConstructor({
-      match: { id },
-      limit,
-      offset,
-      sortsAndFilters,
-      searchFields: ["code", "name"],
-      extraPipelines: [
-        { $unwind: "$stores" },
-        { $replaceRoot: { newRoot: "$stores" } },
-        { $unwind: "$audits" },
-        { $replaceRoot: { newRoot: "$audits" } },
-        { $addFields: { id: { $toString: "$_id" } } },
-        { $match: { id: auditId } },
-        { $unwind: "$scans" },
-        { $replaceRoot: { newRoot: "$scans" } },
-      ],
-      project: {
-        "audits.locations": 0,
-        "audits.inventory": 0,
-        "audits.scans": 0,
+  const { query, searchResults } = await useQueryRefiner({
+    where: { auditId: Number(audit) },
+    limit,
+    offset,
+    refines,
+    search: { table: "Scans", fields: ["location", "barcode", "scanned"] },
+  });
+
+  const rows =
+    searchResults.length > 0
+      ? searchResults
+      : await prisma.scans.findMany(query);
+
+  const dataset = [];
+
+  if (exportable) {
+    return false;
+  }
+
+  for (const row of rows) {
+    dataset.push({
+      ...row,
+      created: {
+        ...(row.created as unknown as Created),
+        on: useDayjsDayFormatter((row.created as any).on),
+      },
+      modified: {
+        ...(row.modified as unknown as Modified),
+        on: useDayjsDayFormatter((row.modified as any).on),
       },
     });
-
-    const dataset = await accountCollection.aggregate(aggregation);
-
-    if (view === "__DISPLAY__") {
-      try {
-        return Response.json({
-          count: dataset.length,
-          // dataset: dataset.map((field) => ({
-          //   ...field,
-          //   scanned: {
-          //     ...field.scanned,
-          //     on: useDayjsDayFormatter(field.scanned.on),
-          //   },
-          // })),
-        });
-      } catch (err) {
-        if (err instanceof Error)
-          return Response.json({ error: err.message }, { status: 500 });
-      }
-    }
-
-    if (view === "__EXPORT__") {
-    }
   }
+
+  return NextResponse.json({ count: dataset.length, dataset });
 }
 
-export async function POST(request: NextRequest) {
-  const {
-    storeId,
-    auditId,
-    location,
-    barcode,
-    scanned: { device },
-  } = await request.json();
+export async function POST(request: Request) {
+  const { store, audit, locations } = await request.json();
+
+  const storeId = Number(store);
+  const auditId = Number(audit);
 
   try {
-    return NextResponse.json(
-      await accountCollection.updateOne(
-        { _id: id },
-        {
-          $push: {
-            "stores.$[store].audits.$[audit].scans": {
-              location,
-              barcode,
-              scanned: { by: "musa", device },
-            },
-          },
-        },
-        {
-          arrayFilters: [
-            { "store._id": new ObjectId(storeId) },
-            { "audit._id": new ObjectId(auditId) },
-          ],
-        },
-      ),
-      { status: 201 },
+    // ? Get store code for location code generation
+    const { code: storeCode } = <{ code: string }>await prisma.stores.findFirst(
+      {
+        where: { id: storeId },
+        select: { code: true },
+      },
     );
+
+    // ? Get date of audit for location code generation
+    const { date } = <{ date: Date }>await prisma.audits.findFirst({
+      where: { id: auditId },
+      select: { date: true },
+    });
+
+    // ? Get number of locations under the audit
+    const locationsCount = await prisma.scans.count({ where: { auditId } });
+
+    // ? Create locations for the audit based on the created store
+    const createdLocations = await prisma.scans.createMany({
+      data: Array.from({ length: locations }).map((_, i) => ({
+        auditId,
+        code: `L${padStart((locationsCount + i + 1).toString(), 4, "0")}-${storeCode}-${dayjs(date).format("YYYYMMDD")}`,
+        created: { by: username, on: new Date() },
+        modified: { by: username, on: new Date() },
+      })),
+    });
+
+    return NextResponse.json(createdLocations, { status: 201 });
   } catch (error) {
-    if (error instanceof Error) {
-      // logIt({code: 1, error: error.name, message: error.message})
+    if (error instanceof PrismaClientKnownRequestError) {
       return NextResponse.json(
         { icon: "", error: error.name, message: error.message },
         { status: 400 },
@@ -120,18 +114,17 @@ export async function PATCH(request: NextRequest) {
   const { scope } = Object.fromEntries(searchParams.entries());
 
   if (scope === "editCell") {
-    const { _id, field, value } = await request.json();
+    const { id, field, value } = await request.json();
     try {
       return NextResponse.json(
-        await accountCollection.findByIdAndUpdate(
-          { _id },
-          { [field]: value, modified: { by: "musa1", on: new Date() } },
-        ),
+        await prisma.scans.update({
+          where: { id },
+          data: { [field]: value, modified: { by: username, on: new Date() } },
+        }),
         { status: 201 },
       );
     } catch (error) {
-      if (error instanceof Error) {
-        // logIt({code: 1, error: error.name, message: error.message})
+      if (error instanceof PrismaClientKnownRequestError) {
         return NextResponse.json(
           { icon: "", error: error.name, message: error.message },
           { status: 400 },
@@ -141,56 +134,19 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-export async function PUT(request: Request) {
-  const body = await request.json();
-  return NextResponse.json(body, { status: 201 });
-}
-
 export async function DELETE(request: NextRequest) {
-  const { storeId, auditId, auditIds, scanId, howMany } = await request.json();
+  const { ids } = await request.json();
 
-  const prepareDeletions = () => {
-    switch (howMany) {
-      case "__ONE__":
-        return {
-          $pull: {
-            "stores.$[store].audits.$[audit].scans": {
-              _id: new ObjectId(scanId),
-            },
-          },
-        };
-      case "__MANY__":
-        return {
-          $pull: {
-            "stores.$[store].audits.$[audit].scans": {
-              _id: { $in: auditIds },
-            },
-          },
-        };
-      case "__ALL__":
-        return { $set: { "stores.$[store].audits.$[audit].scans": [] } };
-    }
-  };
-
-  if (howMany === "__ONE__") {
-    try {
+  try {
+    return NextResponse.json(
+      await prisma.scans.deleteMany({ where: { id: { in: ids } } }),
+    );
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
       return NextResponse.json(
-        await accountCollection.updateOne({ _id: id }, prepareDeletions(), {
-          arrayFilters: [
-            { "store._id": new ObjectId(storeId) },
-            { "audit._id": new ObjectId(auditId) },
-          ],
-        }),
-        { status: 201 },
+        { icon: "", error: error.name, message: error.message },
+        { status: 400 },
       );
-    } catch (error) {
-      if (error instanceof Error) {
-        // logIt({code: 1, error: error.name, message: error.message})
-        return NextResponse.json(
-          { icon: "", error: error.name, message: error.message },
-          { status: 400 },
-        );
-      }
     }
   }
 }
