@@ -1,6 +1,6 @@
 "use client";
 
-import Portal from "../page";
+import Portal from "../layout";
 
 // * React
 import { useEffect, useState } from "react";

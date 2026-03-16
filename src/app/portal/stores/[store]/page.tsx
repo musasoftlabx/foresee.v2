@@ -1,33 +1,22 @@
 "use client";
 
-import Portal from "../../page";
+import Portal from "../page";
 
 // * React
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
-// * Next
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 // * NPM
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import capitalize from "lodash/capitalize";
 
 // * HUI
-import { Avatar, Button } from "@heroui/react";
+import { Avatar } from "@heroui/react";
 
-// * SCNUI
-import { Button as ButtonShadCN } from "@/components/ui/shadcn/button";
-import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/shadcn/sheet";
+// * SUI
+import { Button } from "@/components/ui/shadcn/button";
 
 // * RUI
 
@@ -57,7 +46,7 @@ import {
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Constants
-const apiUrl = "locations";
+const apiUrl = "audits";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -68,43 +57,30 @@ import DataGridPagination from "@/components/DataTable/DataGridPagination";
 import { useDialogStore } from "@/store/useDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import React from "react";
-import Stack from "@mui/material/Stack";
+
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/shadcn/card";
-import { ExternalLinkIcon, Link, PackageIcon } from "lucide-react";
+  ExternalLink,
+  ExternalLinkIcon,
+  FileSymlinkIcon,
+  PackageIcon,
+  Table2,
+} from "lucide-react";
 import dayjs from "dayjs";
+
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/shadcn/table";
-import { Badge } from "@/components/ui/shadcn/badge";
-import { Switch } from "@/components/ui/shadcn/switch";
-import { Checkbox } from "@/components/ui/shadcn/checkbox";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/shadcn/tooltip";
+import { useParams, useRouter } from "next/navigation";
+import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
+import CreateAudit from "@/components/admin/clients/create-audit";
 
-type TResponse = {
-  count: number;
-  dataset: {
-    _id: string;
-    client: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-};
-
-export default function Locations() {
-  // ? Hooks
+export default function Audits() {
+  // ? Refs
   const apiRef = useGridApiRef();
-  const { audit } = useParams();
+  const router = useRouter();
+  const { store } = useParams();
 
   const showConfirm = useDialogStore((state) => state.confirm);
 
@@ -137,31 +113,27 @@ export default function Locations() {
     apiRef,
     apiUrl,
     columnsToHide: [
-      "_id",
+      "id",
       "created.by",
       "created.on",
       "modified.by",
       "modified.on",
     ],
-    columnsToSort: [{ field: "_id", sort: "desc" }],
-    toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id", "code"],
-      right: ["actions"],
-    },
+    columnsToSort: [{ field: "id", sort: "desc" }],
+    toPin: { left: ["id", "code"], right: ["actions"] },
   });
 
   // ? Queries
   const { data, isLoading } = useQuery({
     queryKey: [
-      `${apiUrl}/${audit}`,
+      apiUrl,
       paginationModel?.pageSize,
       paginationModel?.page,
-      "__DISPLAY__",
       encodeURI(JSON.stringify({ filterModel, sortModel })),
     ],
     queryFn: ({ queryKey }) =>
       axios<GridValidRowModel>(
-        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&sortsAndFilters=${queryKey[4]}&scope=__DEFAULT__`,
+        `${queryKey[0]}?store=${store}&limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
       ),
     select: ({ data }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
@@ -177,12 +149,9 @@ export default function Locations() {
     });
   });
 
-  const [isAuditsSheetOpen, setIsAuditsSheetOpen] = useState(false);
-  const [audits, setAudits] = useState<GridValidRowModel>();
-
   return (
-    <Portal>
-      <CreateStore
+    <Fragment>
+      <CreateAudit
         isAddItemOpen={isAddItemOpen}
         setIsAddItemOpen={setIsAddItemOpen}
       />
@@ -195,18 +164,7 @@ export default function Locations() {
           initialState={initialState}
           columns={[
             {
-              field: GRID_CHECKBOX_SELECTION_COL_DEF.field,
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              resizable: false,
-              sortable: false,
-              maxWidth: 40,
-            },
-            {
-              field: "_id",
+              field: "id",
               headerName: "Id.",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: false,
@@ -214,7 +172,7 @@ export default function Locations() {
               hideable: true,
               pinnable: false,
               resizable: false,
-              minWidth: 220,
+              minWidth: 20,
               flex: 1,
             },
             {
@@ -225,12 +183,114 @@ export default function Locations() {
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 160,
+              minWidth: 90,
               flex: 1,
+              renderCell: ({ row: { code } }) => (
+                <div className="font-bold">{code}</div>
+              ),
             },
             {
-              field: "physicalCount",
-              headerName: "Physical Count",
+              field: "locations",
+              headerName: "Locations",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: false,
+              pinnable: true,
+              resizable: false,
+              minWidth: 90,
+              flex: 1,
+              renderCell: ({ row: { id, locations } }) => (
+                <Button
+                  variant="link"
+                  onClick={() =>
+                    router.push(
+                      `/portal/stores/${store}/audits/${id}/locations`,
+                    )
+                  }
+                >
+                  <span className="flex gap-1 underline decoration-dashed">
+                    {locations}
+                    <ExternalLink size={8} />
+                  </span>
+                </Button>
+              ),
+            },
+            {
+              field: "scans",
+              headerName: "Scans",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: false,
+              pinnable: true,
+              resizable: false,
+              minWidth: 90,
+              flex: 1,
+              renderCell: ({ row: { id, scans } }) => (
+                <Button
+                  variant="link"
+                  onClick={() =>
+                    router.push(`/portal/stores/${store}/audits/${id}/scans`)
+                  }
+                >
+                  <span className="flex gap-1 underline decoration-dashed">
+                    {scans}
+                    <ExternalLink size={8} />
+                  </span>
+                </Button>
+              ),
+            },
+            {
+              field: "date",
+              headerName: "Date of Audit",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              type: "dateTime",
+              disableColumnMenu: false,
+              editable: true,
+              hideable: false,
+              pinnable: true,
+              resizable: false,
+              minWidth: 220,
+              flex: 1,
+              valueGetter: ({ value }) =>
+                value ? dayjs(value).toDate() : null,
+              renderCell: ({ row: { date } }) => (
+                <span className="text-xs">{useDayjsDayFormatter(date)}</span>
+              ),
+            },
+            {
+              field: "barcode.mode",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              type: "singleSelect",
+              valueOptions: ["Strict", "Varies"],
+              disableColumnMenu: true,
+              editable: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 90,
+              flex: 1,
+              renderHeader: () => (
+                <div className="flex flex-col items-center font-bold">
+                  <div className="text-xs">Barcode</div>
+                  <div className="text-xs">Mode</div>
+                </div>
+              ),
+              renderCell: ({
+                row: {
+                  barcode: { mode },
+                },
+              }) => <div>{capitalize(mode)}</div>,
+            },
+            {
+              field: "barcode.characters",
               headerAlign: "center",
               align: "center",
               cellClassName: "vertical-center-cell",
@@ -239,56 +299,19 @@ export default function Locations() {
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 115,
+              minWidth: 90,
               flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 3,
-              }),
-            },
-            {
-              field: "systemCount",
-              headerName: "System Count",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 110,
-              flex: 1,
-            },
-            {
-              field: "discrepancies",
-              headerName: "Discrepancies",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 110,
-              flex: 1,
-            },
-            {
-              field: "isVerified",
-              headerName: "Is Verified?",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 100,
-              flex: 1,
-              renderCell: ({ row: { isVerified } }) => (
-                <Checkbox checked={isVerified} disabled />
+              renderHeader: () => (
+                <div className="flex flex-col items-center font-bold">
+                  <div className="text-xs">Barcode</div>
+                  <div className="text-xs">Characters</div>
+                </div>
               ),
+              renderCell: ({
+                row: {
+                  barcode: { characters },
+                },
+              }) => <div>{characters}</div>,
             },
             {
               field: "created",
@@ -311,11 +334,11 @@ export default function Locations() {
                   <Avatar
                     isBordered
                     radius="sm"
-                    size="sm"
+                    className="size-7"
                     src="https://i.pravatar.cc/150?u=a04258114e29026302d"
                   />
                   <div className="flex-col">
-                    <div>by {by}</div>
+                    <div className="text-sm">by {by}</div>
                     <div className="text-xs">on {on}</div>
                   </div>
                 </div>
@@ -342,11 +365,11 @@ export default function Locations() {
                   <Avatar
                     isBordered
                     radius="sm"
-                    size="sm"
+                    className="size-7"
                     src="https://i.pravatar.cc/150?u=a04258114e29026302d"
                   />
                   <div className="flex-col">
-                    <div>by {by}</div>
+                    <div className="text-sm">by {by}</div>
                     <div className="text-xs">on {on}</div>
                   </div>
                 </div>
@@ -354,7 +377,7 @@ export default function Locations() {
             },
             {
               field: "actions",
-              headerName: "Delete",
+              headerName: "Actions",
               headerAlign: "center",
               align: "center",
               sortable: false,
@@ -363,25 +386,27 @@ export default function Locations() {
               pinnable: false,
               disableColumnMenu: true,
               width: 70,
-              renderCell: ({ row: { _id, name } }) => (
-                <Button
-                  isIconOnly
-                  isLoading={false}
-                  isDisabled={false}
-                  radius="full"
-                  className="flex flex-1 align-middle self-center align-center justify-center"
-                  onPress={() => {
-                    //changeRowSelection([_id]);
-                    showConfirm({
-                      operation: "delete",
-                      status: "info",
-                      subject: `Confirm deletion of ${name}`,
-                      body: `Are you sure you intend to delete this store?`,
-                    });
-                  }}
-                >
-                  <DeleteIcon size={20} />
-                </Button>
+              renderCell: ({ row }) => (
+                <div className="flex items-center justify-center gap-3 mt-0.5">
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={() => {
+                      changeRowSelection({
+                        type: "include",
+                        ids: new Set([row.id]),
+                      });
+                      // showConfirm({
+                      //   operation: "delete",
+                      //   status: "info",
+                      //   subject: `Confirm deletion of ${row.name}`,
+                      //   body: `Are you sure you intend to delete this store?`,
+                      // });
+                    }}
+                  >
+                    <DeleteIcon />
+                  </Button>
+                </div>
               ),
             },
             { field: "created.by", headerName: "Created By", hideable: false },
@@ -391,14 +416,21 @@ export default function Locations() {
               hideable: false,
               filterOperators: dateFilter,
             },
+            {
+              field: "modified.by",
+              headerName: "Modified By",
+              hideable: false,
+            },
+            {
+              field: "modified.on",
+              headerName: "Modified On",
+              hideable: false,
+              filterOperators: dateFilter,
+            },
           ]}
-          //getDetailPanelHeight={() => "auto"}
-          //getDetailPanelContent={getDetailPanelContent}
-          getRowId={({ _id }) => _id}
-          getRowHeight={() => "auto"}
+          getRowHeight={() => 40}
           density="compact"
           pagination
-          checkboxSelection
           keepNonExistentRowsSelected
           disableRowSelectionOnClick
           disableRowSelectionExcludeModel
@@ -456,23 +488,15 @@ export default function Locations() {
             setIsAddItemOpen,
             extraActions: (
               <>
-                <ButtonShadCN variant="secondary" size="icon">
+                <Button variant="secondary" size="icon">
                   <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadCN>
-                <ButtonShadCN variant="secondary" size="icon">
+                </Button>
+                <Button variant="secondary" size="icon">
                   <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadCN>
+                </Button>
               </>
             ),
           })}
-          // <Button
-          //   size="small"
-          //   startIcon={<FaUsersCog />}
-          //   onPress={() => setIsAddClientOpen(true)}
-          //   sx={sx}
-          // >
-          //   Manage Roles
-          // </Button>
           slotProps={DataGridSlotProps}
           sx={DataGridStyles}
         />
@@ -483,6 +507,6 @@ export default function Locations() {
           changePagination={changePagination}
         />
       </div>
-    </Portal>
+    </Fragment>
   );
 }

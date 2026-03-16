@@ -594,7 +594,11 @@ export default function Stores() {
                       <Button
                         size="icon"
                         variant="default"
-                        onClick={() => router.push(`/portal/stores/${row.id}`)}
+                        onClick={() => {
+                          setRowDetails(row);
+                          getAudits(row.id);
+                          setIsAuditsSheetOpen(true);
+                        }}
                       >
                         <FileSymlinkIcon aria-hidden="true" />
                       </Button>
@@ -627,17 +631,6 @@ export default function Stores() {
             {
               field: "created.on",
               headerName: "Created On",
-              hideable: false,
-              filterOperators: dateFilter,
-            },
-            {
-              field: "modified.by",
-              headerName: "Modified By",
-              hideable: false,
-            },
-            {
-              field: "modified.on",
-              headerName: "Modified On",
               hideable: false,
               filterOperators: dateFilter,
             },

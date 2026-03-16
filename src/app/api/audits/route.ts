@@ -27,30 +27,29 @@ import { Created, Modified } from "@/types";
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const organizationId = 1;
 const username = "mmuliro";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
-  const { limit, offset, exportable, refines } = Object.fromEntries(
+  const { limit, offset, exportable, refines, store } = Object.fromEntries(
     searchParams.entries(),
   );
 
   const { query, searchResults } = await useQueryRefiner({
-    where: { organizationId },
+    where: { storeId: Number(store) },
     limit,
     offset,
     refines,
     search: {
-      table: "Stores",
-      fields: ["code", "name", "country", "client", "created", "modified"],
+      table: "Audits",
+      fields: ["code", "barcode", "date", "created", "modified"],
     },
   });
 
   const rows =
     searchResults.length > 0
       ? searchResults
-      : await prisma.stores.findMany(query);
+      : await prisma.audits.findMany(query);
 
   const dataset = [];
 
@@ -61,9 +60,8 @@ export async function GET(req: NextRequest) {
   for (const row of rows) {
     dataset.push({
       ...row,
-      inventoryCount: await prisma.inventory.count({
-        where: { storeId: row.id },
-      }),
+      locations: await prisma.locations.count({ where: { auditId: row.id } }),
+      scans: await prisma.scans.count({ where: { auditId: row.id } }),
       created: {
         ...(row.created as unknown as Created),
         on: useDayjsDayFormatter((row.created as any).on),
@@ -80,9 +78,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(request: Request) {
   const {
-    name,
-    country: { code, name: country },
-    client,
+    store,
     inventory: {
       file: { filename, sheetFields },
     },
@@ -94,6 +90,7 @@ export async function POST(request: Request) {
   } = await request.json();
 
   const path = `${tempPath}/${filename}`;
+  const storeId = Number(store);
 
   try {
     if (existsSync(path)) {
@@ -122,49 +119,13 @@ export async function POST(request: Request) {
         }
       }
 
-      // ? Insert only if the incoming client doesn't exists. Else, ignore, don't update
-      await prisma.clients.upsert({
-        where: { id: 1, organizationId, name: client },
-        update: {},
-        create: {
-          organizationId,
-          name: client,
-          added: { by: username, on: new Date() },
-          modified: { by: username, on: new Date() },
-        },
-      });
-
-      // ? Get number of stores with similar country codes
-      const storeCount = await prisma.stores.count({
-        where: { organizationId, code: { startsWith: code } },
-      });
-
-      // ? If no stores, skip to 1 to start store count at 1
-      const storePadding = storeCount === 0 ? 1 : storeCount + 1;
-
-      // ? Add padding to store count if less than 2 characters
-      const storeCode = `${code}${padStart(storePadding.toString(), 2, "0")}`;
-
-      // ? Create the store
-      const createdStore = await prisma.stores.create({
-        data: {
-          organizationId,
-          code: storeCode,
-          name,
-          country,
-          client,
-          created: { by: username, on: new Date() },
-          modified: { by: username, on: new Date() },
-        },
-      });
-
       // ? Create inventory records based on the created store
-      const createInventory = await prisma.$transaction(
+      await prisma.$transaction(
         inventory.map((item: { barcode?: string }) => {
           const { barcode, ...attributes } = item;
           return prisma.inventory.createMany({
             data: {
-              storeId: createdStore.id,
+              storeId,
               barcode: item.barcode!,
               attributes,
               added: { by: username, on: new Date() },
@@ -176,19 +137,24 @@ export async function POST(request: Request) {
       );
 
       // ? Get number of audits
-      //const auditCount = await prisma.audits.count({ where: { storeId } });
+      const { code: storeCode } = <{ code: string }>(
+        await prisma.stores.findFirst({
+          where: { id: storeId },
+          select: { code: true },
+        })
+      );
+
+      // ? Get number of audits
+      const auditCount = await prisma.audits.count({ where: { storeId } });
 
       // ? If no audits, skip to 1 to start store count at 1
-      //const auditPadding = auditCount === 0 ? 1 : auditCount + 1;
-
-      // ? Add padding to audit count if less than 5 characters
-      //const auditCode = `ADT${padStart(auditPadding.toString(), 5, "0")}`;
+      const auditPadding = auditCount === 0 ? 1 : auditCount + 1;
 
       // ? Create an audit based on the created store
       const createdAudit = await prisma.audits.create({
         data: {
-          storeId: createdStore.id,
-          code: `ADT${padStart("1", 5, "0")}`,
+          storeId,
+          code: `ADT${padStart(auditPadding.toString(), 5, "0")}`, // ? Add padding to audit count if less than 5 characters
           date: new Date(date),
           barcode: { mode, characters: mode === "strict" ? characters[0] : 0 },
           created: { by: username, on: new Date() },
@@ -200,13 +166,13 @@ export async function POST(request: Request) {
       await prisma.locations.createMany({
         data: Array.from({ length: locations }).map((_, i) => ({
           auditId: createdAudit.id,
-          code: `L${padStart((i + 1).toString(), 4, "0")}-${createdStore.code}-${dayjs(date).format("YYYYMMDD")}`,
+          code: `L${padStart((i + 1).toString(), 4, "0")}-${storeCode}-${dayjs(date).format("YYYYMMDD")}`,
           created: { by: username, on: new Date() },
           modified: { by: username, on: new Date() },
         })),
       });
 
-      return NextResponse.json(createdStore, { status: 201 });
+      return NextResponse.json(createdAudit, { status: 201 });
     } else throw new Error("File doesn't exist");
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
@@ -234,7 +200,7 @@ export async function PATCH(request: NextRequest) {
     const { id, field, value } = await request.json();
     try {
       return NextResponse.json(
-        await prisma.stores.update({
+        await prisma.audits.update({
           where: { id },
           data: { [field]: value, modified: { by: username, on: new Date() } },
         }),
@@ -262,7 +228,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     return NextResponse.json(
-      await prisma.stores.deleteMany({ where: { id: { in: ids } } }),
+      await prisma.audits.deleteMany({ where: { id: { in: ids } } }),
     );
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {

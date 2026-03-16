@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+
 export type QueryOptions = {
   filterModel: {
     items: { field: string; value: string; operator: string; id: number }[];
@@ -13,11 +15,13 @@ export default async function useQueryRefiner({
   limit,
   offset,
   refines,
+  search,
 }: {
   where: {};
   limit: string;
   offset: string;
   refines: string;
+  search: { table: string; fields: string[] };
 }) {
   const queryOptions = <QueryOptions>JSON.parse(refines);
   const take = Number(limit);
@@ -30,6 +34,8 @@ export default async function useQueryRefiner({
     skip,
   };
 
+  let searchResults: any = [];
+
   if (JSON.stringify(queryOptions) !== "{}") {
     const searchOptions: string[] =
       queryOptions?.filterModel?.quickFilterValues;
@@ -38,9 +44,9 @@ export default async function useQueryRefiner({
       queryOptions?.filterModel?.logicOperator.toUpperCase();
     const sortOptions = queryOptions?.sortModel;
 
-    query.where = { ...query.where, [logicOperator]: [] };
-
     if (filterOptions?.length > 0) {
+      query.where = { ...query.where, [logicOperator]: [] };
+
       filterOptions.forEach(({ operator }) => {
         const i = filterOptions.findIndex(
           (filter) => filter.operator === operator,
@@ -140,26 +146,20 @@ export default async function useQueryRefiner({
       });
     }
 
-    /* if (searchOptions?.length > 0) {
-      const concats: string[] = aggregation[0].$addFields.search.$concat;
-
-      refines.searchFields.map((field, index) => {
-        concats.push(`$${field}`);
-        index !== refines.searchFields.length - 1 && concats.push(" ");
-      });
-
-      if (Object.hasOwn(query.where, "$or")) {
-        query.where.$or.push({
-          search: { $regex: searchOptions[0], $options: "i" },
-        });
-      } else {
-        query.where.$or = query.where.$and;
-        delete query.where.$and;
-        query.where.$or.push({
-          search: { $regex: searchOptions[0], $options: "i" },
-        });
-      }
-    } */
+    if (searchOptions?.length > 0) {
+      searchResults = await prisma.$queryRawUnsafe(`
+        SELECT id, ${search.fields.join(", ")}
+        FROM "${search.table}"
+        WHERE search_vector @@ to_tsquery('simple','${searchOptions[0]}')
+        LIMIT ${take}
+      `);
+      // searchResults = await prisma.$queryRaw(Prisma.sql`
+      //   SELECT id, ${search.fields.join(", ")}
+      //   FROM ${Prisma.raw(capitalize(search.table))} -- ${Prisma.raw(search.table).strings[0]}
+      //   WHERE search_vector @@ to_tsquery('simple', 'opre')
+      //   LIMIT ${take}
+      // `);
+    }
 
     if (sortOptions?.length > 0) {
       Object.assign(
@@ -169,5 +169,7 @@ export default async function useQueryRefiner({
     }
   }
 
-  return query;
+  //console.log("Query: ", query);
+
+  return { query, searchResults };
 }

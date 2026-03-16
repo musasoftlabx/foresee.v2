@@ -63,6 +63,7 @@
     "got": "^14.6.6",
     "html-react-parser": "^5.2.15",
     "ioredis": "^5.9.2",
+    "jsbarcode": "^3.12.3",
     "lucide-react": "^0.563.0",
     "mime": "^4.1.0",
     "mongoose": "^9.1.5",

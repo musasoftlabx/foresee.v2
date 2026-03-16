@@ -1,33 +1,38 @@
 "use client";
 
-import Portal from "../../layout";
-
 // * React
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+
+// * Next
+import { useParams } from "next/navigation";
 
 // * NPM
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import JsBarcode from "jsbarcode";
 
 // * HUI
-import { Avatar, Button } from "@heroui/react";
+import { Avatar, Popover, PopoverContent, PopoverTrigger } from "@heroui/react";
 
 // * SCNUI
-import { Button as ButtonShadCN } from "@/components/ui/shadcn/button";
+import { Button } from "@/components/ui/shadcn/button";
 
 // * RUI
 
-import { AddClient } from "@/components/admin/clients/add-client";
+import CreateStore from "@/components/admin/clients/create-store";
 
 // * MUI
 import {
   DataGridPro,
-  DEFAULT_GRID_AUTOSIZE_OPTIONS,
   GRID_CHECKBOX_SELECTION_COL_DEF,
+  gridDimensionsSelector,
   GridPreProcessEditCellProps,
   GridRowModel,
+  GridRowParams,
   GridValidRowModel,
+  useGridApiContext,
   useGridApiRef,
+  useGridSelector,
 } from "@mui/x-data-grid-pro";
 
 // * Components
@@ -40,7 +45,7 @@ import {
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Constants
-const apiUrl = "scans";
+const apiUrl = "locations";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -51,19 +56,9 @@ import DataGridPagination from "@/components/DataTable/DataGridPagination";
 import { useDialogStore } from "@/store/useDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import { useParams } from "next/navigation";
+import { Checkbox } from "@/components/ui/shadcn/checkbox";
 
-type TResponse = {
-  count: number;
-  dataset: {
-    _id: string;
-    client: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-};
-
-export default function Scans() {
+export default function Locations() {
   // ? Hooks
   const apiRef = useGridApiRef();
   const { audit } = useParams();
@@ -72,8 +67,7 @@ export default function Scans() {
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [isManageUserRolesOpen, setIsManageUserRolesOpen] = useState(false);
+  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -99,30 +93,43 @@ export default function Scans() {
   } = useCustomDataGrid({
     apiRef,
     apiUrl,
-    columnsToHide: ["_id", "scanned.by", "scanned.on"],
-    columnsToSort: [{ field: "_id", sort: "desc" }],
+    columnsToHide: [
+      "id",
+      "created.by",
+      "created.on",
+      "modified.by",
+      "modified.on",
+    ],
+    columnsToSort: [{ field: "id", sort: "desc" }],
     toPin: {
-      left: ["_id", "barcode"],
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "id", "code"],
       right: ["actions"],
     },
   });
 
   // ? Queries
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetched } = useQuery({
     queryKey: [
-      `${apiUrl}/${audit}`,
+      apiUrl,
       paginationModel?.pageSize,
       paginationModel?.page,
-      "__DISPLAY__",
       encodeURI(JSON.stringify({ filterModel, sortModel })),
     ],
     queryFn: ({ queryKey }) =>
       axios<GridValidRowModel>(
-        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&sortsAndFilters=${queryKey[4]}&scope=__DEFAULT__`,
+        `${queryKey[0]}?audit=${audit}&limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
       ),
     select: ({ data }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
   });
+
+  /* isFetched && data.dataset.length > 0 &&  JsBarcode(`#${code}`, code, {
+    width: 1,
+    height: 20,
+    textPosition: "top",
+    textMargin: 10,
+    lineColor: "#990000",
+  }); */
 
   // ? Effects
   useEffect(() => {
@@ -135,10 +142,10 @@ export default function Scans() {
   });
 
   return (
-    <Portal>
-      <AddClient
-        isAddClientOpen={isAddClientOpen}
-        setIsAddClientOpen={setIsAddClientOpen}
+    <Fragment>
+      <CreateStore
+        isAddItemOpen={isAddItemOpen}
+        setIsAddItemOpen={setIsAddItemOpen}
       />
 
       <div className="flex flex-1 flex-col">
@@ -160,7 +167,7 @@ export default function Scans() {
               maxWidth: 40,
             },
             {
-              field: "_id",
+              field: "id",
               headerName: "Id.",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: false,
@@ -172,8 +179,8 @@ export default function Scans() {
               flex: 1,
             },
             {
-              field: "barcode",
-              headerName: "Barcode",
+              field: "code",
+              headerName: "Code",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               hideable: false,
@@ -183,19 +190,107 @@ export default function Scans() {
               flex: 1,
             },
             {
-              field: "location",
-              headerName: "Location",
+              field: "barcode",
+              headerName: "barcode",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: false,
+              filterable: false,
+              hideable: true,
+              pinnable: false,
+              resizable: false,
+              minWidth: 120,
+              flex: 1,
+              renderCell: ({ row: { code } }) => {
+                return (
+                  <Fragment>
+                    <svg id={code} className="h-10" />
+
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => {
+                        JsBarcode(`#${code}`, code.split("-")[0], {
+                          width: 1,
+                          height: 20,
+                          textPosition: "top",
+                          fontSize: 12,
+                          margin: 3,
+                          background: "transparent",
+                          lineColor: "#fff",
+                        });
+                      }}
+                    >
+                      <DeleteIcon />
+                    </Button>
+                  </Fragment>
+                );
+              },
+            },
+            {
+              field: "physicalCount",
+              headerName: "Physical Count",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              editable: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 115,
+              flex: 1,
+              preProcessEditCellProps: (
+                params: GridPreProcessEditCellProps,
+              ) => ({
+                ...params.props,
+                error: !params.props.value || params.props.value.length > 3,
+              }),
+            },
+            {
+              field: "systemCount",
+              headerName: "System Count",
+              headerAlign: "center",
+              align: "center",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 150,
+              minWidth: 110,
               flex: 1,
             },
             {
-              field: "scanned",
-              headerName: "Scanned",
+              field: "discrepancy",
+              headerName: "Discrepancy",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 110,
+              flex: 1,
+            },
+            {
+              field: "isVerified",
+              headerName: "Is Verified?",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: false,
+              pinnable: false,
+              resizable: false,
+              minWidth: 100,
+              flex: 1,
+              renderCell: ({ row: { isVerified } }) => (
+                <Checkbox checked={isVerified} disabled />
+              ),
+            },
+            {
+              field: "created",
+              headerName: "Created",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               filterable: false,
@@ -203,14 +298,14 @@ export default function Scans() {
               pinnable: false,
               resizable: false,
               sortable: false,
-              minWidth: 280,
+              minWidth: 300,
               flex: 1,
               renderCell: ({
                 row: {
-                  scanned: { by, on },
+                  created: { by, on },
                 },
               }) => (
-                <div className="flex gap-3 items-center py-1">
+                <div className="flex gap-3 items-center">
                   <Avatar
                     isBordered
                     radius="sm"
@@ -225,8 +320,8 @@ export default function Scans() {
               ),
             },
             {
-              field: "device",
-              headerName: "Device",
+              field: "modified",
+              headerName: "Modified",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               filterable: false,
@@ -234,35 +329,71 @@ export default function Scans() {
               pinnable: false,
               resizable: false,
               sortable: false,
-              minWidth: 200,
+              minWidth: 300,
               flex: 1,
               renderCell: ({
                 row: {
-                  scanned: {
-                    device: { model, serialNo },
-                  },
+                  modified: { by, on },
                 },
               }) => (
                 <div className="flex gap-3 items-center">
+                  <Avatar
+                    isBordered
+                    radius="sm"
+                    size="sm"
+                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
+                  />
                   <div className="flex-col">
-                    <div>Model {model}</div>
-                    <div className="text-xs">SerialNo {serialNo}</div>
+                    <div>by {by}</div>
+                    <div className="text-xs">on {on}</div>
                   </div>
                 </div>
               ),
             },
-            { field: "scanned.by", headerName: "Scanned By", hideable: false },
             {
-              field: "scanned.on",
-              headerName: "Scanned On",
+              field: "actions",
+              headerName: "Delete",
+              headerAlign: "center",
+              align: "center",
+              sortable: false,
+              filterable: false,
+              hideable: false,
+              pinnable: false,
+              disableColumnMenu: true,
+              width: 70,
+              renderCell: ({ row }) => (
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  onClick={() => {
+                    changeRowSelection({
+                      type: "include",
+                      ids: new Set([row.id]),
+                    });
+                    // showConfirm({
+                    //   operation: "delete",
+                    //   status: "info",
+                    //   subject: `Confirm deletion of ${row.name}`,
+                    //   body: `Are you sure you intend to delete this store?`,
+                    // });
+                  }}
+                >
+                  <DeleteIcon />
+                </Button>
+              ),
+            },
+            { field: "created.by", headerName: "Created By", hideable: false },
+            {
+              field: "created.on",
+              headerName: "Created On",
               hideable: false,
               filterOperators: dateFilter,
             },
           ]}
-          getRowId={({ _id }) => _id}
           getRowHeight={() => "auto"}
           density="compact"
           pagination
+          checkboxSelection
           keepNonExistentRowsSelected
           disableRowSelectionOnClick
           disableRowSelectionExcludeModel
@@ -301,10 +432,10 @@ export default function Scans() {
             changeRowSelection,
             clearRowSelection,
             changeVisibleColumns,
-            exclude: ["add", "columns"],
+            //exclude: ["multiApprove", "multiReject"],
             exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
               paginationModel?.page
-            }&view=__EXPORT__&options=${encodeURI(
+            }&view=__EXPORT__&sortsAndFilters=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
             )}`,
             handleGetData,
@@ -317,26 +448,18 @@ export default function Scans() {
             setIsExporting,
             stats,
             changeStats,
-            setIsAddItemOpen: setIsAddClientOpen,
+            setIsAddItemOpen,
             extraActions: (
               <>
-                <ButtonShadCN variant="secondary" size="icon">
+                <Button variant="secondary" size="icon">
                   <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadCN>
-                <ButtonShadCN variant="secondary" size="icon">
+                </Button>
+                <Button variant="secondary" size="icon">
                   <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadCN>
+                </Button>
               </>
             ),
           })}
-          // <Button
-          //   size="small"
-          //   startIcon={<FaUsersCog />}
-          //   onPress={() => setIsAddClientOpen(true)}
-          //   sx={sx}
-          // >
-          //   Manage Roles
-          // </Button>
           slotProps={DataGridSlotProps}
           sx={DataGridStyles}
         />
@@ -347,6 +470,6 @@ export default function Scans() {
           changePagination={changePagination}
         />
       </div>
-    </Portal>
+    </Fragment>
   );
 }

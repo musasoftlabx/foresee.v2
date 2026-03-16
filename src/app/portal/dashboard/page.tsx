@@ -1,4 +1,4 @@
-import Portal from "../page";
+import Portal from "../layout";
 
 export default function Dashboard() {
   return (

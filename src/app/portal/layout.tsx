@@ -14,10 +14,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/shadcn/sidebar";
+//import { useRouter } from "next/navigation";
 
 //w-[calc(100vw-16rem)]
 
 export default function Portal({ children }: { children: React.ReactNode }) {
+  // const router = useRouter();
+  // console.log("Router: ", router);
   return (
     <>
       <AppSidebar />

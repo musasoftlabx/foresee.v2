@@ -53,3 +53,7 @@ kill -9 $(lsof -ti:5432)
 rm /opt/homebrew/var/postgresql@16/postmaster.pid
 
 psql -d foresee -U mmuliro -h localhost -p 5432
+
+# Add custom prisma migration
+
+npx prisma migrate dev --name add_tsvector_column --create-only
