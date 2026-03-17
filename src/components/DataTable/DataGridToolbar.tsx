@@ -333,19 +333,22 @@ const operators = [
 export default function DataGridToolbar({
   //apiRef,
   apiUrl,
+  title,
+  caption,
   changeFilters,
   clearFilters,
   changeRowSelection,
   clearRowSelection,
   changeVisibleColumns,
   exclude,
-  exportURL,
+  exportUrl,
   handleGetData,
+  newItemLabel,
   isExporting,
   isLoading,
   setIsExporting,
-  setIsAddItemOpen,
-  search,
+  setIsNewItemOpen,
+  searchPlaceholder,
   stats,
   changeStats,
   extraActions,
@@ -1486,8 +1489,8 @@ export default function DataGridToolbar({
           <HomeIcon />
         </Button>
         <div className="flex flex-col">
-          <b className="text-lg">Title</b>
-          <span className="text-sm -mt-1.5">erergrgeger</span>
+          <b className="text-lg">{title}</b>
+          <span className="text-xs -mt-1.5 ml-0.5">{caption}</span>
         </div>
 
         <div className="flex-1" />
@@ -1497,13 +1500,13 @@ export default function DataGridToolbar({
             render={({ ref, ...controlProps }, state) => {
               const [value, setValue] = useState(state.value);
               return (
-                <ButtonGroup className="w-48">
+                <ButtonGroup className="w-[20vw]">
                   <InputGroup>
                     <InputGroupInput
                       {...controlProps}
                       ref={ref}
                       size={10}
-                      placeholder="Search..."
+                      placeholder={`Search by ${searchPlaceholder ? searchPlaceholder : ""}`}
                       className="focus-visible:ring-0 focus-visible:ring-offset-0"
                       value={value}
                       onChange={(e) => setValue(e.target.value)}
@@ -1599,11 +1602,11 @@ export default function DataGridToolbar({
       <ScrollArea className="max-w-auto px-3 pt-2">
         <div className="flex gap-5">
           <ButtonGroup>
-            {/* Add item */}
-            {!exclude?.includes("add") && (
-              <Button variant="outline" onClick={() => setIsAddItemOpen(true)}>
+            {/* Create item */}
+            {!exclude?.includes("creations") && (
+              <Button variant="outline" onClick={() => setIsNewItemOpen(true)}>
                 <PlusIcon />
-                <Badge size="sm">Add</Badge>
+                <Badge size="sm">{newItemLabel}</Badge>
               </Button>
             )}
 
@@ -1924,7 +1927,7 @@ export default function DataGridToolbar({
                 </Button>
               </DropdownMenuTrigger>
 
-              {!exclude?.includes("exporting") && exportURL && (
+              {!exclude?.includes("exporting") && exportUrl && (
                 <DropdownMenuContent align="end" className="max-w-60">
                   <p className="text-xs p-2">
                     Note that exporting the data without any filters will
@@ -1935,7 +1938,7 @@ export default function DataGridToolbar({
                     onClick={() => {
                       setIsExporting(true);
                       axios
-                        .get(exportURL)
+                        .get(exportUrl)
                         .then(({ data }) => {
                           location.href = data;
                           setIsExporting(false);
@@ -2104,8 +2107,8 @@ export default function DataGridToolbar({
           )}
         </div>
 
-        <div className={`flex gap-5 ${extraActions ? "pt-3" : ""}`}>
-          {/* {extraActions} */}
+        <div className={`flex gap-5 ${filters.length > 0 ? "py-3" : "pb-3"}`}>
+          {/* {extraActions} pb-3*/}
 
           <div className="w-0 flex-wrap flex flex-1 gap-1">
             {filters.map((filter: any, i: number) => {

@@ -1,58 +1,99 @@
 "use client";
 
+// * Next
+import Image from "next/image";
+
 // * MUI
 import {
   GridApiPro,
   GridColumnVisibilityModel,
   GridFilterModel,
   GridRowSelectionModel,
+  GridSlotProps,
 } from "@mui/x-data-grid-pro";
-import { green, red } from "@mui/material/colors";
 
 // * Components
 import DataGridToolbar from "./DataGridToolbar";
-import DataGridLoadingOverlay from "./DataGridLoadingOverlay";
-import DataGridNoRowsOverlay from "./DataGridNoRowsOverlay";
 
 // * Icons
-import { CgPlayListAdd } from "react-icons/cg";
-import { RiDeleteBinLine } from "react-icons/ri";
 import { TbDragDrop } from "react-icons/tb";
 import { Dispatch } from "react";
 
-export type tDataGridSlots = {
+export type DataGridSlots = {
   apiRef: React.RefObject<GridApiPro | null>;
+  /**
+   * Extends the API URL defined to the toolbar
+   */
   apiUrl: string;
+  /**
+   * Extends the API URL defined to the toolbar
+   */
+  title: string;
+  /**
+   * Description of the table.
+   * @default 'Total row count, filtered count'
+   */
+  caption: string;
+  /**
+   * Effects the filter model to the table
+   */
   changeFilters: (arg0: GridFilterModel) => void;
+  /**
+   * Effects the column visibility model to the table
+   */
   changeVisibleColumns: (arg0: GridColumnVisibilityModel) => void;
-  clearFilters: () => void;
+  /**
+   * Effects the row selection model to the table
+   */
   changeRowSelection: (arg0: GridRowSelectionModel) => void;
+  /**
+   * Clears all filters
+   */
+  clearFilters: () => void;
+  /**
+   * Clears row selections
+   */
   clearRowSelection: () => void;
   /**
-   * This will exclude the listed buttons from displaying.
-   *
-   * @see https://musasoftlabx.com
+   * Excludes the listed buttons from displaying on the toolbar
    */
-  exclude?: [
+  exclude: [
     _?: string, // Caters for undefined instances where filtering option is excluded on mobile to enable header filters.
-    add?: string,
+    creations?: string,
+    filters?: string,
     columns?: string,
-    exporting?: string,
-    filtering?: string,
-    toggleStats?: string,
-    multiApprove?: string,
-    multiReject?: string,
-    multiDelete?: string,
-    deselectAll?: string,
+    exports?: string,
+    statcards?: string,
+    approvals?: string,
+    rejections?: string,
+    deletions?: string,
   ];
-  exportURL?: string;
+
+  exportUrl?: string;
+
   extraActions?: React.ReactNode;
+  /**
+   * Handles data refetch by triggering refetch query
+   */
   handleGetData: () => void;
+  /**
+   * How to label the new item button
+   */
+  newItemLabel: "Add" | "Create" | "New";
+  /**
+   * Parses the exporting state to the toolbar
+   */
   isExporting: boolean;
+  /**
+   * Parses the loading state to the toolbar
+   */
   isLoading: boolean;
   setIsExporting: (arg0: boolean) => void;
-  search?: { fields: string; width?: number };
-  setIsAddItemOpen: Dispatch<React.SetStateAction<boolean>>;
+  /**
+   * Fields included in the search criteria
+   */
+  searchPlaceholder?: string;
+  setIsNewItemOpen: Dispatch<React.SetStateAction<boolean>>;
   stats?: boolean;
   changeStats?: (arg0: boolean) => void; //React.Dispatch<React.SetStateAction<boolean>>;
 };
@@ -60,34 +101,44 @@ export type tDataGridSlots = {
 export const DataGridSlots = ({
   apiRef,
   apiUrl,
+  title,
+  caption,
   changeFilters,
   clearFilters,
   changeRowSelection,
   clearRowSelection,
   changeVisibleColumns,
   exclude,
-  exportURL,
+  exportUrl,
   handleGetData,
+  newItemLabel,
   isExporting,
   isLoading,
   setIsExporting,
-  setIsAddItemOpen,
-  search,
+  setIsNewItemOpen,
+  searchPlaceholder,
   stats,
   changeStats,
   extraActions,
-}: tDataGridSlots) => ({
-  FilterPanel: <div />,
-  filterPanelAddIcon: () => <CgPlayListAdd style={{ color: green[400] }} />,
-  filterPanelRemoveAllIcon: () => (
-    <RiDeleteBinLine style={{ color: red[300] }} />
+}: DataGridSlots) => ({
+  noResultsOverlay: () => "",
+  noRowsOverlay: () => (
+    <section className="absolute --dark:bg-gray-950 z-[-1] h-[inherit] w-[inherit] top-0 right-0 bottom-0 left-0">
+      <div className="flex flex-col h-[inherit] items-center justify-center -mt-5">
+        <Image
+          src="/images/animated/no-records.gif"
+          alt="no-records"
+          priority
+          width={150}
+          height={150}
+        />
+        <div className="font-bold text-xl -mt-5">No records found!</div>
+        <div className="font-bold text-sm text-muted-foreground">
+          We could not find any items under these
+        </div>
+      </div>
+    </section>
   ),
-  filterPanelDeleteIcon: () => (
-    <RiDeleteBinLine size={24} style={{ color: red[300] }} />
-  ),
-  //loadingOverlay: () => <DataGridLoadingOverlay />,
-  noResultsOverlay: () => <DataGridNoRowsOverlay />,
-  noRowsOverlay: () => <DataGridNoRowsOverlay />,
   rowReorderIcon: () => (
     <TbDragDrop style={{ width: 21, height: 23, opacity: 0.8 }} />
   ),
@@ -95,19 +146,22 @@ export const DataGridSlots = ({
     <DataGridToolbar
       apiRef={apiRef}
       apiUrl={apiUrl}
+      title={title}
+      caption={caption}
       changeFilters={changeFilters}
       clearFilters={clearFilters}
       changeRowSelection={changeRowSelection}
       clearRowSelection={clearRowSelection}
       changeVisibleColumns={changeVisibleColumns}
       exclude={exclude}
-      exportURL={exportURL}
+      exportUrl={exportUrl}
       handleGetData={handleGetData}
+      newItemLabel={newItemLabel}
       isExporting={isExporting}
       isLoading={isLoading}
       setIsExporting={setIsExporting}
-      setIsAddItemOpen={setIsAddItemOpen}
-      search={search}
+      setIsNewItemOpen={setIsNewItemOpen}
+      searchPlaceholder={searchPlaceholder}
       extraActions={extraActions}
       stats={stats}
       changeStats={changeStats}
@@ -115,54 +169,6 @@ export const DataGridSlots = ({
   ),
 });
 
-export const DataGridSlotProps = {
-  toolbar: { showQuickFilter: true },
-  filterPanel: {
-    filterFormProps: {
-      logicOperatorInputProps: {
-        variant: "outlined",
-        size: "small",
-      },
-      columnInputProps: {
-        variant: "outlined",
-        size: "small",
-        sx: { mt: "auto" },
-      },
-      operatorInputProps: {
-        variant: "outlined",
-        size: "small",
-        sx: { mt: "auto" },
-      },
-      valueInputProps: {
-        InputComponentProps: {
-          variant: "outlined",
-          size: "small",
-        },
-      },
-    },
-    sx: {
-      pr: 2,
-      "& .MuiDataGrid-filterForm": { p: 2 },
-      // "& .MuiDataGrid-filterForm:nth-of-type(even)": {
-      //   backgroundColor: (theme: { palette: { mode: string } }) =>
-      //     theme.palette.mode === "dark" ? "#444" : "#f5f5f5",
-      // },
-      "& .MuiDataGrid-filterFormLogicOperatorInput": { mr: 2 },
-      "& .MuiDataGrid-filterFormColumnInput": { mr: 2, width: 150 },
-      "& .MuiDataGrid-filterFormOperatorInput": { mr: 2 },
-      "& .MuiDataGrid-filterFormValueInput": { width: 200 },
-      "& .MuiDataGrid-panelFooter >": {
-        ":first-of-type": {
-          color: "--primary", //green[500],
-          ml: 2,
-          textTransform: "capitalize",
-        },
-        ":last-child": {
-          color: red[300],
-          textTransform: "capitalize",
-        },
-      },
-    },
-  },
+export const DataGridSlotProps: Pick<GridSlotProps, "loadingOverlay"> = {
   loadingOverlay: { variant: "skeleton", noRowsVariant: "skeleton" },
 };

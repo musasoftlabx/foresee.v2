@@ -57,3 +57,11 @@ psql -d foresee -U mmuliro -h localhost -p 5432
 # Add custom prisma migration
 
 npx prisma migrate dev --name add_tsvector_column --create-only
+
+# Access Mac postgresDB from parallels windows navicat
+
+1. edit pg_hba.conf
+2. get mac ip address from terminal
+   > ipconfig getifaddr en0
+3. add line below to file (edit ip if necessary)
+   > host all all 192.168.100.84/32 trust

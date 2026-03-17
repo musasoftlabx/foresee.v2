@@ -3,83 +3,66 @@
 // * React
 import { Fragment, useEffect, useState } from "react";
 
+// * Next
+import { useRouter } from "next/navigation";
+
 // * NPM
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 // * HUI
-import {
-  Avatar,
-  Badge,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-} from "@heroui/react";
+import { Avatar } from "@heroui/react";
 
 // * SUI
 import { Button } from "@/components/ui/shadcn/button";
-import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
-
-import CreateStore from "@/components/admin/clients/create-store";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/shadcn/tooltip";
 
 // * MUI
 import {
   DataGridPro,
-  GRID_CHECKBOX_SELECTION_COL_DEF,
-  gridDimensionsSelector,
   GridPreProcessEditCellProps,
   GridRowModel,
-  GridRowParams,
-  GridValidRowModel,
-  useGridApiContext,
   useGridApiRef,
-  useGridSelector,
 } from "@mui/x-data-grid-pro";
+
+// * Icons
+import { ExternalLink } from "lucide-react";
+import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
+import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 
 // * Components
 import {
   DataGridSlotProps,
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
-
-// * Icons
-import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
-
-// * Constants
-const apiUrl = "stores";
+import { dateFilter } from "@/components/DataTable/DataGridFilters";
+import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
+import DataGridPagination from "@/components/DataTable/DataGridPagination";
+import CreateStore from "@/components/admin/clients/create-store";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 
-import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
-import DataGridPagination from "@/components/DataTable/DataGridPagination";
-
+// * Store
 import { useDialogStore } from "@/store/useDialogStore";
-import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
-import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import { ExternalLink, ExternalLinkIcon, FileSymlinkIcon } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/shadcn/tooltip";
-import { useRouter } from "next/navigation";
 
-export default function Stores() {
-  // ? Refs
+// * Prisma
+import { Prisma } from "@/generated/prisma/client";
+import { capitalize } from "@mui/material";
+
+export default function Stores({ apiUrl = "stores" }) {
+  // ? Hooks
   const apiRef = useGridApiRef();
   const router = useRouter();
-
   const showConfirm = useDialogStore((state) => state.confirm);
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
-  const [audits, setAudits] = useState([]);
-  const [isAuditsSheetOpen, setIsAuditsSheetOpen] = useState(false);
-  const [rowDetails, setRowDetails] = useState<GridValidRowModel>();
+  const [isNewItemOpen, setIsNewItemOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -116,6 +99,17 @@ export default function Stores() {
     toPin: { left: ["id", "code"], right: ["actions"] },
   });
 
+  // ? Effects
+  useEffect(() => {
+    apiRef.current?.restoreState({
+      columns: {
+        dimensions: initialState?.columns?.dimensions,
+        orderedFields: initialState?.columns?.orderedFields,
+      },
+    });
+    //console.log(apiRef.current?.getRowsCount());
+  });
+
   // ? Queries
   const { data, isLoading } = useQuery({
     queryKey: [
@@ -125,236 +119,23 @@ export default function Stores() {
       encodeURI(JSON.stringify({ filterModel, sortModel })),
     ],
     queryFn: ({ queryKey }) =>
-      axios<GridValidRowModel>(
+      axios(
         `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
       ),
-    select: ({ data }) => data,
+    select: ({
+      data,
+    }: {
+      data: { count: number; dataset: Prisma.StoresModel[] };
+    }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
-  });
-
-  const { mutate: getAudits, isSuccess } = useMutation({
-    mutationFn: (id: string) => axios(`/audits?store=${id}`),
-    onSuccess: ({ data }) => {
-      setAudits(data);
-    },
-    onError: () => {},
-  });
-
-  // ? Effects
-  useEffect(() => {
-    apiRef.current?.restoreState({
-      columns: {
-        dimensions: initialState?.columns?.dimensions,
-        orderedFields: initialState?.columns?.orderedFields,
-      },
-    });
   });
 
   return (
     <Fragment>
       <CreateStore
-        isAddItemOpen={isAddItemOpen}
-        setIsAddItemOpen={setIsAddItemOpen}
+        isNewItemOpen={isNewItemOpen}
+        setIsNewItemOpen={setIsNewItemOpen}
       />
-
-      <div className="flex items-center justify-center">
-        {/* <Sheet open={isAuditsSheetOpen} onOpenChange={setIsAuditsSheetOpen}>
-          <SheetContent className="flex flex-col gap-0 space-y-0">
-            <SheetHeader>
-              <SheetTitle>{rowDetails?.name}</SheetTitle>
-              <SheetDescription>
-                Audits done under {rowDetails?.name} for {rowDetails?.client}
-              </SheetDescription>
-            </SheetHeader>
-            <ScrollArea className="h-[calc(100vh-230px)] flex-1 grow">
-              <div className="w-full">
-                <Table className="border-x-0 border-y-1 border-dashed">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Audit</TableHead>
-                      <TableHead>Locations</TableHead>
-                      <TableHead>Inventory</TableHead>
-                      <TableHead>Scans</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rowDetails?.audits.map(
-                      ({
-                        id,
-                        date,
-                        locationsCount,
-                        inventoryCount,
-                        scansCount,
-                      }: {
-                        id: string;
-                        date: string;
-                        locationsCount: number;
-                        inventoryCount: number;
-                        scansCount: number;
-                      }) => (
-                        <TableRow key={id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <div className="bg-muted rounded-md flex size-9 shrink-0 items-center justify-center">
-                                <PackageIcon className="text-muted-foreground size-4" />
-                              </div>
-                              <div className="flex flex-col">
-                                {`Audit ${dayjs(date).format("DD/MM/YY")}`}
-                                <div className="flex gap-3">
-                                  <Link
-                                    href={`/portal/locations/${id}`}
-                                    className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
-                                  >
-                                    Locations
-                                  </Link>
-                                  <span>/</span>
-                                  <Link
-                                    href={`/portal/inventory/${id}`}
-                                    className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
-                                  >
-                                    Inventory
-                                  </Link>
-                                  <span>/</span>
-                                  <Link
-                                    href={`/portal/scans/${id}`}
-                                    className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
-                                  >
-                                    Scans
-                                  </Link>
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center text-muted-foreground text-sm">
-                              {locationsCount}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center text-muted-foreground text-sm">
-                              {inventoryCount}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center justify-center text-muted-foreground text-sm">
-                              {scansCount}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ),
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </ScrollArea>
-          </SheetContent>
-        </Sheet> */}
-
-        <Drawer
-          isOpen={isAuditsSheetOpen}
-          onOpenChange={setIsAuditsSheetOpen}
-          backdrop="blur"
-          size="xl"
-        >
-          <DrawerContent>
-            {(onClose) => (
-              <>
-                <DrawerHeader className="flex flex-col gap-1">
-                  <h4>{rowDetails?.name}</h4>
-                  <h6 className="text-sm text-foreground-500">
-                    Audits done under {rowDetails?.name} for{" "}
-                    {rowDetails?.client}
-                  </h6>
-                </DrawerHeader>
-                <DrawerBody>
-                  <ScrollArea className="h-[calc(100vh-230px)] flex-1 grow">
-                    <div className="w-full">
-                      {/* <Table className="border-x-0 border-y-1 border-dashed">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Audit</TableHead>
-                            <TableHead>Locations</TableHead>
-                            <TableHead>Scans</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {rowDetails?.audits.map(
-                            ({
-                              id,
-                              date,
-                              locationsCount,
-                              inventoryCount,
-                              scansCount,
-                            }: {
-                              id: string;
-                              date: string;
-                              locationsCount: number;
-                              inventoryCount: number;
-                              scansCount: number;
-                            }) => (
-                              <TableRow key={id}>
-                                <TableCell>
-                                  <div className="flex items-center gap-3">
-                                    <div className="bg-muted rounded-md flex size-9 shrink-0 items-center justify-center">
-                                      <PackageIcon className="text-muted-foreground size-4" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                      {`Audit ${dayjs(date).format("DD/MM/YY")}`}
-                                      <div className="flex gap-3">
-                                        <Link
-                                          href={`/portal/locations/${id}`}
-                                          className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
-                                        >
-                                          Locations
-                                        </Link>
-                                        <span>/</span>
-                                        <Link
-                                          href={`/portal/scans/${id}`}
-                                          className="text-sm text-muted-foreground font-medium hover:underline cursor-pointer"
-                                        >
-                                          Scans
-                                        </Link>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center justify-center text-muted-foreground text-sm">
-                                    {locationsCount}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center justify-center text-muted-foreground text-sm">
-                                    {inventoryCount}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center justify-center text-muted-foreground text-sm">
-                                    {scansCount}
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            ),
-                          )}
-                        </TableBody>
-                      </Table> */}
-                    </div>
-                  </ScrollArea>
-                </DrawerBody>
-                <DrawerFooter>
-                  {/* <Button
-                    color="danger"
-                    variant="light"
-                    onPress={() => setIsAuditsSheetOpen(false)}
-                  >
-                    Close
-                  </Button> */}
-                </DrawerFooter>
-              </>
-            )}
-          </DrawerContent>
-        </Drawer>
-      </div>
 
       <div className="flex flex-1 flex-col">
         <DataGridPro
@@ -414,11 +195,11 @@ export default function Stores() {
               resizable: false,
               minWidth: 250,
               flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
+              preProcessEditCellProps: ({
+                props,
+              }: GridPreProcessEditCellProps) => ({
+                ...props,
+                error: !props.value || props.value.length > 50,
               }),
             },
             {
@@ -431,12 +212,6 @@ export default function Stores() {
               resizable: false,
               minWidth: 150,
               flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
-              }),
             },
             {
               field: "client",
@@ -448,12 +223,6 @@ export default function Stores() {
               resizable: false,
               minWidth: 150,
               flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
-              }),
             },
             {
               field: "inventoryCount",
@@ -594,16 +363,11 @@ export default function Stores() {
               filterOperators: dateFilter,
             },
           ]}
-          //getDetailPanelHeight={() => "auto"}
-          //getDetailPanelContent={getDetailPanelContent}
           getRowHeight={() => 40}
           density="compact"
           pagination
-          keepNonExistentRowsSelected
-          disableRowSelectionOnClick
-          disableRowSelectionExcludeModel
-          showCellVerticalBorder={false}
-          showColumnVerticalBorder={false}
+          //showCellVerticalBorder={false}
+          //showColumnVerticalBorder={false}
           showToolbar
           hideFooter
           hideFooterPagination
@@ -632,28 +396,28 @@ export default function Stores() {
           slots={DataGridSlots({
             apiRef,
             apiUrl: `${apiUrl}?scope=users`,
+            title: capitalize(apiUrl),
+            caption: `${data?.count} items displayed from a total of ${data?.count}.`,
             changeFilters,
-            clearFilters,
-            changeRowSelection,
-            clearRowSelection,
             changeVisibleColumns,
-            //exclude: ["multiApprove", "multiReject"],
-            exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+            changeRowSelection,
+            clearFilters,
+            clearRowSelection,
+            exclude: [],
+            exportUrl: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
               paginationModel?.page
-            }&view=__EXPORT__&sortsAndFilters=${encodeURI(
+            }&exportable=true&refines=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
             )}`,
             handleGetData,
+            newItemLabel: "Create",
             isExporting,
             isLoading,
-            search: {
-              fields: "Id, Username, Dealer, Names, Phone etc ...",
-              width: 450,
-            },
+            searchPlaceholder: "Code, Name, Country, Client",
             setIsExporting,
             stats,
             changeStats,
-            setIsAddItemOpen,
+            setIsNewItemOpen,
             extraActions: (
               <>
                 <Button variant="secondary" size="icon">
@@ -665,14 +429,6 @@ export default function Stores() {
               </>
             ),
           })}
-          // <Button
-          //   size="small"
-          //   startIcon={<FaUsersCog />}
-          //   onPress={() => setIsAddClientOpen(true)}
-          //   sx={sx}
-          // >
-          //   Manage Roles
-          // </Button>
           slotProps={DataGridSlotProps}
           sx={DataGridStyles}
         />

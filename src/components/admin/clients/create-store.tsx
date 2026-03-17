@@ -109,11 +109,11 @@ const schema = z.object({
 type TSchema = z.infer<typeof schema>;
 
 export default function CreateStore({
-  isAddItemOpen,
-  setIsAddItemOpen,
+  isNewItemOpen,
+  setIsNewItemOpen,
 }: {
-  isAddItemOpen: boolean;
-  setIsAddItemOpen: React.Dispatch<SetStateAction<boolean>>;
+  isNewItemOpen: boolean;
+  setIsNewItemOpen: React.Dispatch<SetStateAction<boolean>>;
 }) {
   const {
     control,
@@ -176,8 +176,8 @@ export default function CreateStore({
         ref={targetRef}
         backdrop="blur"
         shadow="lg"
-        isOpen={isAddItemOpen}
-        onClose={() => setIsAddItemOpen(false)}
+        isOpen={isNewItemOpen}
+        onClose={() => setIsNewItemOpen(false)}
         onOpenChange={onOpenChange}
         draggable={false}
         isDismissable={false}
@@ -215,7 +215,7 @@ export default function CreateStore({
                 onSubmit={handleSubmit((formdata: TSchema) =>
                   createStore(formdata, {
                     onSuccess: () => {
-                      // setIsAddItemOpen(false);
+                      // setIsNewItemOpen(false);
                       // queryClient.refetchQueries({
                       //   queryKey: ["stores"],
                       // });

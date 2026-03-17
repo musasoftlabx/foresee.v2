@@ -5,13 +5,16 @@ export const DataGridStyles = (theme: {
 }) => ({
   borderTop: `1px solid ${theme.palette.grey}`,
   borderRadius: 3,
-  mx: 0,
-  overflow: "auto",
-  ".vertical-center-cell": {
-    display: "flex",
-    alignItems: "center",
+  //mx: 0,
+  //overflow: "auto",
+  ".vertical-center-cell": { display: "flex", alignItems: "center" },
+  //[`.${gridClasses["cell"]}`]: { border: 0 },
+  [`.${gridClasses["cell"]}`]: {
+    borderColor: "#fff",
+    //borderLeft: 0.5,
+    borderTop: 0,
+    borderBottom: 0,
   },
-  [`.${gridClasses["cell"]}`]: { border: 0 },
   [`.${gridClasses["cell--editable"]}`]: {
     background: "rgba(70, 189, 97, .1)",
     //background: "rgba(var(--color-sidebar-primary), .1)",
