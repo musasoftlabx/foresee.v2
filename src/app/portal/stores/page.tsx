@@ -1,11 +1,7 @@
 "use client";
 
-import Portal from "../layout";
-
 // * React
 import { Fragment, useEffect, useState } from "react";
-
-import Link from "next/link";
 
 // * NPM
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -25,18 +21,6 @@ import {
 // * SUI
 import { Button } from "@/components/ui/shadcn/button";
 import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/shadcn/sheet";
-
-// * RUI
 
 import CreateStore from "@/components/admin/clients/create-store";
 
@@ -75,49 +59,13 @@ import DataGridPagination from "@/components/DataTable/DataGridPagination";
 import { useDialogStore } from "@/store/useDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import React from "react";
-import Stack from "@mui/material/Stack";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/shadcn/card";
-import {
-  ExternalLink,
-  ExternalLinkIcon,
-  FileSymlinkIcon,
-  PackageIcon,
-  Table2,
-} from "lucide-react";
-import dayjs from "dayjs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/shadcn/table";
-import { BoxesIcon } from "@/components/ui/lucide-animated/boxes";
-import { Separator } from "@/components/ui/shadcn/separator";
+import { ExternalLink, ExternalLinkIcon, FileSymlinkIcon } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/shadcn/tooltip";
 import { useRouter } from "next/navigation";
-
-type TResponse = {
-  count: number;
-  dataset: {
-    id: string;
-    client: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-};
 
 export default function Stores() {
   // ? Refs
@@ -203,7 +151,7 @@ export default function Stores() {
   });
 
   return (
-    <Portal>
+    <Fragment>
       <CreateStore
         isAddItemOpen={isAddItemOpen}
         setIsAddItemOpen={setIsAddItemOpen}
@@ -435,8 +383,25 @@ export default function Stores() {
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 75,
+              minWidth: 80,
               flex: 1,
+              renderCell: ({ row }) => (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="link"
+                      onClick={() => router.push(`/portal/stores/${row.id}`)}
+                      className="pl-0"
+                    >
+                      <span className="flex gap-1 underline decoration-dashed">
+                        {row.code}
+                        <ExternalLink size={8} />
+                      </span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">View Audits</TooltipContent>
+                </Tooltip>
+              ),
             },
             {
               field: "name",
@@ -505,7 +470,7 @@ export default function Stores() {
               renderCell: ({ row: { id, inventoryCount } }) => (
                 <Button
                   variant="link"
-                  onClick={() => router.push(`/portal/inventory/${id}`)}
+                  onClick={() => router.push(`/portal/stores/${id}/inventory`)}
                 >
                   <span className="flex gap-1 underline decoration-dashed">
                     {inventoryCount} items
@@ -578,7 +543,7 @@ export default function Stores() {
             },
             {
               field: "actions",
-              headerName: "Actions",
+              headerName: "Delete",
               headerAlign: "center",
               align: "center",
               sortable: false,
@@ -586,22 +551,9 @@ export default function Stores() {
               hideable: false,
               pinnable: false,
               disableColumnMenu: true,
-              width: 100,
+              width: 70,
               renderCell: ({ row }) => (
                 <div className="flex items-center justify-center gap-3 mt-0.5">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="default"
-                        onClick={() => router.push(`/portal/stores/${row.id}`)}
-                      >
-                        <FileSymlinkIcon aria-hidden="true" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="left">View Audits</TooltipContent>
-                  </Tooltip>
-
                   <Button
                     size="icon"
                     variant="destructive"
@@ -731,6 +683,6 @@ export default function Stores() {
           changePagination={changePagination}
         />
       </div>
-    </Portal>
+    </Fragment>
   );
 }

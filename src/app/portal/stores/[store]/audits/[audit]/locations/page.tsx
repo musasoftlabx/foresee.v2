@@ -169,7 +169,7 @@ export default function Locations() {
               hideable: true,
               pinnable: false,
               resizable: false,
-              minWidth: 220,
+              minWidth: 20,
               flex: 1,
             },
             {

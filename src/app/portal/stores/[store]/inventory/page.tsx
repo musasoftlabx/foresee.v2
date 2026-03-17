@@ -1,9 +1,9 @@
 "use client";
 
-import Portal from "../../layout";
+import Portal from "../../../../layout";
 
 // * React
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 // * NPM
 import { useQuery } from "@tanstack/react-query";
@@ -36,11 +36,8 @@ import {
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
 
-// * Icons
-import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
-
 // * Constants
-const apiUrl = "scans";
+const apiUrl = "inventory";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -50,30 +47,28 @@ import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
 import { useDialogStore } from "@/store/useDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
-import { dateFilter } from "@/components/DataTable/DataGridFilters";
 import { useParams } from "next/navigation";
 
 type TResponse = {
   count: number;
   dataset: {
-    _id: string;
+    id: string;
     client: string;
     createdAt: string;
     updatedAt: string;
   };
 };
 
-export default function Scans() {
+export default function Inventory() {
   // ? Hooks
   const apiRef = useGridApiRef();
-  const { audit } = useParams();
+  const { store } = useParams();
 
   const showConfirm = useDialogStore((state) => state.confirm);
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
   const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [isManageUserRolesOpen, setIsManageUserRolesOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -99,10 +94,10 @@ export default function Scans() {
   } = useCustomDataGrid({
     apiRef,
     apiUrl,
-    columnsToHide: ["_id", "scanned.by", "scanned.on"],
-    columnsToSort: [{ field: "_id", sort: "desc" }],
+    columnsToHide: ["id"],
+    columnsToSort: [{ field: "id", sort: "desc" }],
     toPin: {
-      left: ["_id", "barcode"],
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "id", "barcode"],
       right: ["actions"],
     },
   });
@@ -110,15 +105,14 @@ export default function Scans() {
   // ? Queries
   const { data, isLoading } = useQuery({
     queryKey: [
-      `${apiUrl}/${audit}`,
+      apiUrl,
       paginationModel?.pageSize,
       paginationModel?.page,
-      "__DISPLAY__",
       encodeURI(JSON.stringify({ filterModel, sortModel })),
     ],
     queryFn: ({ queryKey }) =>
       axios<GridValidRowModel>(
-        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&sortsAndFilters=${queryKey[4]}&scope=__DEFAULT__`,
+        `${queryKey[0]}?store=${store}&limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
       ),
     select: ({ data }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
@@ -135,12 +129,7 @@ export default function Scans() {
   });
 
   return (
-    <Portal>
-      <AddClient
-        isAddClientOpen={isAddClientOpen}
-        setIsAddClientOpen={setIsAddClientOpen}
-      />
-
+    <Fragment>
       <div className="flex flex-1 flex-col">
         <DataGridPro
           apiRef={apiRef}
@@ -149,18 +138,7 @@ export default function Scans() {
           initialState={initialState}
           columns={[
             {
-              field: GRID_CHECKBOX_SELECTION_COL_DEF.field,
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              resizable: false,
-              sortable: false,
-              maxWidth: 40,
-            },
-            {
-              field: "_id",
+              field: "id",
               headerName: "Id.",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: false,
@@ -183,84 +161,57 @@ export default function Scans() {
               flex: 1,
             },
             {
-              field: "location",
-              headerName: "Location",
+              field: "name",
+              headerName: "Name",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 150,
+              hideable: true,
+              pinnable: true,
+              resizable: true,
+              minWidth: 250,
               flex: 1,
             },
             {
-              field: "scanned",
-              headerName: "Scanned",
+              field: "color",
+              headerName: "Color",
+              headerAlign: "center",
+              align: "center",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              sortable: false,
-              minWidth: 280,
+              hideable: true,
+              pinnable: true,
+              resizable: true,
+              minWidth: 50,
               flex: 1,
-              renderCell: ({
-                row: {
-                  scanned: { by, on },
-                },
-              }) => (
-                <div className="flex gap-3 items-center py-1">
-                  <Avatar
-                    isBordered
-                    radius="sm"
-                    size="sm"
-                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
-                  />
-                  <div className="flex-col">
-                    <div>by {by}</div>
-                    <div className="text-xs">on {on}</div>
-                  </div>
-                </div>
-              ),
             },
             {
-              field: "device",
-              headerName: "Device",
+              field: "length",
+              headerName: "Length",
+              headerAlign: "center",
+              align: "center",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              sortable: false,
-              minWidth: 200,
+              hideable: true,
+              pinnable: true,
+              resizable: true,
+              minWidth: 50,
               flex: 1,
-              renderCell: ({
-                row: {
-                  scanned: {
-                    device: { model, serialNo },
-                  },
-                },
-              }) => (
-                <div className="flex gap-3 items-center">
-                  <div className="flex-col">
-                    <div>Model {model}</div>
-                    <div className="text-xs">SerialNo {serialNo}</div>
-                  </div>
-                </div>
-              ),
             },
-            { field: "scanned.by", headerName: "Scanned By", hideable: false },
             {
-              field: "scanned.on",
-              headerName: "Scanned On",
-              hideable: false,
-              filterOperators: dateFilter,
+              field: "specialCode",
+              headerName: "Special Code",
+              headerAlign: "center",
+              align: "center",
+              cellClassName: "vertical-center-cell",
+              disableColumnMenu: true,
+              hideable: true,
+              pinnable: true,
+              resizable: true,
+              minWidth: 50,
+              flex: 1,
             },
           ]}
-          getRowId={({ _id }) => _id}
-          getRowHeight={() => "auto"}
+          getRowHeight={() => 30}
           density="compact"
           pagination
           keepNonExistentRowsSelected
@@ -295,14 +246,14 @@ export default function Scans() {
           }
           slots={DataGridSlots({
             apiRef,
-            apiUrl: `${apiUrl}?scope=users`,
+            apiUrl: `${apiUrl}?scope=__DEFAULT__`,
             changeFilters,
             clearFilters,
             changeRowSelection,
             clearRowSelection,
             changeVisibleColumns,
-            exclude: ["add", "columns"],
-            exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+            //exclude: ["multiApprove", "multiReject"],
+            exportURL: `${apiUrl}?scope=__DEFAULT__&limit=${data?.count}&offset=${
               paginationModel?.page
             }&view=__EXPORT__&options=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
@@ -329,14 +280,6 @@ export default function Scans() {
               </>
             ),
           })}
-          // <Button
-          //   size="small"
-          //   startIcon={<FaUsersCog />}
-          //   onPress={() => setIsAddClientOpen(true)}
-          //   sx={sx}
-          // >
-          //   Manage Roles
-          // </Button>
           slotProps={DataGridSlotProps}
           sx={DataGridStyles}
         />
@@ -347,6 +290,6 @@ export default function Scans() {
           changePagination={changePagination}
         />
       </div>
-    </Portal>
+    </Fragment>
   );
 }

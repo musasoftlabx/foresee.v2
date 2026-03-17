@@ -95,6 +95,7 @@ import { addToast } from "@heroui/react";
 import { TbDatabaseEdit } from "react-icons/tb";
 import { GoTrash } from "react-icons/go";
 import {
+  ArrowLeft,
   BanIcon,
   CalendarIcon,
   CheckIcon,
@@ -224,6 +225,9 @@ import { Checkbox } from "../ui/shadcn/checkbox";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/shadcn/tooltip";
 import { EllipsisHorizontalIcon } from "../ui/heroicons-animated/ellipsis-horizontal";
 import { EllipsisVerticalIcon } from "../ui/heroicons-animated/ellipsis-vertical";
+import { useRouter } from "next/navigation";
+import { HomeIcon } from "../ui/lucide-animated/home";
+import { ArrowLeftIcon } from "../ui/lucide-animated/arrow-left";
 
 // Zod validation helper - wraps a Zod schema to return validation result with message
 function zodValidator<T extends z.ZodType>(schema: T) {
@@ -347,6 +351,7 @@ export default function DataGridToolbar({
   extraActions,
 }: tDataGridSlots) {
   // ? Hooks
+  const router = useRouter();
   const confirmOperation = useDialogStore((state) => state.operation);
   const showAlert = useAlertStore((state) => state.alert);
   const showConfirm = useDialogStore((state) => state.confirm);
@@ -1463,7 +1468,135 @@ export default function DataGridToolbar({
         cancelText="NO"
       />
 
-      <ScrollArea className="max-w-auto p-3">
+      <div className="flex items-center gap-2 px-3 mt-2">
+        <Button
+          variant="outline"
+          size="icon-lg"
+          onClick={() => router.back()}
+          disabled={isLoading}
+        >
+          <ArrowLeftIcon />
+        </Button>
+        <Button
+          variant="secondary"
+          size="icon-lg"
+          onClick={() => router.push("/portal/stores")}
+          disabled={isLoading}
+        >
+          <HomeIcon />
+        </Button>
+        <div className="flex flex-col">
+          <b className="text-lg">Title</b>
+          <span className="text-sm -mt-1.5">erergrgeger</span>
+        </div>
+
+        <div className="flex-1" />
+
+        <QuickFilter>
+          <QuickFilterControl
+            render={({ ref, ...controlProps }, state) => {
+              const [value, setValue] = useState(state.value);
+              return (
+                <ButtonGroup className="w-48">
+                  <InputGroup>
+                    <InputGroupInput
+                      {...controlProps}
+                      ref={ref}
+                      size={10}
+                      placeholder="Search..."
+                      className="focus-visible:ring-0 focus-visible:ring-offset-0"
+                      value={value}
+                      onChange={(e) => setValue(e.target.value)}
+                      onKeyUp={(e) =>
+                        e.key === "Enter" &&
+                        changeFilters({
+                          ...filterModel,
+                          quickFilterValues: [
+                            (e.target as HTMLInputElement).value,
+                          ],
+                        })
+                      }
+                    />
+                    <InputGroupAddon>
+                      <SearchIcon className="text-muted-foreground" />
+                    </InputGroupAddon>
+                    <InputGroupAddon align="inline-end">
+                      {isLoading && <LoaderIcon className="animate-spin" />}
+                    </InputGroupAddon>
+                    <InputGroupAddon align="inline-end">
+                      {value.length > 0 && (
+                        <XIcon
+                          size={16}
+                          className="cursor-pointer"
+                          onClick={() => {
+                            setValue("");
+                            changeFilters({
+                              ...filterModel,
+                              quickFilterValues: [""],
+                            });
+                          }}
+                        />
+                      )}
+                    </InputGroupAddon>
+                  </InputGroup>
+                </ButtonGroup>
+              );
+            }}
+          />
+        </QuickFilter>
+
+        <Button
+          size="icon"
+          variant="destructive"
+          onClick={() => {
+            localStorage.removeItem(`_${apiUrl}_filtered_columns`);
+            localStorage.removeItem(`_${apiUrl}_pagination`);
+            localStorage.removeItem(`_${apiUrl}_pinned_columns`);
+            localStorage.removeItem(`_${apiUrl}_selected_rows`);
+            localStorage.removeItem(`_${apiUrl}_sorted_columns`);
+            localStorage.removeItem(`_${apiUrl}_state`);
+            localStorage.removeItem(`_${apiUrl}_visible_columns`);
+            localStorage.removeItem(`_${apiUrl}_stats`);
+            location.reload();
+          }}
+        >
+          <CogIcon />
+        </Button>
+
+        {/* <DropdownMenu>
+          <DropdownMenuTrigger>
+            <EllipsisVerticalIcon size={24} />
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent>
+            {extraActions && (
+              <DropdownMenuGroup>
+                <DropdownMenuItem>Log out</DropdownMenuItem>
+              </DropdownMenuGroup>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => {
+                localStorage.removeItem(`_${apiUrl}_filtered_columns`);
+                localStorage.removeItem(`_${apiUrl}_pagination`);
+                localStorage.removeItem(`_${apiUrl}_pinned_columns`);
+                localStorage.removeItem(`_${apiUrl}_selected_rows`);
+                localStorage.removeItem(`_${apiUrl}_sorted_columns`);
+                localStorage.removeItem(`_${apiUrl}_state`);
+                localStorage.removeItem(`_${apiUrl}_visible_columns`);
+                localStorage.removeItem(`_${apiUrl}_stats`);
+                location.reload();
+              }}
+            >
+              <CogIcon />
+              Reset defaults
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu> */}
+      </div>
+
+      <ScrollArea className="max-w-auto px-3 pt-2">
         <div className="flex gap-5">
           <ButtonGroup>
             {/* Add item */}
@@ -1485,215 +1618,234 @@ export default function DataGridToolbar({
             </Button>
 
             {/* Filter */}
-            <DropdownMenu
-              open={addFilterOpen}
-              onOpenChange={(open) => {
-                setAddFilterOpen(open);
-                if (!open) {
-                  setMenuSearchInput("");
-                  setSessionFilterIds({});
-                } else {
-                  setActiveMenu("root");
-                }
-              }}
-            >
-              <DropdownMenuTrigger
-                children={
-                  <Button
-                    variant={filters!.length > 0 ? "default" : "outline"}
-                    className="rounded-l-none border-l-0"
-                  >
-                    <SlidersHorizontalIcon />
-                    <Badge
-                      color="primary"
-                      content={`${filterModel.items.length}`}
-                      size="sm"
-                      variant="faded"
-                      hidden={filterModel.items.length === 0}
-                      className={cn(
-                        "top-1",
-                        filterModel.items.length !== 0 && "left-10",
-                      )}
+            {!exclude?.includes("filter") && (
+              <DropdownMenu
+                open={addFilterOpen}
+                onOpenChange={(open) => {
+                  setAddFilterOpen(open);
+                  if (!open) {
+                    setMenuSearchInput("");
+                    setSessionFilterIds({});
+                  } else {
+                    setActiveMenu("root");
+                  }
+                }}
+              >
+                <DropdownMenuTrigger
+                  children={
+                    <Button
+                      variant={filters!.length > 0 ? "default" : "outline"}
+                      className="rounded-l-none border-l-0"
                     >
-                      <span>Filters</span>
-                      <div
+                      <SlidersHorizontalIcon />
+                      <Badge
+                        color="primary"
+                        content={`${filterModel.items.length}`}
+                        size="sm"
+                        variant="faded"
+                        hidden={filterModel.items.length === 0}
                         className={cn(
-                          "size-1.5 animate-pulse rounded-full bg-green-600 text-muted-foreground hover:text-foreground",
-                          filterModel.items.length !== 0 && "mr-2",
+                          "top-1",
+                          filterModel.items.length !== 0 && "left-10",
                         )}
-                      />
-                    </Badge>
-                  </Button>
-                }
-              />
-              <DropdownMenuContent align="start">
-                <Input
-                  ref={rootInputRef}
-                  placeholder="Filter..."
-                  className={cn(
-                    "h-8 rounded-none border-0 bg-transparent! px-2 text-sm shadow-none",
-                    "focus-visible:border-border focus-visible:ring-0 focus-visible:ring-offset-0",
-                  )}
-                  value={menuSearchInput}
-                  onChange={(e) => setMenuSearchInput(e.target.value)}
+                      >
+                        <span>Filters</span>
+                        <div
+                          className={cn(
+                            "size-1.5 animate-pulse rounded-full bg-green-600 text-muted-foreground hover:text-foreground",
+                            filterModel.items.length !== 0 && "mr-2",
+                          )}
+                        />
+                      </Badge>
+                    </Button>
+                  }
                 />
+                <DropdownMenuContent align="start">
+                  <Input
+                    ref={rootInputRef}
+                    placeholder="Filter..."
+                    className={cn(
+                      "h-8 rounded-none border-0 bg-transparent! px-2 text-sm shadow-none",
+                      "focus-visible:border-border focus-visible:ring-0 focus-visible:ring-offset-0",
+                    )}
+                    value={menuSearchInput}
+                    onChange={(e) => setMenuSearchInput(e.target.value)}
+                  />
 
-                <DropdownMenuSeparator />
+                  <DropdownMenuSeparator />
 
-                <div
-                  className="flex max-h-[min(var(--available-height),24rem)] w-full scroll-pt-2 scroll-pb-2 flex-col overscroll-contain"
-                  id={`${rootId}-listbox`}
-                  onMouseEnter={() => setActiveMenu("root")}
-                >
-                  <ScrollArea className="**:data-[slot=scroll-area-scrollbar]:m-0">
-                    {(() => {
-                      if (filteredFields.length === 0) {
-                        return (
-                          <div className="text-muted-foreground py-2 text-center text-sm">
-                            No filters found.
-                          </div>
-                        );
-                      }
-
-                      return filteredFields.map((field: any, index: number) => {
-                        const isHighlighted = highlightedIndex === index;
-                        const itemId = `${rootId}-item-${index}`;
-                        const hasSubMenu =
-                          (field.type === "select" ||
-                            field.type === "multiselect") &&
-                          field.options?.length;
-
-                        if (hasSubMenu) {
-                          const isMultiSelect = field.type === "multiselect";
-                          const fieldKey = field.key as string;
-                          const sessionFilterId = sessionFilterIds[fieldKey];
-                          const sessionFilter = sessionFilterId
-                            ? filters.find((f: any) => f.id === sessionFilterId)
-                            : null;
-                          const currentValues = sessionFilter?.values || [];
-
+                  <div
+                    className="flex max-h-[min(var(--available-height),24rem)] w-full scroll-pt-2 scroll-pb-2 flex-col overscroll-contain"
+                    id={`${rootId}-listbox`}
+                    onMouseEnter={() => setActiveMenu("root")}
+                  >
+                    <ScrollArea className="**:data-[slot=scroll-area-scrollbar]:m-0">
+                      {(() => {
+                        if (filteredFields.length === 0) {
                           return (
-                            <DropdownMenuSub
-                              key={fieldKey}
-                              open={openSubMenu === fieldKey}
-                              onOpenChange={(open) => {
-                                if (open) {
-                                  setOpenSubMenu(fieldKey);
-                                } else {
-                                  if (openSubMenu === fieldKey) {
-                                    setOpenSubMenu(null);
-                                    setActiveMenu("root");
-                                  }
-                                }
-                              }}
-                            >
-                              <DropdownMenuSubTrigger
-                                id={itemId}
-                                role="option"
-                                aria-selected={isHighlighted}
-                                data-highlighted={isHighlighted || undefined}
-                                onMouseEnter={() => {
-                                  setHighlightedIndex(index);
-                                  setActiveMenu("root");
-                                }}
-                                className="data-popup-open:bg-accent data-popup-open:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-                              >
-                                {field.icon}
-                                <span>{field.label}</span>
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuSubContent>
-                                <FilterSubmenuContent
-                                  field={field}
-                                  currentValues={currentValues}
-                                  isMultiSelect={isMultiSelect}
-                                  isActive={activeMenu === fieldKey}
-                                  onActive={() => {
-                                    if (field.searchable !== false) {
-                                      setActiveMenu(fieldKey);
-                                    }
-                                  }}
-                                  onBack={() => {
-                                    setOpenSubMenu(null);
-                                    setActiveMenu("root");
-                                  }}
-                                  onClose={() => setAddFilterOpen(false)}
-                                  onToggle={(value, isSelected) => {
-                                    if (isMultiSelect) {
-                                      const nextValues = isSelected
-                                        ? (currentValues.filter(
-                                            (v: any) => v !== value,
-                                          ) as any)
-                                        : ([...currentValues, value] as any);
-
-                                      if (sessionFilter) {
-                                        if (nextValues.length === 0) {
-                                          onChange(
-                                            filters.filter(
-                                              (f: any) =>
-                                                f.id !== sessionFilter.id,
-                                            ),
-                                          );
-                                          setSessionFilterIds((prev) => ({
-                                            ...prev,
-                                            [fieldKey]: "",
-                                          }));
-                                        } else {
-                                          onChange(
-                                            filters.map((f: any) =>
-                                              f.id === sessionFilter.id
-                                                ? { ...f, values: nextValues }
-                                                : f,
-                                            ),
-                                          );
-                                        }
-                                      } else {
-                                        const newFilter = createFilter(
-                                          fieldKey,
-                                          field.defaultOperator || "is_any_of",
-                                          nextValues,
-                                        );
-                                        onChange([...filters, newFilter]);
-                                        setSessionFilterIds((prev) => ({
-                                          ...prev,
-                                          [fieldKey]: newFilter.id,
-                                        }));
-                                      }
-                                    } else {
-                                      const newFilter = createFilter(
-                                        fieldKey,
-                                        field.defaultOperator || "is",
-                                        [value] as any,
-                                      );
-                                      setLastAddedFilterId(newFilter.id);
-                                      onChange([...filters, newFilter]);
-                                      setAddFilterOpen(false);
-                                    }
-                                  }}
-                                />
-                              </DropdownMenuSubContent>
-                            </DropdownMenuSub>
+                            <div className="text-muted-foreground py-2 text-center text-sm">
+                              No filters found.
+                            </div>
                           );
                         }
 
-                        return (
-                          <DropdownMenuItem
-                            key={field.key}
-                            id={itemId}
-                            data-highlighted={isHighlighted || undefined}
-                            onMouseEnter={() => setHighlightedIndex(index)}
-                            onClick={() => field.key && addFilter(field.key)}
-                            className="data-highlighted:bg-accent data-highlighted:text-accent-foreground"
-                          >
-                            {field.icon}
-                            <span>{field.label}</span>
-                          </DropdownMenuItem>
+                        return filteredFields.map(
+                          (field: any, index: number) => {
+                            const isHighlighted = highlightedIndex === index;
+                            const itemId = `${rootId}-item-${index}`;
+                            const hasSubMenu =
+                              (field.type === "select" ||
+                                field.type === "multiselect") &&
+                              field.options?.length;
+
+                            if (hasSubMenu) {
+                              const isMultiSelect =
+                                field.type === "multiselect";
+                              const fieldKey = field.key as string;
+                              const sessionFilterId =
+                                sessionFilterIds[fieldKey];
+                              const sessionFilter = sessionFilterId
+                                ? filters.find(
+                                    (f: any) => f.id === sessionFilterId,
+                                  )
+                                : null;
+                              const currentValues = sessionFilter?.values || [];
+
+                              return (
+                                <DropdownMenuSub
+                                  key={fieldKey}
+                                  open={openSubMenu === fieldKey}
+                                  onOpenChange={(open) => {
+                                    if (open) {
+                                      setOpenSubMenu(fieldKey);
+                                    } else {
+                                      if (openSubMenu === fieldKey) {
+                                        setOpenSubMenu(null);
+                                        setActiveMenu("root");
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <DropdownMenuSubTrigger
+                                    id={itemId}
+                                    role="option"
+                                    aria-selected={isHighlighted}
+                                    data-highlighted={
+                                      isHighlighted || undefined
+                                    }
+                                    onMouseEnter={() => {
+                                      setHighlightedIndex(index);
+                                      setActiveMenu("root");
+                                    }}
+                                    className="data-popup-open:bg-accent data-popup-open:text-accent-foreground data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                                  >
+                                    {field.icon}
+                                    <span>{field.label}</span>
+                                  </DropdownMenuSubTrigger>
+                                  <DropdownMenuSubContent>
+                                    <FilterSubmenuContent
+                                      field={field}
+                                      currentValues={currentValues}
+                                      isMultiSelect={isMultiSelect}
+                                      isActive={activeMenu === fieldKey}
+                                      onActive={() => {
+                                        if (field.searchable !== false) {
+                                          setActiveMenu(fieldKey);
+                                        }
+                                      }}
+                                      onBack={() => {
+                                        setOpenSubMenu(null);
+                                        setActiveMenu("root");
+                                      }}
+                                      onClose={() => setAddFilterOpen(false)}
+                                      onToggle={(value, isSelected) => {
+                                        if (isMultiSelect) {
+                                          const nextValues = isSelected
+                                            ? (currentValues.filter(
+                                                (v: any) => v !== value,
+                                              ) as any)
+                                            : ([
+                                                ...currentValues,
+                                                value,
+                                              ] as any);
+
+                                          if (sessionFilter) {
+                                            if (nextValues.length === 0) {
+                                              onChange(
+                                                filters.filter(
+                                                  (f: any) =>
+                                                    f.id !== sessionFilter.id,
+                                                ),
+                                              );
+                                              setSessionFilterIds((prev) => ({
+                                                ...prev,
+                                                [fieldKey]: "",
+                                              }));
+                                            } else {
+                                              onChange(
+                                                filters.map((f: any) =>
+                                                  f.id === sessionFilter.id
+                                                    ? {
+                                                        ...f,
+                                                        values: nextValues,
+                                                      }
+                                                    : f,
+                                                ),
+                                              );
+                                            }
+                                          } else {
+                                            const newFilter = createFilter(
+                                              fieldKey,
+                                              field.defaultOperator ||
+                                                "is_any_of",
+                                              nextValues,
+                                            );
+                                            onChange([...filters, newFilter]);
+                                            setSessionFilterIds((prev) => ({
+                                              ...prev,
+                                              [fieldKey]: newFilter.id,
+                                            }));
+                                          }
+                                        } else {
+                                          const newFilter = createFilter(
+                                            fieldKey,
+                                            field.defaultOperator || "is",
+                                            [value] as any,
+                                          );
+                                          setLastAddedFilterId(newFilter.id);
+                                          onChange([...filters, newFilter]);
+                                          setAddFilterOpen(false);
+                                        }
+                                      }}
+                                    />
+                                  </DropdownMenuSubContent>
+                                </DropdownMenuSub>
+                              );
+                            }
+
+                            return (
+                              <DropdownMenuItem
+                                key={field.key}
+                                id={itemId}
+                                data-highlighted={isHighlighted || undefined}
+                                onMouseEnter={() => setHighlightedIndex(index)}
+                                onClick={() =>
+                                  field.key && addFilter(field.key)
+                                }
+                                className="data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                              >
+                                {field.icon}
+                                <span>{field.label}</span>
+                              </DropdownMenuItem>
+                            );
+                          },
                         );
-                      });
-                    })()}
-                  </ScrollArea>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                      })()}
+                    </ScrollArea>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
 
             {false && (
               <FilterPanelTrigger
@@ -1950,93 +2102,6 @@ export default function DataGridToolbar({
               </Button>
             </ButtonGroup>
           )}
-
-          <div className="flex-1" />
-
-          <QuickFilter>
-            <QuickFilterControl
-              render={({ ref, ...controlProps }, state) => {
-                const [value, setValue] = useState(state.value);
-                return (
-                  <ButtonGroup className="w-48">
-                    <InputGroup>
-                      <InputGroupInput
-                        {...controlProps}
-                        ref={ref}
-                        size={10}
-                        placeholder="Search..."
-                        className="focus-visible:ring-0 focus-visible:ring-offset-0"
-                        value={value}
-                        onChange={(e) => setValue(e.target.value)}
-                        onKeyUp={(e) =>
-                          e.key === "Enter" &&
-                          changeFilters({
-                            ...filterModel,
-                            quickFilterValues: [
-                              (e.target as HTMLInputElement).value,
-                            ],
-                          })
-                        }
-                      />
-                      <InputGroupAddon>
-                        <SearchIcon className="text-muted-foreground" />
-                      </InputGroupAddon>
-                      <InputGroupAddon align="inline-end">
-                        {isLoading && <LoaderIcon className="animate-spin" />}
-                      </InputGroupAddon>
-                      <InputGroupAddon align="inline-end">
-                        {value.length > 0 && (
-                          <XIcon
-                            size={16}
-                            className="cursor-pointer"
-                            onClick={() => {
-                              setValue("");
-                              changeFilters({
-                                ...filterModel,
-                                quickFilterValues: [""],
-                              });
-                            }}
-                          />
-                        )}
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </ButtonGroup>
-                );
-              }}
-            />
-          </QuickFilter>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <EllipsisVerticalIcon size={24} />
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent>
-              {extraActions && (
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>Log out</DropdownMenuItem>
-                </DropdownMenuGroup>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onClick={() => {
-                  localStorage.removeItem(`_${apiUrl}_filtered_columns`);
-                  localStorage.removeItem(`_${apiUrl}_pagination`);
-                  localStorage.removeItem(`_${apiUrl}_pinned_columns`);
-                  localStorage.removeItem(`_${apiUrl}_selected_rows`);
-                  localStorage.removeItem(`_${apiUrl}_sorted_columns`);
-                  localStorage.removeItem(`_${apiUrl}_state`);
-                  localStorage.removeItem(`_${apiUrl}_visible_columns`);
-                  localStorage.removeItem(`_${apiUrl}_stats`);
-                  location.reload();
-                }}
-              >
-                <CogIcon />
-                Reset defaults
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
         <div className={`flex gap-5 ${extraActions ? "pt-3" : ""}`}>

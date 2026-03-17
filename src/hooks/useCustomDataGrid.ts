@@ -188,7 +188,6 @@ export default function useCustomDataGrid({
         apiUrl,
         paginationModel?.pageSize,
         paginationModel?.page,
-        "display",
         encodeURI(JSON.stringify({ filterModel, sortModel })),
       ],
     });
