@@ -16,12 +16,19 @@ import "@/styles/globals.css";
 // import "@fontsource/allison";
 // import "@fontsource/lato";
 import "@fontsource/nunito";
+import { Inter } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+
+
 // import "@fontsource/pacifico";
 // import "@fontsource/kenia";
 
 export const metadata: Metadata = {
-  title: "E-Ballot",
-  description: "Application used to organize and cast electronic ballots.",
+  title: "Foresee Inc.",
+  description:
+    "SASS application used to take and maintain stock records & inventories in warehouses.",
 };
 
 export default function RootLayout({
@@ -30,7 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
+    <html lang="en" suppressHydrationWarning={true} className={cn("font-sans", inter.variable)}>
       <body>
         <InitColorSchemeScript attribute="class" />
         <Main>{children}</Main>

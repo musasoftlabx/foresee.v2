@@ -12,15 +12,16 @@ import {
 } from "@/components/ui/shadcn/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
-import { Input, Textarea } from "@heroui/react";
+import { Divider, Input, Textarea } from "@heroui/react";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useState } from "react";
 import { useDialogStore } from "@/store/useDialogStore";
 
 import parse from "html-react-parser";
+import { Trash2Icon } from "lucide-react";
 
-export default function Confirm({
+export default function Dialog({
   okText = "OK",
   cancelText = "CANCEL",
   comments,
@@ -45,11 +46,49 @@ export default function Confirm({
   const handleCancel = useDialogStore((state) => state.close);
 
   return (
+    <AlertDialog open={true}>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
+            <DeleteIcon />
+          </AlertDialogMedia>
+          <AlertDialogTitle>{subject}</AlertDialogTitle>
+          <AlertDialogDescription>{parse(body ?? "")}</AlertDialogDescription>
+          {comments && (
+            <Textarea
+              className="max-w-xs"
+              description={`${comment.length} chars`}
+              label="Description"
+              placeholder="Enter your description"
+              variant="faded"
+              size="sm"
+              isRequired
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+          )}
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel variant="ghost" onClick={handleCancel}>
+            {cancelText}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            variant="destructive"
+            onClick={() => handleConfirm()}
+          >
+            {okText}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  return (
     <AlertDialog open={useDialogStore((state) => state.isOpen)}>
       {/* <AlertDialogTrigger asChild>
         <Button variant="destructive">Delete Chat</Button>
       </AlertDialogTrigger> */}
-      <AlertDialogContent size="sm">
+      <AlertDialogContent size="sm" className="p-0">
         <AlertDialogHeader>
           <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
             <DeleteIcon />
@@ -70,6 +109,7 @@ export default function Confirm({
             />
           )}
         </AlertDialogHeader>
+        <Divider className="mt-4" />
         <AlertDialogFooter>
           <AlertDialogCancel variant="outline" onClick={handleCancel}>
             {cancelText}

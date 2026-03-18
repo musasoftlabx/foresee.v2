@@ -35,6 +35,11 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+# Project starter kit
+
+1. bunx create-next-app@latest
+2. bunx --bun shadcn@latest init
+
 bunx --bun shadcn@latest add "https://lucide-animated.com/r/refresh-cw.json" --path src/components/ui/lucide-animated/
 bunx --bun shadcn@latest add badge --path src/components/ui/shadcn/
 

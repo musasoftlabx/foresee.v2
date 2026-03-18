@@ -6,6 +6,7 @@ import Image from "next/image";
 // * MUI
 import {
   GridApiPro,
+  gridClasses,
   GridColumnVisibilityModel,
   GridFilterModel,
   GridRowSelectionModel,
@@ -18,8 +19,10 @@ import DataGridToolbar from "./DataGridToolbar";
 // * Icons
 import { TbDragDrop } from "react-icons/tb";
 import { Dispatch } from "react";
+import { alpha, Theme } from "@mui/material";
+import { blue, green, grey, red } from "@mui/material/colors";
 
-export type DataGridSlots = {
+export type TDataGridSlots = Partial<{
   apiRef: React.RefObject<GridApiPro | null>;
   /**
    * Extends the API URL defined to the toolbar
@@ -73,6 +76,11 @@ export type DataGridSlots = {
 
   extraActions?: React.ReactNode;
   /**
+   * Toggles cell horizontal border. MUI only supports toogling vertical cell borders.
+   * @default false
+   */
+  hideRowBorders?: boolean;
+  /**
    * Handles data refetch by triggering refetch query
    */
   handleGetData: () => void;
@@ -96,7 +104,7 @@ export type DataGridSlots = {
   setIsNewItemOpen: Dispatch<React.SetStateAction<boolean>>;
   stats?: boolean;
   changeStats?: (arg0: boolean) => void; //React.Dispatch<React.SetStateAction<boolean>>;
-};
+}>;
 
 export const DataGridSlots = ({
   apiRef,
@@ -110,6 +118,7 @@ export const DataGridSlots = ({
   changeVisibleColumns,
   exclude,
   exportUrl,
+  hideRowBorders,
   handleGetData,
   newItemLabel,
   isExporting,
@@ -120,7 +129,7 @@ export const DataGridSlots = ({
   stats,
   changeStats,
   extraActions,
-}: DataGridSlots) => ({
+}: TDataGridSlots) => ({
   noResultsOverlay: () => "",
   noRowsOverlay: () => (
     <section className="absolute --dark:bg-gray-950 z-[-1] h-[inherit] w-[inherit] top-0 right-0 bottom-0 left-0">
@@ -167,6 +176,27 @@ export const DataGridSlots = ({
       changeStats={changeStats}
     />
   ),
+  styles: (theme: Theme) => ({
+    borderRadius: 3,
+    [`.${gridClasses["cell"]}`]: hideRowBorders ? { borderTop: 0 } : {},
+    [`.${gridClasses["cell--pinnedLeft"]}, .${gridClasses["cell--pinnedRight"]}, .${gridClasses["columnHeader--pinnedLeft"]}, .${gridClasses["columnHeader--pinnedRight"]}`]:
+      [
+        { background: alpha(grey[100], 0.9) },
+        theme.applyStyles("dark", { background: alpha(grey[900], 0.9) }),
+      ],
+    [`.${gridClasses["cell--editable"]}`]: {
+      background: alpha(green[900], 0.3),
+      cursor: "text",
+    },
+    [`.${gridClasses["cell--editing"]}`]: { border: `1px solid ${red[500]}` },
+    [`.${gridClasses.columnHeaderTitle}`]: { fontWeight: "bold" },
+    "& :not(.MuiDataGrid-cell--editable:focus)": { outline: "none" },
+    "& .MuiDataGrid-cell--editable:focus-within": {
+      background: alpha(blue[900], 0.7),
+      outline: `1px solid ${blue[500]}`,
+    },
+    ".vertical-center-cell": { display: "flex", alignItems: "center" },
+  }),
 });
 
 export const DataGridSlotProps: Pick<GridSlotProps, "loadingOverlay"> = {

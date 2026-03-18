@@ -12,7 +12,7 @@ interface useDialogStore {
     subject,
     body,
   }: {
-    status: "success" | "info" | "warning" | "error";
+    status?: "success" | "info" | "warning" | "error";
     operation?: string;
     subject: string;
     body: string;
@@ -28,11 +28,12 @@ export const useDialogStore = create<useDialogStore>((set) => ({
   status: "warning",
   subject: "",
   body: "",
-  confirm: ({ status, subject, body }) =>
+  confirm: ({ status, operation, subject, body }) =>
     set((state) => ({
       ...state,
       isOpen: !state.isOpen,
       status: !status ? state.status : status,
+      operation,
       subject,
       body,
     })),

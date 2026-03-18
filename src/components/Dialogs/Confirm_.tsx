@@ -95,6 +95,8 @@ export default function Confirm({
     }
   };
 
+  return false;
+
   return (
     <AnimatePresence>
       <Modal open={useDialogStore((state) => state.isOpen)}>

@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/shadcn/tooltip";
 
 // * MUI
+import { capitalize } from "@mui/material";
 import {
   DataGridPro,
   GridPreProcessEditCellProps,
@@ -32,7 +33,6 @@ import {
 // * Icons
 import { ExternalLink } from "lucide-react";
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
-import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 
 // * Components
 import {
@@ -40,7 +40,6 @@ import {
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
 import CreateStore from "@/components/admin/clients/create-store";
 
@@ -52,7 +51,6 @@ import { useDialogStore } from "@/store/useDialogStore";
 
 // * Prisma
 import { Prisma } from "@/generated/prisma/client";
-import { capitalize } from "@mui/material";
 
 export default function Stores({ apiUrl = "stores" }) {
   // ? Hooks
@@ -331,12 +329,11 @@ export default function Stores({ apiUrl = "stores" }) {
                         type: "include",
                         ids: new Set([row.id]),
                       });
-                      // showConfirm({
-                      //   operation: "delete",
-                      //   status: "info",
-                      //   subject: `Confirm deletion of ${row.name}`,
-                      //   body: `Are you sure you intend to delete this store?`,
-                      // });
+                      showConfirm({
+                        operation: "delete",
+                        subject: `Confirm deletion of ${row.name}`,
+                        body: `Are you sure you intend to delete this store?`,
+                      });
                     }}
                   >
                     <DeleteIcon />
@@ -418,19 +415,9 @@ export default function Stores({ apiUrl = "stores" }) {
             stats,
             changeStats,
             setIsNewItemOpen,
-            extraActions: (
-              <>
-                <Button variant="secondary" size="icon">
-                  <EllipsisHorizontalIcon data-icon="inline-start" />
-                </Button>
-                <Button variant="secondary" size="icon">
-                  <EllipsisHorizontalIcon data-icon="inline-start" />
-                </Button>
-              </>
-            ),
           })}
           slotProps={DataGridSlotProps}
-          sx={DataGridStyles}
+          sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}
         />
 
         <DataGridPagination

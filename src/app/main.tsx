@@ -35,7 +35,7 @@ import Alert from "@/components/Dialogs/Alert";
 // * Store
 import { useThemeStore } from "@/store/useThemeStore";
 import { getCookie } from "cookies-next";
-import Confirm from "@/components/dialog";
+import Dialog from "@/components/dialog";
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -81,7 +81,7 @@ export default function QueryProvider({ children }: Props) {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         {/* <Alert theme={theme} /> */}
-        <Confirm />
+        <Dialog />
         <ToastProvider />
         <QueryClientProvider client={queryClient}>
           <SidebarProvider>{children}</SidebarProvider>

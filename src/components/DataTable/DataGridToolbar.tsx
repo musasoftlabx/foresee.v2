@@ -68,7 +68,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 
 // * Components
-import { tDataGridSlots } from "./DataGridSlots";
+import { TDataGridSlots } from "./DataGridSlots";
 import { TextFieldX } from "../InputFields/TextFieldX";
 //import Confirm from "@/components/Shared/Confirm";
 
@@ -89,7 +89,6 @@ import { MdAdd, MdSearch } from "react-icons/md";
 import { MdDeselect } from "react-icons/md";
 import { RiDeleteBinLine } from "react-icons/ri";
 import { SlRefresh } from "react-icons/sl";
-import Confirm from "../Dialogs/Confirm_";
 import { ThemeOptions } from "@mui/material";
 import { addToast } from "@heroui/react";
 import { TbDatabaseEdit } from "react-icons/tb";
@@ -352,7 +351,7 @@ export default function DataGridToolbar({
   stats,
   changeStats,
   extraActions,
-}: tDataGridSlots) {
+}: TDataGridSlots) {
   // ? Hooks
   const router = useRouter();
   const confirmOperation = useDialogStore((state) => state.operation);
@@ -1395,7 +1394,7 @@ export default function DataGridToolbar({
 
   return (
     <>
-      <Confirm
+      {/* <Confirm
         handleConfirm={() => {
           closeConfirm();
           switch (confirmOperation) {
@@ -1469,7 +1468,7 @@ export default function DataGridToolbar({
         handleCancel={() => (clearRowSelection(), closeConfirm())}
         okText="YES"
         cancelText="NO"
-      />
+      /> */}
 
       <div className="flex items-center gap-2 px-3 mt-2">
         <Button
@@ -1862,6 +1861,8 @@ export default function DataGridToolbar({
             )}
           </ButtonGroup>
 
+          {extraActions && <ButtonGroup>{extraActions}</ButtonGroup>}
+
           <ButtonGroup>
             {/* Columns */}
             {!exclude?.includes("columns") && (
@@ -2108,8 +2109,6 @@ export default function DataGridToolbar({
         </div>
 
         <div className={`flex gap-5 ${filters.length > 0 ? "py-3" : "pb-3"}`}>
-          {/* {extraActions} pb-3*/}
-
           <div className="w-0 flex-wrap flex flex-1 gap-1">
             {filters.map((filter: any, i: number) => {
               const field = fields.find((field) => field.key === filter.field);
