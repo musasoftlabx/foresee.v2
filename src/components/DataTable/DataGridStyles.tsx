@@ -10,10 +10,9 @@ export const DataGridStyles = (theme: {
   ".vertical-center-cell": { display: "flex", alignItems: "center" },
   //[`.${gridClasses["cell"]}`]: { border: 0 },
   [`.${gridClasses["cell"]}`]: {
-    borderColor: "#fff",
-    //borderLeft: 0.5,
+    borderColor: "#535353",
+    //borderTop: "0.5px solid #535353",
     borderTop: 0,
-    borderBottom: 0,
   },
   [`.${gridClasses["cell--editable"]}`]: {
     background: "rgba(70, 189, 97, .1)",

@@ -192,7 +192,7 @@ export default function Stores({ apiUrl = "stores" }) {
               editable: true,
               hideable: false,
               pinnable: false,
-              resizable: false,
+              resizable: true,
               minWidth: 250,
               flex: 1,
               preProcessEditCellProps: ({
@@ -209,7 +209,7 @@ export default function Stores({ apiUrl = "stores" }) {
               disableColumnMenu: true,
               hideable: false,
               pinnable: false,
-              resizable: false,
+              resizable: true,
               minWidth: 150,
               flex: 1,
             },
@@ -220,7 +220,7 @@ export default function Stores({ apiUrl = "stores" }) {
               disableColumnMenu: true,
               hideable: false,
               pinnable: false,
-              resizable: false,
+              resizable: true,
               minWidth: 150,
               flex: 1,
             },
@@ -366,8 +366,8 @@ export default function Stores({ apiUrl = "stores" }) {
           getRowHeight={() => 40}
           density="compact"
           pagination
-          //showCellVerticalBorder={false}
-          //showColumnVerticalBorder={false}
+          showCellVerticalBorder
+          showColumnVerticalBorder
           showToolbar
           hideFooter
           hideFooterPagination
