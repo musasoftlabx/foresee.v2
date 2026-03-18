@@ -77,6 +77,15 @@ export default function QueryProvider({ children }: Props) {
   }, []);
 
   return (
+    <>
+      <Dialog />
+      <QueryClientProvider client={queryClient}>
+        <SidebarProvider>{children}</SidebarProvider>
+      </QueryClientProvider>
+    </>
+  );
+
+  return (
     <HeroUIProvider navigate={router.push}>
       <ThemeProvider theme={theme}>
         <CssBaseline />

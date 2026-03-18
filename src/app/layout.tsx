@@ -1,5 +1,6 @@
 // * Next
 import type { Metadata } from "next";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 
 // * NPM
 import Main from "@/app/main";
@@ -21,9 +22,18 @@ import { cn } from "@/lib/utils";
 
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
-
 // import "@fontsource/pacifico";
 // import "@fontsource/kenia";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
   title: "Foresee Inc.",
@@ -37,9 +47,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning={true} className={cn("font-sans", inter.variable)}>
+    <html
+      lang="en"
+      suppressHydrationWarning={true}
+      //className={cn("font-sans", inter.variable)}
+      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
+    >
       <body>
-        <InitColorSchemeScript attribute="class" />
+        {/* <InitColorSchemeScript attribute="class" /> */}
         <Main>{children}</Main>
       </body>
     </html>
