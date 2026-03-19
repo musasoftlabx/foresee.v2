@@ -17,10 +17,9 @@ import "@/styles/globals.css";
 // import "@fontsource/allison";
 // import "@fontsource/lato";
 import "@fontsource/nunito";
-import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 // import "@fontsource/pacifico";
 // import "@fontsource/kenia";
@@ -51,7 +50,14 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning={true}
       //className={cn("font-sans", inter.variable)}
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        geistSans.variable,
+        geistMono.variable,
+        "font-sans",
+        inter.variable,
+      )}
     >
       <body>
         {/* <InitColorSchemeScript attribute="class" /> */}

@@ -26,6 +26,7 @@ import {
 import { useColorScheme } from "@mui/material/styles";
 import { HeroUIProvider } from "@heroui/react";
 import { ToastProvider } from "@heroui/toast";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 import axios from "axios";
 
@@ -77,15 +78,6 @@ export default function QueryProvider({ children }: Props) {
   }, []);
 
   return (
-    <>
-      <Dialog />
-      <QueryClientProvider client={queryClient}>
-        <SidebarProvider>{children}</SidebarProvider>
-      </QueryClientProvider>
-    </>
-  );
-
-  return (
     <HeroUIProvider navigate={router.push}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
@@ -93,7 +85,9 @@ export default function QueryProvider({ children }: Props) {
         <Dialog />
         <ToastProvider />
         <QueryClientProvider client={queryClient}>
-          <SidebarProvider>{children}</SidebarProvider>
+          <SidebarProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </SidebarProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </HeroUIProvider>
