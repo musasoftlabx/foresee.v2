@@ -6,20 +6,24 @@ import { ReactNode, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-import LaunchUI from "@/components/logos/launch-ui";
-import { Button, buttonVariants } from "@/components/ui/button";
+import LaunchUI from "@/components/ui/launchui/launch-ui";
+import { Button, buttonVariants } from "@/components/ui/shadcn/button";
 import {
   Navbar as NavbarComponent,
   NavbarLeft,
   NavbarRight,
-} from "@/components/ui/navbar";
-import Navigation from "@/components/ui/navigation";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+} from "@/components/ui/shadcn/navbar";
+import Navigation from "@/components/ui/shadcn/navigation";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/shadcn/sheet";
 
 import {
   PricingColumn,
   PricingColumnProps,
-} from "@/components/ui/pricing-column";
+} from "@/components/ui/launchui/pricing-column";
 //import { Section } from "@/components/ui/section";
 
 interface PricingProps {
@@ -60,7 +64,7 @@ const siteConfig = {
 
 import { CalendarIcon, FileTextIcon, InputIcon } from "@radix-ui/react-icons";
 import { BellIcon, Share2Icon } from "lucide-react";
-import { BentoCard, BentoGrid } from "@/components/ui/bento-grid";
+import { BentoCard, BentoGrid } from "@/components/ui/launchui/bento-grid";
 import { Marquee } from "@/components/ui/marquee";
 
 const files = [
@@ -135,7 +139,7 @@ const features = [
 ];
 
 import React from "react";
-import KineticTestimonial from "@/components/ui/kinetic-testimonials";
+import KineticTestimonial from "@/components/ui/scrollxui/kinetic-testimonials";
 import CreateAccount from "@/components/admin/clients/create-account";
 
 const testimonials = [

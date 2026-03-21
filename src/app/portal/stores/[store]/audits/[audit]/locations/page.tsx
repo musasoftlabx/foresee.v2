@@ -54,7 +54,7 @@ import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
-import { useDialogStore } from "@/store/useDialogStore";
+import { useDialogStore } from "@/store/useAlertDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
 import { Checkbox } from "@/components/ui/shadcn/checkbox";

@@ -35,14 +35,66 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+# Biome not working
+
+1. Install biome on mac
+   brew install biome
+2. Install biome on global node_modules
+   npm install -g @biomejs/biome
+3. Add the below line to vscode settings
+   "biome.lsp.bin": "node_modules/@biomejs/cli-darwin-arm64/biome"
+
+# Install nvm
+
+1. curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+2. nvm -v
+3. nvm i 25
+4. node -v
+
 # Project starter kit
 
 1. bunx create-next-app@latest
-2. bunx --bun shadcn@latest init
+2. bunx --bun shadcn@latest init --preset a1EE9GQS
+3. bun add @heroui/react framer-motion @hookform/resolvers @hyperse/hero-tel-input @emotion/react @emotion/styled @mui/material @mui/x-data-grid-pro @mui/x-date-pickers-pro @prisma/client @prisma/adapter-pg @protobi/exceljs @react-input/mask @tanstack/react-query axios cookies-next dayjs date-fns dotenv filesize filepond filepond-plugin-file-validate-size filepond-plugin-file-validate-type filepond-plugin-image-preview filepond-plugin-image-validate-size next-themes react-filepond file-type got html-react-parser ioredis mime prisma puppeteer pg react-icons react-hook-form slash zod zustand
+4. bun add -D @hookform/devtools
+5. bun add jsbarcode (per project additions)
+6. bunx prisma init
+7. bunx prisma db pull (if db already exists) If not, use
+8. bunx prisma generate
+9. add prisma.ts file to lib
+10. bunx --bun shadcn@latest add alert-dialog alert button breadcrumb button-group calendar card checkbox combobox dialog dropdown-menu input-group input item popover radio-group scroll-area select separator --path src/components/ui/shadcn
+    To overwrite existing components, use overwite directive
+    - bunx --bun shadcn@latest add alert-dialog --overwrite
+11. Add hero.ts file with the below code to /src
 
-bunx --bun shadcn@latest add "https://lucide-animated.com/r/refresh-cw.json" --path src/components/ui/lucide-animated/
-bunx --bun shadcn@latest add badge --path src/components/ui/shadcn/
+`````js
+import { heroui } from "@heroui/react";
+export default heroui();
 
+11. Add the code below to globals.css
+
+````css
+   /* Hero UI */
+   @plugin './hero.ts';
+   @source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+
+12. Add lucide-animated icons
+   ```bash
+    bunx --bun shadcn@latest add "https://lucide-animated.com/r/refresh-cw.json" "https://lucide-animated.com/r/arrow-left.json" "https://lucide-animated.com/r/bookmark-plus.json" "https://lucide-animated.com/r/eye.json" "https://lucide-animated.com/r/eye-off.json" "https://lucide-animated.com/r/plus.json" "https://lucide-animated.com/r/sliders-horizontal.json" "https://lucide-animated.com/r/delete.json" "https://lucide-animated.com/r/boxes.json"  --path src/components/ui/lucide-animated
+
+13. Add reui components (Some like date selector error out so use manual copy paste code in such cases)
+   bunx --bun shadcn@latest add @reui/number-field --path src/components/ui/reui
+
+14.
+   bunx --bun shadcn@latest add @magicui/animated-theme-toggler --path src/components/ui/magicui
+
+15.
+   bunx --bun shadcn@latest add "https://launchuicomponents.com/r/pricing" --path src/components/ui/launchui
+
+
+bunx --bun shadcn@latest add "https://lucide-animated.com/r/refresh-cw.json" --path src/components/ui/lucide-animated
+bunx --bun shadcn@latest add @heroicons-animated/tag --path src/components/ui/heroicons-animated
+bunx --bun shadcn@latest add badge --path src/components/ui/shadcn
 # kill port
 
 lsof -ti:5432
@@ -67,6 +119,7 @@ npx prisma migrate dev --name add_tsvector_column --create-only
 
 1. edit pg_hba.conf
 2. get mac ip address from terminal
-   > ipconfig getifaddr en0
+> ipconfig getifaddr en0
 3. add line below to file (edit ip if necessary)
-   > host all all 192.168.100.84/32 trust
+> host all all 192.168.100.84/32 trust
+`````

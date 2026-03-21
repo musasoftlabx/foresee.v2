@@ -17,30 +17,20 @@ import { useRouter } from "next/navigation";
 
 // * NPM
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-  createTheme,
-  CssBaseline,
-  ThemeProvider,
-  useMediaQuery,
-} from "@mui/material";
-import { useColorScheme } from "@mui/material/styles";
+import { createTheme, ThemeProvider } from "@mui/material";
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { HeroUIProvider } from "@heroui/react";
 import { ToastProvider } from "@heroui/toast";
-import { TooltipProvider } from "@/components/ui/tooltip";
-
+import { TooltipProvider } from "@/components/ui/shadcn/tooltip";
+import { getCookie } from "cookies-next";
 import axios from "axios";
-
-// * Components
-import Alert from "@/components/Dialogs/Alert";
 
 // * Store
 import { useThemeStore } from "@/store/useThemeStore";
-import { getCookie } from "cookies-next";
-import Dialog from "@/components/dialog";
-import {
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/shadcn/sidebar";
+
+// * Components
+import { SidebarProvider } from "@/components/ui/shadcn/sidebar";
+import AlertDialog from "@/components/alert-dialog";
 
 type Props = Readonly<{
   children: React.ReactNode;
@@ -50,46 +40,60 @@ type Props = Readonly<{
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_API;
 axios.defaults.timeout = 60000;
 axios.defaults.headers.post["Content-Type"] = "application/json";
-axios.defaults.headers.post["Accept"] = "application/json";
+axios.defaults.headers.post.Accept = "application/json";
 axios.interceptors.request.use(
-  (req: any) => {
-    req.headers.Authorization = `Bearer ${getCookie("__e_ballot_aT")}`;
+  (req) => {
+    req.headers.Authorization = `Bearer ${getCookie("__foresee_aT")}`;
     return req;
   },
   (err) => Promise.reject(err),
 );
 
+// * Initialize Query Client
 const queryClient = new QueryClient();
+
+export function NextThemeProvider({
+  children,
+  ...props
+}: React.ComponentProps<typeof NextThemesProvider>) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
+}
 
 export default function QueryProvider({ children }: Props) {
   const router = useRouter();
-  const setTheme = useThemeStore((state) => state.changeMode);
   const themeState = useThemeStore((state) => state.theme);
-  const theme = createTheme(themeState);
-  //const theme = useMemo(() => createTheme(themeState), [themeState]);
+  const changeMode = useThemeStore((state) => state.changeMode);
+  const theme = useMemo(() => createTheme(themeState), [themeState]);
 
-  const { setMode, systemMode } = useColorScheme();
+  const isSystemDark =
+    window?.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
 
   useEffect(() => {
-    const __theme = localStorage.getItem("__theme");
-
-    if (__theme === "light" || __theme === "dark") setMode(__theme);
-    else localStorage.setItem("__theme", (systemMode as string) ?? "light");
+    const storedTheme = localStorage.getItem("theme");
+    if (storedTheme === "light" || storedTheme === "dark")
+      changeMode(storedTheme);
+    else if (storedTheme === "system")
+      changeMode(isSystemDark ? "dark" : "light");
   }, []);
 
   return (
-    <HeroUIProvider navigate={router.push}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {/* <Alert theme={theme} /> */}
-        <Dialog />
-        <ToastProvider />
-        <QueryClientProvider client={queryClient}>
-          <SidebarProvider>
-            <TooltipProvider>{children}</TooltipProvider>
-          </SidebarProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </HeroUIProvider>
+    <NextThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <HeroUIProvider navigate={router.push}>
+        <ThemeProvider theme={theme}>
+          <AlertDialog />
+          <ToastProvider />
+          <QueryClientProvider client={queryClient}>
+            <SidebarProvider>
+              <TooltipProvider>{children}</TooltipProvider>
+            </SidebarProvider>
+          </QueryClientProvider>
+        </ThemeProvider>
+      </HeroUIProvider>
+    </NextThemeProvider>
   );
 }

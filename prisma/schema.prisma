@@ -7,6 +7,58 @@ datasource db {
   provider = "postgresql"
 }
 
+model Audits {
+  id        Int         @id @default(autoincrement())
+  code      String      @db.VarChar(8)
+  date      DateTime    @db.Timestamp(6)
+  barcode   Json
+  storeId   Int
+  created   Json
+  modified  Json
+  Stores    Stores      @relation(fields: [storeId], references: [id])
+  Locations Locations[]
+  Scans     Scans[]
+
+  @@index([code])
+}
+
+model Clients {
+  id             Int           @id @default(autoincrement())
+  name           String        @db.VarChar(30)
+  added          Json
+  modified       Json
+  organizationId Int
+  Organizations  Organizations @relation(fields: [organizationId], references: [id])
+
+  @@index([name])
+}
+
+model Inventory {
+  id         Int    @id @default(autoincrement())
+  barcode    String @db.VarChar(30)
+  attributes Json
+  added      Json
+  modified   Json
+  storeId    Int
+  Stores     Stores @relation(fields: [storeId], references: [id])
+
+  @@index([barcode])
+}
+
+model Locations {
+  id            Int     @id @default(autoincrement())
+  code          String  @db.VarChar(20)
+  physicalCount Int     @default(0)
+  systemCount   Int     @default(0)
+  isVerified    Boolean @default(false)
+  created       Json
+  modified      Json
+  auditId       Int
+  Audits        Audits  @relation(fields: [auditId], references: [id])
+
+  @@index([code])
+}
+
 model Organizations {
   id       Int       @id @default(autoincrement())
   name     String    @unique @db.VarChar(50)
@@ -16,6 +68,44 @@ model Organizations {
   Clients  Clients[]
   Stores   Stores[]
   Users    Users[]
+}
+
+model Scans {
+  id       Int    @id @default(autoincrement())
+  location String @db.VarChar(20)
+  barcode  String @db.VarChar(30)
+  scanned  Json
+  auditId  Int
+  Audits   Audits @relation(fields: [auditId], references: [id])
+
+  @@index([location, barcode])
+}
+
+model SpreadsheetTemplates {
+  id       Int    @id @default(autoincrement())
+  fields   Json[]
+  modified Json
+  template String @unique @db.VarChar(20)
+
+  @@index([template])
+}
+
+model Stores {
+  id             Int                      @id @default(autoincrement())
+  code           String                   @db.VarChar(8)
+  name           String                   @db.VarChar(50)
+  created        Json
+  modified       Json
+  organizationId Int
+  client         String                   @db.VarChar(50)
+  country        String                   @db.VarChar(100)
+  search_vector  Unsupported("tsvector")? @default(dbgenerated("to_tsvector('simple'::regconfig, (((((((COALESCE(code, ''::character varying))::text || ' '::text) || (COALESCE(name, ''::character varying))::text) || ' '::text) || (COALESCE(country, ''::character varying))::text) || ' '::text) || (COALESCE(client, ''::character varying))::text))"))
+  Audits         Audits[]
+  Inventory      Inventory[]
+  Organizations  Organizations            @relation(fields: [organizationId], references: [id])
+
+  @@index([code, name])
+  @@index([search_vector], map: "stores_search_vector_idx", type: Gin)
 }
 
 model Users {
@@ -31,97 +121,7 @@ model Users {
   modified       Json
   organizationId Int
   activity       Json[]
-  organization   Organizations @relation(fields: [organizationId], references: [id])
+  Organizations  Organizations @relation(fields: [organizationId], references: [id])
 
   @@index([emailAddress])
-}
-
-model Stores {
-  id             Int                      @id @default(autoincrement())
-  code           String                   @db.VarChar(8)
-  name           String                   @db.VarChar(50)
-  created        Json
-  modified       Json
-  organizationId Int
-  client         String                   @db.VarChar(50)
-  country        String                   @db.VarChar(100)
-  search_vector  Unsupported("tsvector")? @default(dbgenerated("to_tsvector('simple'::regconfig, (((((((COALESCE(code, ''::character varying))::text || ' '::text) || (COALESCE(name, ''::character varying))::text) || ' '::text) || (COALESCE(country, ''::character varying))::text) || ' '::text) || (COALESCE(client, ''::character varying))::text))"))
-  Audits         Audits[]
-  Inventory      Inventory[]
-  organization   Organizations            @relation(fields: [organizationId], references: [id])
-
-  @@index([code, name])
-  @@index([search_vector], map: "stores_search_vector_idx", type: Gin)
-}
-
-model Clients {
-  id             Int           @id @default(autoincrement())
-  name           String        @db.VarChar(30)
-  added          Json
-  modified       Json
-  organizationId Int
-  organization   Organizations @relation(fields: [organizationId], references: [id])
-
-  @@index([name])
-}
-
-model Inventory {
-  id         Int    @id @default(autoincrement())
-  barcode    String @db.VarChar(30)
-  attributes Json
-  added      Json
-  modified   Json
-  storeId    Int
-  store      Stores @relation(fields: [storeId], references: [id])
-
-  @@index([barcode])
-}
-
-model Audits {
-  id        Int         @id @default(autoincrement())
-  code      String      @db.VarChar(8)
-  date      DateTime    @db.Timestamp(6)
-  barcode   Json
-  storeId   Int
-  created   Json
-  modified  Json
-  store     Stores      @relation(fields: [storeId], references: [id])
-  Locations Locations[]
-  Scans     Scans[]
-
-  @@index([code])
-}
-
-model Locations {
-  id            Int     @id @default(autoincrement())
-  code          String  @db.VarChar(20)
-  physicalCount Int     @default(0)
-  systemCount   Int     @default(0)
-  isVerified    Boolean @default(false)
-  created       Json
-  modified      Json
-  auditId       Int
-  audit         Audits  @relation(fields: [auditId], references: [id])
-
-  @@index([code])
-}
-
-model Scans {
-  id       Int    @id @default(autoincrement())
-  location String @db.VarChar(20)
-  barcode  String @db.VarChar(30)
-  scanned  Json
-  auditId  Int
-  audit    Audits @relation(fields: [auditId], references: [id])
-
-  @@index([location, barcode])
-}
-
-model SpreadsheetTemplates {
-  id       Int    @id @default(autoincrement())
-  fields   Json[]
-  modified Json
-  template String @unique @db.VarChar(20)
-
-  @@index([template])
 }

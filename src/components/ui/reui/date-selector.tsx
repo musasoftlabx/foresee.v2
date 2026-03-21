@@ -23,9 +23,9 @@ import type { DateRange } from "react-day-picker";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "../shadcn/button";
 import { Calendar, CalendarDayButton } from "../shadcn/calendar";
-import { Input } from "@/components/ui/input";
+import { Input } from "../shadcn/input";
 import { ScrollArea } from "../shadcn/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "../shadcn/tabs";
 import {

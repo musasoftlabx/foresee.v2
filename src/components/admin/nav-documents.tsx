@@ -1,12 +1,12 @@
 "use client";
 
-import {
-  IconDots,
-  IconFolder,
-  IconShare3,
-  IconTrash,
-  type Icon,
-} from "@tabler/icons-react";
+// import {
+//   IconDots,
+//   IconFolder,
+//   IconShare3,
+//   IconTrash,
+//   type Icon,
+// } from "@tabler/icons-react";
 
 import {
   DropdownMenu,
@@ -54,7 +54,7 @@ export function NavDocuments({
                   showOnHover
                   className="data-[state=open]:bg-accent rounded-sm"
                 >
-                  <IconDots />
+                  {/* <IconDots /> */}
                   <span className="sr-only">More</span>
                 </SidebarMenuAction>
               </DropdownMenuTrigger>
@@ -64,16 +64,16 @@ export function NavDocuments({
                 align={isMobile ? "end" : "start"}
               >
                 <DropdownMenuItem>
-                  <IconFolder />
+                  {/* <IconFolder /> */}
                   <span>Open</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem>
-                  <IconShare3 />
+                  {/* <IconShare3 /> */}
                   <span>Share</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="destructive">
-                  <IconTrash />
+                  {/* <IconTrash /> */}
                   <span>Delete</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -82,7 +82,7 @@ export function NavDocuments({
         ))}
         <SidebarMenuItem>
           <SidebarMenuButton className="text-sidebar-foreground/70">
-            <IconDots className="text-sidebar-foreground/70" />
+            {/* <IconDots className="text-sidebar-foreground/70" /> */}
             <span>More</span>
           </SidebarMenuButton>
         </SidebarMenuItem>

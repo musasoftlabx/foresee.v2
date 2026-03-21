@@ -73,8 +73,8 @@ import { TextFieldX } from "../InputFields/TextFieldX";
 //import Confirm from "@/components/Shared/Confirm";
 
 // * Store
-import { useAlertStore } from "@/store/useAlertStore";
-import { useDialogStore } from "@/store/useDialogStore";
+import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
+import { useAlertDialogStore } from "@/store/useAlertDialogStore";
 //import { useSnackBarStore } from "@/store/useToastStore";
 
 // * Icons
@@ -228,6 +228,8 @@ import { useRouter } from "next/navigation";
 import { HomeIcon } from "../ui/lucide-animated/home";
 import { ArrowLeftIcon } from "../ui/lucide-animated/arrow-left";
 
+import ConfirmDialog from "@/components/confirm-dialog";
+
 // Zod validation helper - wraps a Zod schema to return validation result with message
 function zodValidator<T extends z.ZodType>(schema: T) {
   return (value: unknown): { valid: boolean; message?: string } => {
@@ -354,10 +356,10 @@ export default function DataGridToolbar({
 }: TDataGridSlots) {
   // ? Hooks
   const router = useRouter();
-  const confirmOperation = useDialogStore((state) => state.operation);
-  const showAlert = useAlertStore((state) => state.alert);
-  const showConfirm = useDialogStore((state) => state.confirm);
-  const closeConfirm = useDialogStore((state) => state.close);
+  const action = useConfirmDialogStore((state) => state.action);
+  const alert = useAlertDialogStore((state) => state.alert);
+  const confirm = useConfirmDialogStore((state) => state.confirm);
+  const closeConfirm = useConfirmDialogStore((state) => state.close);
 
   // ? States
   const [multiRejectAnchorEl, setMultiRejectAnchorEl] =
@@ -366,8 +368,7 @@ export default function DataGridToolbar({
 
   // ? Mutations
   const { mutate: deleteData } = useMutation({
-    mutationFn: (body: GridRowSelectionModel) =>
-      axios.delete(`${apiUrl}`, { data: body }),
+    mutationFn: (body: string[]) => axios.delete(apiUrl!, { data: body }),
   });
 
   const { mutate: resetPassword } = useMutation({
@@ -388,8 +389,9 @@ export default function DataGridToolbar({
   //const rowSelection = apiRef.current?.state.rowSelection;
 
   const activeFilters = useGridSelector(apiRef, gridFilterActiveItemsSelector);
+
   const rowSelections = [...gridRowSelectionIdsSelector(apiRef)].map(
-    (row) => row[1]?.client,
+    (row) => row[1]?.id,
   );
   const rowSelectionCount = useGridSelector(
     apiRef,
@@ -1394,81 +1396,39 @@ export default function DataGridToolbar({
 
   return (
     <>
-      {/* <Confirm
+      <ConfirmDialog
         handleConfirm={() => {
           closeConfirm();
-          switch (confirmOperation) {
-            case "reset":
-              resetPassword(rowSelection, {
-                onSuccess: () => {
-                  showAlert({
-                    status: "success",
-                    subject: "Password reset!",
-                    body: `Password was reset and sent to the user.`,
-                  });
-                  changeRowSelection([]);
-                },
-                onError: (error: any) =>
-                  showAlert({
-                    status: "error",
-                    subject: error.response.data.subject || "Reset Error!",
-                    body:
-                      error.response.data.body ||
-                      "An issue occurred while attempting to reset password. Please try again.",
-                  }),
-              });
-              break;
+          switch (action) {
             case "delete":
-              deleteData(rowSelection, {
-                onSuccess: ({ data }) => {
+              deleteData(rowSelections, {
+                onSuccess: ({ data: { count } }) => {
                   addToast({
                     title: "Success",
-                    description: `${apiUrl}${
-                      data.length === 1 ? "" : "s"
-                    } deleted!`,
+                    description: `Store${count === 1 ? "" : "s"} deleted!`,
                     color: "success",
                     variant: "flat",
                     icon: <GoTrash size={25} />,
                     timeout: 3000,
                   });
-                  changeRowSelection([]);
+                  clearRowSelection();
                   handleGetData();
                 },
                 onError: () =>
-                  showAlert({
+                  alert({
+                    icon: <GoTrash size={25} />,
                     status: "error",
                     subject: "Deletion Error!",
                     body: `Error occurred while attempting to delete item`,
                   }),
               });
               break;
-            case "multiAction":
-              multiAction(
-                { action: "multi-approve", ids: rowSelection },
-                {
-                  onSuccess: ({ data }) => {
-                    setSnackBar({
-                      status: "success",
-                      duration: 3000,
-                      message: `row${data.length === 1 ? "" : "s"} approved!`,
-                    });
-                    changeRowSelection([]);
-                    handleGetData();
-                  },
-                  onError: () =>
-                    showAlert({
-                      status: "error",
-                      subject: "Multi-Approval Error!",
-                      body: `Error occurred while attempting to approve record(s)`,
-                    }),
-                },
-              );
           }
         }}
         handleCancel={() => (clearRowSelection(), closeConfirm())}
         okText="YES"
         cancelText="NO"
-      /> */}
+      />
 
       <div className="flex items-center gap-2 px-3 mt-2">
         <Button

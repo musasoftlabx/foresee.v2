@@ -39,7 +39,7 @@ import {
 } from "../ui/shadcn/table";
 
 // * Store
-import { useAlertStore } from "@/store/useAlertStore";
+import { useAlertDialogStore } from "@/store/useAlertDialogStore";
 
 // * CSS
 import "filepond/dist/filepond.min.css";
@@ -94,7 +94,7 @@ export default function __FileUploader__(
   });
 
   // ? State Actions
-  const showAlert = useAlertStore((state) => state.alert);
+  const showAlert = useAlertDialogStore((state) => state.alert);
 
   // ? Mutations
   const { mutate: deleteFile } = useMutation({
@@ -115,8 +115,8 @@ export default function __FileUploader__(
             p: caption ? 2 : 0,
             //pt: caption ? 0 : 0.3,
             ".filepond--root": {
-              backgroundColor: theme.vars.palette.grey[100],
-              border: `2px dashed ${theme.vars.palette.grey[300]}`,
+              backgroundColor: theme.palette.grey[100],
+              border: `2px dashed ${theme.palette.grey[300]}`,
               borderRadius: circular ? 9999 : 3,
               // height: circular
               //   ? "170px !important"
@@ -125,13 +125,13 @@ export default function __FileUploader__(
               //     : "100px !important",
               marginBottom: 0,
               overflow: "hidden",
-              ":hover": { backgroundColor: theme.vars.palette.grey[200] },
+              ":hover": { backgroundColor: theme.palette.grey[200] },
             },
             ".filepond--drop-label": {
-              background: theme.vars.palette.grey[100],
+              background: theme.palette.grey[100],
               cursor: "pointer !important",
               label: { cursor: "pointer !important" },
-              ":hover": { backgroundColor: theme.vars.palette.grey[200] },
+              ":hover": { backgroundColor: theme.palette.grey[200] },
               /* min-height: unset !important; */
               //position: "relative !important",
               //padding: "10px 0 !important",
@@ -148,7 +148,7 @@ export default function __FileUploader__(
               borderRadius: circular ? "99999rem" : "unset !important",
             },
             ".filepond--credits": { display: "none" },
-            ".filepond--panel": { background: theme.vars.palette.grey[100] },
+            ".filepond--panel": { background: theme.palette.grey[100] },
             ".filepond--panel-center, .filepond--panel-top, .filepond--panel-bottom":
               {
                 background: "transparent !important",
@@ -159,12 +159,12 @@ export default function __FileUploader__(
             theme.applyStyles("dark", {
               ".filepond--root": {
                 backgroundColor: "rgba(43, 43, 43, 0.95)",
-                border: `2px dashed ${theme.vars.palette.action.disabledBackground}`,
-                ":hover": { backgroundColor: theme.vars.palette.grey[900] },
+                border: `2px dashed ${theme.palette.action.disabledBackground}`,
+                ":hover": { backgroundColor: theme.palette.grey[900] },
               },
               ".filepond--drop-label": {
                 backgroundColor: theme.palette.action.hover,
-                ":hover": { backgroundColor: theme.vars.palette.grey[900] },
+                ":hover": { backgroundColor: theme.palette.grey[900] },
               },
               ".filepond--panel": {
                 backgroundColor: "rgba(43, 43, 43, 0.95)",

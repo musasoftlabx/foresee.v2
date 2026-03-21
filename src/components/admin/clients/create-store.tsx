@@ -604,7 +604,7 @@ export default function CreateStore({
                       />
                     )}
 
-                    <Controller
+                    {/* <Controller
                       control={control}
                       name="inventory"
                       render={({ field }) => (
@@ -621,7 +621,7 @@ export default function CreateStore({
                           stylePanelAspectRatio={"16:5"}
                         />
                       )}
-                    />
+                    /> */}
                   </ModalBody>
                   <ScrollBar />
                 </ScrollArea>

@@ -258,7 +258,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const { ids } = await request.json();
+  const ids = await request.json();
 
   try {
     return NextResponse.json(

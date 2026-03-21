@@ -21,7 +21,6 @@ import { UsersIcon } from "../ui/lucide-animated/users";
 import { TagIcon } from "../ui/heroicons-animated/tag";
 import { NavDocuments } from "./nav-documents";
 import { NavSecondary } from "./nav-secondary";
-import { IconInnerShadowTop } from "@tabler/icons-react";
 
 // This is sample data.
 /* const data = {
@@ -281,7 +280,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <GaugeIcon className="!size-5" />
                 <span className="text-base font-semibold">Foresee Inc.</span>
               </a>
             </SidebarMenuButton>

@@ -59,7 +59,7 @@ import useJWT from "@/hooks/useJWT";
 import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
-import { useDialogStore } from "@/store/useDialogStore";
+import { useDialogStore } from "@/store/useAlertDialogStore";
 import { Box } from "@mui/material";
 import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";

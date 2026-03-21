@@ -1,26 +1,28 @@
 "use client";
 
+// * React
+import { Dispatch } from "react";
+
 // * Next
 import Image from "next/image";
 
 // * MUI
 import {
-  GridApiPro,
+  type GridApiPro,
   gridClasses,
-  GridColumnVisibilityModel,
-  GridFilterModel,
-  GridRowSelectionModel,
-  GridSlotProps,
+  type GridColumnVisibilityModel,
+  type GridFilterModel,
+  type GridRowSelectionModel,
+  type GridSlotProps,
 } from "@mui/x-data-grid-pro";
+import { alpha, Theme } from "@mui/material";
+import { blue, red } from "@mui/material/colors";
 
 // * Components
 import DataGridToolbar from "./DataGridToolbar";
 
 // * Icons
 import { TbDragDrop } from "react-icons/tb";
-import { Dispatch } from "react";
-import { alpha, Theme } from "@mui/material";
-import { blue, green, grey, red } from "@mui/material/colors";
 
 export type TDataGridSlots = Partial<{
   apiRef: React.RefObject<GridApiPro | null>;
@@ -73,7 +75,9 @@ export type TDataGridSlots = Partial<{
   ];
 
   exportUrl?: string;
-
+  /**
+   * Add extra functionalities to the toolbar
+   */
   extraActions?: React.ReactNode;
   /**
    * Toggles cell horizontal border. MUI only supports toogling vertical cell borders.
@@ -178,24 +182,28 @@ export const DataGridSlots = ({
   ),
   styles: (theme: Theme) => ({
     borderRadius: 3,
-    [`.${gridClasses["cell"]}`]: hideRowBorders ? { borderTop: 0 } : {},
+    [`.${gridClasses.cell}`]: hideRowBorders ? { borderTop: 0 } : {},
     [`.${gridClasses["cell--pinnedLeft"]}, .${gridClasses["cell--pinnedRight"]}, .${gridClasses["columnHeader--pinnedLeft"]}, .${gridClasses["columnHeader--pinnedRight"]}`]:
-      [
-        { background: alpha(grey[100], 0.9) },
-        theme.applyStyles("dark", { background: alpha(grey[900], 0.9) }),
-      ],
+      { background: "var(--sidebar) !important" },
     [`.${gridClasses["cell--editable"]}`]: {
-      background: alpha(green[900], 0.3),
+      background: "var(--sidebar-accent)",
       cursor: "text",
     },
     [`.${gridClasses["cell--editing"]}`]: { border: `1px solid ${red[500]}` },
     [`.${gridClasses.columnHeaderTitle}`]: { fontWeight: "bold" },
     "& :not(.MuiDataGrid-cell--editable:focus)": { outline: "none" },
-    "& .MuiDataGrid-cell--editable:focus-within": {
-      background: alpha(blue[900], 0.7),
-      outline: `1px solid ${blue[500]}`,
-    },
+    "& .MuiDataGrid-cell--editable:focus-within": [
+      { background: alpha(blue[900], 0.2), outline: `1px solid ${blue[500]}` },
+      theme.applyStyles("dark", { background: alpha(blue[900], 0.7) }),
+    ],
     ".vertical-center-cell": { display: "flex", alignItems: "center" },
+    "& *::-webkit-scrollbar": { cursor: "grap", width: 8, height: 8 },
+    "& *::-webkit-scrollbar-track": { background: "var(--sidebar)" },
+    "& *::-webkit-scrollbar-thumb": {
+      background: "var(--ring)",
+      borderRadius: "50px",
+    },
+    "& *::-webkit-scrollbar-thumb:hover": { background: "var(--primary)" },
   }),
 });
 

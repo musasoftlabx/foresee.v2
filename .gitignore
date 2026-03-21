@@ -13,9 +13,6 @@
 # testing
 /coverage
 
-# server-mock
-/server
-
 # next.js
 /.next/
 /out/
@@ -44,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# server-mock
+/server

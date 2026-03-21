@@ -1,5 +1,5 @@
 import { AppSidebar } from "@/components/admin/app-sidebar";
-import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { AnimatedThemeToggler } from "@/components/ui/magicui/animated-theme-toggler";
 import {
   Breadcrumb,
   BreadcrumbItem,

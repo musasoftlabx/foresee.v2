@@ -25,13 +25,13 @@ import {
 import { capitalize } from "@mui/material";
 import {
   DataGridPro,
-  GridPreProcessEditCellProps,
-  GridRowModel,
+  type GridPreProcessEditCellProps,
+  type GridRowModel,
   useGridApiRef,
 } from "@mui/x-data-grid-pro";
 
 // * Icons
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Trash2Icon } from "lucide-react";
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Components
@@ -41,22 +41,22 @@ import {
 } from "@/components/DataTable/DataGridSlots";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
-import CreateStore from "@/components/admin/clients/create-store";
+import CreateStore from "@/components/admin/clients/create-store-shad";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 
 // * Store
-import { useDialogStore } from "@/store/useDialogStore";
+import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
 
 // * Prisma
-import { Prisma } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 
 export default function Stores({ apiUrl = "stores" }) {
   // ? Hooks
   const apiRef = useGridApiRef();
   const router = useRouter();
-  const showConfirm = useDialogStore((state) => state.confirm);
+  const confirm = useConfirmDialogStore((state) => state.confirm);
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
@@ -172,7 +172,7 @@ export default function Stores({ apiUrl = "stores" }) {
                       onClick={() => router.push(`/portal/stores/${row.id}`)}
                       className="pl-0"
                     >
-                      <span className="flex gap-1 underline decoration-dashed">
+                      <span className="flex gap-1 underline decoration-dashed text-chart-1">
                         {row.code}
                         <ExternalLink size={8} />
                       </span>
@@ -232,6 +232,7 @@ export default function Stores({ apiUrl = "stores" }) {
               hideable: true,
               pinnable: true,
               resizable: false,
+              sortable: false,
               minWidth: 120,
               flex: 1,
               renderCell: ({ row: { id, inventoryCount } }) => (
@@ -239,7 +240,7 @@ export default function Stores({ apiUrl = "stores" }) {
                   variant="link"
                   onClick={() => router.push(`/portal/stores/${id}/inventory`)}
                 >
-                  <span className="flex gap-1 underline decoration-dashed">
+                  <span className="flex gap-1 underline decoration-dashed text-chart-1">
                     {inventoryCount} items
                     <ExternalLink size={10} />
                   </span>
@@ -329,10 +330,12 @@ export default function Stores({ apiUrl = "stores" }) {
                         type: "include",
                         ids: new Set([row.id]),
                       });
-                      showConfirm({
-                        operation: "delete",
-                        subject: `Confirm deletion of ${row.name}`,
-                        body: `Are you sure you intend to delete this store?`,
+                      confirm({
+                        icon: <Trash2Icon />,
+                        status: "error",
+                        action: "delete",
+                        subject: "Confirm deletion",
+                        body: `Are you sure you intend to delete store ${row.name}?`,
                       });
                     }}
                   >
