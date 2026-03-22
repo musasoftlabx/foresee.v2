@@ -52,7 +52,6 @@ import {
   Button,
   useDisclosure,
   useDraggable,
-  Alert,
 } from "@heroui/react";
 
 // * Components
@@ -72,14 +71,17 @@ import axios, { AxiosError } from "axios";
 import { cn } from "@/lib/utils";
 
 // * Icons
-import { ExternalLink, X } from "lucide-react";
+import { X } from "lucide-react";
 
 // * Assets
 import countries from "../../../public/data/countries.json";
-import { useParams } from "next/navigation";
 
 // * Schema
 const schema = z.object({
+  clients: z.array(z.string()),
+  name: z.string().min(2, "Min. 2 chars.").max(50, "Max. 50 chars."),
+  country: z.object({ code: z.string(), name: z.string() }),
+  client: z.string(),
   inventory: z.strictObject({
     label: z.string(),
     file: z.object({
@@ -95,7 +97,7 @@ const schema = z.object({
   audit: z.object({
     date: z.date().or(z.string().nonempty()),
     barcode: z.object({
-      mode: z.enum(["strict", "varies"]).or(z.string()),
+      mode: z.enum(["strict", "variable"]).or(z.string()),
       characters: z.array(z.number().min(1)),
       min: z.number(),
       max: z.number(),
@@ -106,15 +108,13 @@ const schema = z.object({
 
 type TSchema = z.infer<typeof schema>;
 
-export default function CreateAudit({
-  isAddItemOpen,
-  setIsAddItemOpen,
+export default function CreateStore({
+  isNewItemOpen,
+  setIsNewItemOpen,
 }: {
-  isAddItemOpen: boolean;
-  setIsAddItemOpen: React.Dispatch<SetStateAction<boolean>>;
+  isNewItemOpen: boolean;
+  setIsNewItemOpen: React.Dispatch<SetStateAction<boolean>>;
 }) {
-  const { store } = useParams();
-
   const {
     control,
     formState: { errors, isLoading, isValid, isSubmitting, dirtyFields: dirty },
@@ -127,6 +127,15 @@ export default function CreateAudit({
     reset,
   } = useForm({
     defaultValues: async () => ({
+      // ? Pre-fetch clients
+      clients: (await axios("clients").then(
+        ({ data }) => data,
+      )) as TSchema["clients"],
+
+      // ? Form fields
+      name: "",
+      country: { code: "", name: "" },
+      client: "",
       inventory: {
         label: "Inventory",
         file: { filename: "", sheetFields: [], systemFields: [] },
@@ -147,9 +156,12 @@ export default function CreateAudit({
   // ? Hooks
   const queryClient = useQueryClient();
 
+  // ? Effects
+  useEffect(() => setFocus("name"), [setFocus]);
+
   // ? Mutations
-  const { mutate: createAudit } = useMutation({
-    mutationFn: (body: TSchema) => axios.post("audits", { ...body, store }),
+  const { mutate: createStore } = useMutation({
+    mutationFn: (body: TSchema) => axios.post("stores", body),
   });
 
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -164,8 +176,8 @@ export default function CreateAudit({
         ref={targetRef}
         backdrop="blur"
         shadow="lg"
-        isOpen={isAddItemOpen}
-        onClose={() => setIsAddItemOpen(false)}
+        isOpen={isNewItemOpen}
+        onClose={() => setIsNewItemOpen(false)}
         onOpenChange={onOpenChange}
         draggable={false}
         isDismissable={false}
@@ -193,18 +205,20 @@ export default function CreateAudit({
           {(onClose) => (
             <>
               <ModalHeader {...moveProps} className="flex flex-col">
-                Create Audit
+                Create Store
                 <p className="text-xs text-muted-foreground">
-                  Enter audit details
+                  Enter store details, locations in store & upload inventory
                 </p>
               </ModalHeader>
 
               <form
                 onSubmit={handleSubmit((formdata: TSchema) =>
-                  createAudit(formdata, {
+                  createStore(formdata, {
                     onSuccess: () => {
-                      setIsAddItemOpen(false);
-                      queryClient.refetchQueries({ queryKey: ["audits"] });
+                      // setIsNewItemOpen(false);
+                      // queryClient.refetchQueries({
+                      //   queryKey: ["stores"],
+                      // });
                     },
                     onError: (error) => {
                       if (error instanceof AxiosError) {
@@ -220,6 +234,181 @@ export default function CreateAudit({
               >
                 <ScrollArea type="auto" className="h-[50vh]">
                   <ModalBody>
+                    <Controller
+                      control={control}
+                      name="name"
+                      render={() => (
+                        <Input
+                          label="Store Name"
+                          size="sm"
+                          maxLength={20}
+                          isRequired
+                          variant="faded"
+                          color={
+                            dirty.name && !errors?.name
+                              ? "success"
+                              : errors.name
+                                ? "danger"
+                                : "default"
+                          }
+                          isInvalid={dirty.name && Boolean(errors.name)}
+                          errorMessage={dirty.name && errors.name?.message}
+                          {...register("name")}
+                        />
+                      )}
+                    />
+
+                    <div className="flex flex-row gap-3">
+                      <Controller
+                        control={control}
+                        name="country.name"
+                        render={({ field: { value } }) => (
+                          <Autocomplete
+                            isRequired
+                            isClearable
+                            variant="faded"
+                            size="sm"
+                            label="Country"
+                            defaultItems={countries}
+                            endContent={
+                              <img
+                                src={`https://flagcdn.com/w20/${countries.find(({ country }) => country === value)?.code.toLowerCase()}.png`}
+                                alt={value}
+                                width="20"
+                              />
+                            }
+                            color={
+                              dirty.country?.name && !errors?.country?.name
+                                ? "success"
+                                : errors.country?.name
+                                  ? "danger"
+                                  : "default"
+                            }
+                            isInvalid={
+                              dirty.country?.name &&
+                              Boolean(errors.country?.name?.message)
+                            }
+                            errorMessage={
+                              dirty.country?.name &&
+                              errors.country?.name?.message
+                            }
+                            {...register(`country.name`)}
+                            onInputChange={(value) =>
+                              setValue(`country.name`, value, {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true,
+                              })
+                            }
+                            onSelectionChange={(value) =>
+                              setValue(`country.code`, value as string, {
+                                shouldDirty: true,
+                                shouldTouch: true,
+                                shouldValidate: true,
+                              })
+                            }
+                          >
+                            {({
+                              code,
+                              country,
+                            }: {
+                              code: string;
+                              country: string;
+                            }) => (
+                              <AutocompleteItem
+                                key={code}
+                                startContent={
+                                  <img
+                                    src={`https://flagcdn.com/w20/${code.toLowerCase()}.png`}
+                                    width="20"
+                                    alt={country}
+                                    className="-mt-0.5"
+                                  />
+                                }
+                              >
+                                {country}
+                              </AutocompleteItem>
+                            )}
+                          </Autocomplete>
+                        )}
+                      />
+
+                      {!isLoading && (
+                        <Controller
+                          control={control}
+                          name="client"
+                          render={() => {
+                            if (getValues().clients.length === 0) {
+                              return (
+                                <Input
+                                  label="Client"
+                                  size="sm"
+                                  maxLength={20}
+                                  isRequired
+                                  variant="faded"
+                                  color={
+                                    dirty.client && !errors?.client
+                                      ? "success"
+                                      : errors.client
+                                        ? "danger"
+                                        : "default"
+                                  }
+                                  isInvalid={
+                                    dirty.client && Boolean(errors.client)
+                                  }
+                                  errorMessage={
+                                    dirty.client && errors.client?.message
+                                  }
+                                  {...register("client")}
+                                />
+                              );
+                            } else {
+                              return (
+                                <Autocomplete
+                                  allowsCustomValue
+                                  isRequired
+                                  isClearable
+                                  label="Client"
+                                  variant="faded"
+                                  size="sm"
+                                  isInvalid={
+                                    dirty.client &&
+                                    Boolean(errors.client?.message)
+                                  }
+                                  errorMessage={
+                                    dirty.client &&
+                                    Boolean(errors.client?.message)
+                                  }
+                                  {...register("client")}
+                                  onInputChange={(value) =>
+                                    setValue("client", value, {
+                                      shouldDirty: true,
+                                      shouldTouch: true,
+                                      shouldValidate: true,
+                                    })
+                                  }
+                                >
+                                  {getValues().clients?.map((docket) => (
+                                    <AutocompleteItem key={docket}>
+                                      {docket}
+                                    </AutocompleteItem>
+                                  ))}
+                                </Autocomplete>
+                              );
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex flex-row items-center gap-3 mt-3">
+                      <Divider className="w-1/12 -ml-11" />
+                      <span className="text-[14px] text-muted-foreground text-nowrap">
+                        Audit details
+                      </span>
+                      <Divider />
+                    </div>
+
                     <Grid container spacing={1}>
                       <Controller
                         control={control}
@@ -314,7 +503,7 @@ export default function CreateAudit({
                               description: `Barcodes are strictly ${getValues().audit.barcode.characters[0]} characters.`,
                             },
                             {
-                              value: "varies",
+                              value: "variable",
                               title: "Variable barcodes",
                               description: "Barcodes have varying characters.",
                             },
@@ -415,7 +604,7 @@ export default function CreateAudit({
                       />
                     )}
 
-                    <Controller
+                    {/* <Controller
                       control={control}
                       name="inventory"
                       render={({ field }) => (
@@ -426,13 +615,13 @@ export default function CreateAudit({
                           setValue={setValue}
                           columnspan={{ xs: 12 }}
                           acceptedFileTypes={["XLSX", "XLS", "CSV"]}
-                          caption="We already have the inventory for this store. We will however update the current inventory with the new file you upload."
+                          caption="Store's inventory to be audited"
                           maxFileSize="10MB"
                           stylePanelLayout="integrated"
                           stylePanelAspectRatio={"16:5"}
                         />
                       )}
-                    />
+                    /> */}
                   </ModalBody>
                   <ScrollBar />
                 </ScrollArea>

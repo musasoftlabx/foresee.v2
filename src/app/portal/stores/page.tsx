@@ -41,7 +41,7 @@ import {
 } from "@/components/DataTable/DataGridSlots";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
-import CreateStore from "@/components/modals/create-store-shad";
+import CreateStore from "@/components/modals/create-store";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";

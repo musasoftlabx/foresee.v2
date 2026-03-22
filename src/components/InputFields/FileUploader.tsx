@@ -17,6 +17,7 @@ import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import FilePondPluginImageValidateSize from "filepond-plugin-image-validate-size";
 import FilePondPluginFileValidateSize from "filepond-plugin-file-validate-size";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
+import isEqual from "lodash/isEqual";
 import mime from "mime";
 
 // * HUI
@@ -55,12 +56,11 @@ export default function FileUploader(
     imageResizeTargetWidth?: number;
     imageResizeTargetHeight?: number;
   } & {
-    acceptedFileTypes: FilePondProps["acceptedFileTypes"];
+    allowOnly: "images" | "spreadsheets" | "documents" | "pdf";
     caption?: string;
     circular?: boolean;
     control?: any;
     register?: any;
-    columnspan?: {};
     dimensions?: { height: number; width: number };
     field: Pick<ControllerRenderProps, "name" | "value">;
     maxFileSize: string;
@@ -68,8 +68,7 @@ export default function FileUploader(
   },
 ) {
   const {
-    acceptedFileTypes,
-    columnspan,
+    allowOnly,
     caption,
     circular,
     control,
@@ -89,7 +88,7 @@ export default function FileUploader(
   });
 
   // ? State Actions
-  const showAlert = useAlertDialogStore((state) => state.alert);
+  const alert = useAlertDialogStore((state) => state.alert);
 
   // ? Mutations
   const { mutate: deleteFile } = useMutation({
@@ -97,30 +96,97 @@ export default function FileUploader(
       axios.delete(`upload?file=${file}&context=${field.name}`),
   });
 
+  let acceptedFileTypes = [];
+  let filterDegree = 0;
+
+  switch (allowOnly) {
+    case "pdf":
+      acceptedFileTypes = ["PDF"];
+      filterDegree = 285;
+      break;
+    case "images":
+      acceptedFileTypes = ["PNG", "JPG", "JPEG", "GIF"];
+      filterDegree = 270;
+      break;
+    case "spreadsheets":
+      acceptedFileTypes = ["XLSX", "XLS", "XSLB", "CSV"];
+      filterDegree = 175;
+      break;
+    case "documents":
+      acceptedFileTypes = ["DOC", "DOCX"];
+      filterDegree = 285;
+      break;
+  }
+
   return (
     <Fragment>
-      <style>{`
-      .filepond {
-        border: 2px solid var(--border);
-        border-radius: var(--radius-lg);
-        padding: 12px 18px;
-      }
-      .filepond--root {
-        border: 2px dashed var(--primary);
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-      }
-      .filepond--drop-label {
-        background-color: var(--sidebar-accent);
-        cursor: pointer;
-      }
-      .filepond--drop-label:hover {
-        background-color: var(--secondary);
-      }
-      .filepond--list-scroller {
-        display: none;
-      }
-    `}</style>
+      <style>
+        {`
+          .filepond { border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 12px 18px; }
+          .filepond--root { color: var(--card-foreground) !important; border: 2px dashed var(--primary); border-radius: var(--radius-lg); overflow: hidden; }
+          .filepond--drop-label { background-color: var(--sidebar); cursor: pointer; }
+          .filepond--drop-label:hover { background-color: var(--sidebar-accent); }
+          .filepond--image-preview-overlay-success { color: var(--primary); }
+
+          .filepond--file-action-button:hover,
+          .filepond--file-action-button:focus {
+            cursor: pointer;
+          }
+
+          [data-filepond-item-state="idle"] .filepond--item-panel,
+          [data-filepond-item-state="busy processing"] .filepond--item-panel,
+          [data-filepond-item-state="processing"] .filepond--item-panel {
+            background: var(--sidebar) !important; 
+          }
+
+          [data-filepond-item-state="idle"] .filepond--file,
+          [data-filepond-item-state="busy processing"] .filepond--file,
+          [data-filepond-item-state="processing"] .filepond--file { 
+            color: var(--chart-5) !important;
+            font-weight: bold;
+          }
+
+          [data-filepond-item-state="processing-complete"] .filepond--item-panel {
+            background: var(--chart-5) !important;
+          }
+
+          .filepond--panel-top.filepond--item-panel,
+          .filepond--panel-center.filepond--item-panel,
+          .filepond--panel-bottom.filepond--item-panel {
+            background: transparent !important;
+          }
+
+          .filepond--root[data-style-panel-layout~="circle"] .filepond--item-panel,
+          .filepond--root[data-style-panel-layout~="integrated"] .filepond--item-panel {
+            display: block
+          }
+          
+          [data-filepond-item-state*="error"] .filepond--item-panel,
+          [data-filepond-item-state*="load-invalid"] .filepond--item-panel,
+          [data-filepond-item-state*="invalid"] .filepond--item-panel {
+            -background: color-mix(in oklab, var(--destructive) 20%, transparent) !important;
+            background: var(--destructive) !important;
+          }
+
+          [data-filepond-item-state*="error"] .filepond--item-panel, [data-filepond-item-state*="invalid"] .filepond--item-panel .filepond--panel-center::after {
+            content: url(/icons/filepond/${allowOnly}.png);
+            filter: hue-rotate(260deg);
+            top: 50%;
+            left: 50%;
+            transform: scale(0.6) translate(-80%, -80%) !important;
+            position: absolute; 
+          }
+
+          .filepond--panel-center::after {
+            content: url(/icons/filepond/${allowOnly}.png);
+            filter: hue-rotate(${filterDegree}deg);
+            top: 50%;
+            left: 50%;
+            transform: scale(0.6) translate(-80%, -80%) !important;
+            position: absolute;
+          }
+        `}
+      </style>
 
       <div className="filepond flex flex-col gap-3 p-2">
         {field.value?.file && (
@@ -131,9 +197,11 @@ export default function FileUploader(
 
         <FilePond
           {...props}
-          acceptedFileTypes={acceptedFileTypes?.map((type: string) =>
-            mime.getType(type),
-          )}
+          acceptedFileTypes={
+            acceptedFileTypes.map(
+              (type) => type && mime.getType(type),
+            ) as FilePondProps["acceptedFileTypes"]
+          }
           onprocessfile={(_, file) => {
             const { serverId } = file;
             setValue(
@@ -164,11 +232,13 @@ export default function FileUploader(
                 return formData;
               },
               onload: (data) => JSON.parse(data),
-              onerror: (err) => {
-                if (err) {
-                  const { error, message } = JSON.parse(err);
-                  showAlert({ status: "error", error, message });
-                }
+              onerror: (error) => {
+                if (error instanceof AxiosError)
+                  alert({
+                    status: "error",
+                    subject: error.response?.data.error,
+                    body: error.response?.data.message,
+                  });
               },
             },
             revert: ({ filename }) =>
@@ -178,11 +248,7 @@ export default function FileUploader(
                     field.name,
                     {
                       ...field.value,
-                      file: {
-                        filename: "",
-                        sheetFields: [],
-                        systemFields: [],
-                      },
+                      file: { filename: "", sheetFields: [], systemFields: [] },
                     },
                     {
                       shouldDirty: true,
@@ -192,17 +258,17 @@ export default function FileUploader(
                   ),
                 onError: (error) => {
                   if (error instanceof AxiosError)
-                    showAlert({
+                    alert({
                       status: "error",
-                      error: error.response?.data.error,
-                      message: error.response?.data.message,
+                      subject: error.response?.data.error,
+                      body: error.response?.data.message,
                     });
                 },
               }),
           }}
           labelIdle={`<div style="cursor: pointer">
                         <div style="display: flex; justify-content: center; height: 35px; text-align: center">
-                          <img src="/icons/filepond/excel.png" style="filter: hue-rotate(175deg)" />
+                          <img src="/icons/filepond/${allowOnly}.png" style="filter: hue-rotate(${filterDegree}deg)" />
                         </div>
                         <div style="font-size: 16px; font-weight: 600; color: var(--sidebar-primary); opacity: .9">Upload ${field.value.label ?? "Upload file"}</div>
                         <div style="color: var(--sidebar-accent-foreground); font-size: 11px; font-weight: 600;">Only ${acceptedFileTypes.join(", ")} allowed</div>
@@ -224,10 +290,10 @@ export default function FileUploader(
                 <Table>
                   <TableHeader>
                     <TableRow className="*:border-border hover:bg-transparent [&>:not(:last-child)]:border-r">
-                      <TableHead className="font-bold">
+                      <TableHead className="font-bold text-primary">
                         Worksheet field
                       </TableHead>
-                      <TableHead className="font-bold text-center">
+                      <TableHead className="font-bold text-primary text-center">
                         Maps to
                       </TableHead>
                     </TableRow>

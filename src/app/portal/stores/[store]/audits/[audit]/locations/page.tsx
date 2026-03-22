@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/shadcn/button";
 
 // * RUI
 
-import CreateStore from "@/components/modals/create-store";
+import CreateStore from "@/components/modals/create-store-heroui";
 
 // * MUI
 import {

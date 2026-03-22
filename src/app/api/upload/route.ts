@@ -2,13 +2,13 @@
 import { unlinkSync, writeFileSync } from "fs";
 
 // * Next
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
 import { filesize } from "filesize";
 import { fileTypeFromBlob } from "file-type";
 import dayjs from "dayjs";
-import ExcelJS, { CellValue } from "@protobi/exceljs";
+import ExcelJS, { type CellValue } from "@protobi/exceljs";
 import mime from "mime";
 
 // * Libs

@@ -36,7 +36,7 @@ import {
 
 // * Components
 import __DatePicker__ from "@/components/InputFields/__DatePicker__";
-import __FileUploader__ from "@/components/InputFields/__FileUploader__";
+import __FileUploader__ from "@/components/InputFields/FileUploader";
 import { XIcon } from "@/components/ui/lucide-animated/x";
 
 // * NPM
