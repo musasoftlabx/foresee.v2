@@ -17,7 +17,7 @@ import { Button as ButtonShadCN } from "@/components/ui/shadcn/button";
 
 // * RUI
 
-import { AddClient } from "@/components/admin/clients/add-client";
+import { AddClient } from "@/components/modals/add-client";
 
 // * MUI
 import {

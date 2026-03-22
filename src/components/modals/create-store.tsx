@@ -74,7 +74,7 @@ import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 
 // * Assets
-import countries from "../../../../public/data/countries.json";
+import countries from "../../../public/data/countries.json";
 
 // * Schema
 const schema = z.object({

@@ -32,10 +32,6 @@ import { useThemeStore } from "@/store/useThemeStore";
 import { SidebarProvider } from "@/components/ui/shadcn/sidebar";
 import AlertDialog from "@/components/alert-dialog";
 
-type Props = Readonly<{
-  children: React.ReactNode;
-}>;
-
 // * Axios config
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_API;
 axios.defaults.timeout = 60000;
@@ -52,6 +48,7 @@ axios.interceptors.request.use(
 // * Initialize Query Client
 const queryClient = new QueryClient();
 
+// * Initialize Next Themes
 export function NextThemeProvider({
   children,
   ...props
@@ -59,22 +56,30 @@ export function NextThemeProvider({
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
 }
 
-export default function QueryProvider({ children }: Props) {
+export default function QueryProvider({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const isSystemDark =
+    matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
+
+  // ? Hooks
   const router = useRouter();
   const themeState = useThemeStore((state) => state.theme);
   const changeMode = useThemeStore((state) => state.changeMode);
+
+  // ? Memo
   const theme = useMemo(() => createTheme(themeState), [themeState]);
 
-  const isSystemDark =
-    window?.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
-
+  // ? Effects
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme");
     if (storedTheme === "light" || storedTheme === "dark")
       changeMode(storedTheme);
     else if (storedTheme === "system")
       changeMode(isSystemDark ? "dark" : "light");
-  }, []);
+  }, [isSystemDark, changeMode]);
 
   return (
     <NextThemeProvider

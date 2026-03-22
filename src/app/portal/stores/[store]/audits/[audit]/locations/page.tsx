@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/shadcn/button";
 
 // * RUI
 
-import CreateStore from "@/components/admin/clients/create-store";
+import CreateStore from "@/components/modals/create-store";
 
 // * MUI
 import {
@@ -58,7 +58,7 @@ import { useDialogStore } from "@/store/useAlertDialogStore";
 import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
 import { Checkbox } from "@/components/ui/shadcn/checkbox";
-import AddLocations from "@/components/admin/clients/add-locations";
+import AddLocations from "@/components/modals/add-locations";
 
 export default function Locations() {
   // ? Hooks

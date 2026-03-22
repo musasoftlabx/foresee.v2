@@ -67,7 +67,7 @@ const schema = z.object({
 });
 
 // * Assets
-import countries from "../../../../public/data/countries.json";
+import countries from "../../../public/data/countries.json";
 import { HeroTelInput, matchIsValidTel } from "@hyperse/hero-tel-input";
 import Grid from "@mui/material/Grid";
 import { useRouter } from "next/navigation";

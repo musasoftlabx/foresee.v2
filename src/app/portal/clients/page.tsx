@@ -25,7 +25,7 @@ import {
   CardTitle,
   CardToolbar,
 } from "@/components/ui/reui/card";
-import { AddClient } from "@/components/admin/clients/add-client";
+import { AddClient } from "@/components/modals/add-client";
 
 // * MUI
 import {

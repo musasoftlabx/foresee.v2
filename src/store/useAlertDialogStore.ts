@@ -6,8 +6,8 @@ import { create } from "zustand";
 
 interface AlertDialogStore {
   isOpen?: boolean;
-  icon: ReactNode;
-  status: "success" | "info" | "warning" | "error";
+  icon?: ReactNode;
+  status?: "success" | "info" | "warning" | "error";
   subject: string;
   body: string;
   alert: ({

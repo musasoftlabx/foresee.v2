@@ -140,7 +140,7 @@ const features = [
 
 import React from "react";
 import KineticTestimonial from "@/components/ui/scrollxui/kinetic-testimonials";
-import CreateAccount from "@/components/admin/clients/create-account";
+import CreateAccount from "@/components/modals/create-account";
 
 const testimonials = [
   {

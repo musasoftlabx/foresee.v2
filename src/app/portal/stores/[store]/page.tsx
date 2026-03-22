@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/shadcn/button";
 
 // * RUI
 
-import CreateStore from "@/components/admin/clients/create-store";
+import CreateStore from "@/components/modals/create-store";
 
 // * MUI
 import {
@@ -74,7 +74,7 @@ import {
 } from "@/components/ui/shadcn/tooltip";
 import { useParams, useRouter } from "next/navigation";
 import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
-import CreateAudit from "@/components/admin/clients/create-audit";
+import CreateAudit from "@/components/modals/create-audit";
 
 export default function Audits() {
   // ? Refs

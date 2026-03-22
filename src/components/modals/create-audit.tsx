@@ -75,7 +75,7 @@ import { cn } from "@/lib/utils";
 import { ExternalLink, X } from "lucide-react";
 
 // * Assets
-import countries from "../../../../public/data/countries.json";
+import countries from "../../../public/data/countries.json";
 import { useParams } from "next/navigation";
 
 // * Schema

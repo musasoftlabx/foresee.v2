@@ -41,7 +41,7 @@ import {
 } from "@/components/DataTable/DataGridSlots";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
-import CreateStore from "@/components/admin/clients/create-store-shad";
+import CreateStore from "@/components/modals/create-store-shad";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -424,8 +424,8 @@ export default function Stores({ apiUrl = "stores" }) {
         />
 
         <DataGridPagination
-          data={data}
-          paginationModel={paginationModel!}
+          count={data?.count}
+          paginationModel={paginationModel}
           changePagination={changePagination}
         />
       </div>
