@@ -17,7 +17,6 @@ import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import FilePondPluginImageValidateSize from "filepond-plugin-image-validate-size";
 import FilePondPluginFileValidateSize from "filepond-plugin-file-validate-size";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
-import isEqual from "lodash/isEqual";
 import mime from "mime";
 
 // * HUI
@@ -168,7 +167,8 @@ export default function FileUploader(
             background: var(--destructive) !important;
           }
 
-          [data-filepond-item-state*="error"] .filepond--item-panel, [data-filepond-item-state*="invalid"] .filepond--item-panel .filepond--panel-center::after {
+          [data-filepond-item-state*="error"] .filepond--item-panel .filepond--panel-center::after,
+          [data-filepond-item-state*="invalid"] .filepond--item-panel .filepond--panel-center::after {
             content: url(/icons/filepond/${allowOnly}.png);
             filter: hue-rotate(260deg);
             top: 50%;

@@ -17,7 +17,7 @@ import { prisma } from "@/lib/prisma";
 // * Helpers
 import { tempPath } from "@/helpers/configurePaths";
 
-const MAX_FILE_SIZE: number = 5 * 1024 * 1024;
+const MAX_FILE_SIZE: number = 5; //* 1024 * 1024;
 const FILE_WHITELIST: string[] = [
   "png",
   "jpg",
