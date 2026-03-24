@@ -1,14 +1,10 @@
 "use client";
 
-import Portal from "../page";
-
 // * React
 import { Fragment, useEffect, useState } from "react";
 
-import Link from "next/link";
-
 // * NPM
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import capitalize from "lodash/capitalize";
 
@@ -18,22 +14,11 @@ import { Avatar } from "@heroui/react";
 // * SUI
 import { Button } from "@/components/ui/shadcn/button";
 
-// * RUI
-
-import CreateStore from "@/components/modals/create-store-heroui";
-
 // * MUI
 import {
+  type GridRowModel,
   DataGridPro,
-  GRID_CHECKBOX_SELECTION_COL_DEF,
-  gridDimensionsSelector,
-  GridPreProcessEditCellProps,
-  GridRowModel,
-  GridRowParams,
-  GridValidRowModel,
-  useGridApiContext,
   useGridApiRef,
-  useGridSelector,
 } from "@mui/x-data-grid-pro";
 
 // * Components
@@ -45,48 +30,31 @@ import {
 // * Icons
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
-// * Constants
-const apiUrl = "audits";
-
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
-
-import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
-
-import { useDialogStore } from "@/store/useAlertDialogStore";
-import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
+import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-
-import {
-  ExternalLink,
-  ExternalLinkIcon,
-  FileSymlinkIcon,
-  PackageIcon,
-  Table2,
-} from "lucide-react";
+import { ExternalLink, Trash2Icon } from "lucide-react";
 import dayjs from "dayjs";
-
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/shadcn/tooltip";
 import { useParams, useRouter } from "next/navigation";
-import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
+import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 import CreateAudit from "@/components/modals/create-audit";
 
-export default function Audits() {
+// * Prisma
+import type { Prisma } from "@/generated/prisma/client";
+
+export default function Audits({ apiUrl = "audits" }) {
   // ? Refs
   const apiRef = useGridApiRef();
   const router = useRouter();
   const { store } = useParams();
 
-  const showConfirm = useDialogStore((state) => state.confirm);
+  const confirm = useConfirmDialogStore((state) => state.confirm);
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isAddItemOpen, setIsNewItemOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -132,10 +100,18 @@ export default function Audits() {
       encodeURI(JSON.stringify({ filterModel, sortModel })),
     ],
     queryFn: ({ queryKey }) =>
-      axios<GridValidRowModel>(
+      axios(
         `${queryKey[0]}?store=${store}&limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
       ),
-    select: ({ data }) => data,
+    select: ({
+      data,
+    }: {
+      data: {
+        dataset: Prisma.AuditsModel[];
+        filtered: number;
+        totalCount: number;
+      };
+    }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
   });
 
@@ -152,15 +128,15 @@ export default function Audits() {
   return (
     <Fragment>
       <CreateAudit
-        isAddItemOpen={isAddItemOpen}
-        setIsAddItemOpen={setIsAddItemOpen}
+        isNewItemOpen={isAddItemOpen}
+        setIsNewItemOpen={setIsNewItemOpen}
       />
 
       <div className="flex flex-1 flex-col">
         <DataGridPro
           apiRef={apiRef}
           rows={data?.dataset ?? []}
-          rowCount={data?.count ?? 0}
+          rowCount={data?.totalCount ?? 0}
           initialState={initialState}
           columns={[
             {
@@ -260,7 +236,7 @@ export default function Audits() {
               valueGetter: ({ value }) =>
                 value ? dayjs(value).toDate() : null,
               renderCell: ({ row: { date } }) => (
-                <span className="text-xs">{useDayjsDayFormatter(date)}</span>
+                <span className="text-xs">{dayjsDayFormatter(date)}</span>
               ),
             },
             {
@@ -377,7 +353,7 @@ export default function Audits() {
             },
             {
               field: "actions",
-              headerName: "Actions",
+              headerName: "Delete",
               headerAlign: "center",
               align: "center",
               sortable: false,
@@ -396,12 +372,13 @@ export default function Audits() {
                         type: "include",
                         ids: new Set([row.id]),
                       });
-                      // showConfirm({
-                      //   operation: "delete",
-                      //   status: "info",
-                      //   subject: `Confirm deletion of ${row.name}`,
-                      //   body: `Are you sure you intend to delete this store?`,
-                      // });
+                      confirm({
+                        icon: <Trash2Icon />,
+                        status: "error",
+                        action: "delete",
+                        subject: "Confirm deletion",
+                        body: `Are you sure you intend to delete audit ${row.code}?`,
+                      });
                     }}
                   >
                     <DeleteIcon />
@@ -464,46 +441,36 @@ export default function Audits() {
           slots={DataGridSlots({
             apiRef,
             apiUrl: `${apiUrl}?scope=users`,
+            title: capitalize(apiUrl),
+            caption: `${data?.filtered} items displayed from a total of ${data?.totalCount}.`,
             changeFilters,
-            clearFilters,
-            changeRowSelection,
-            clearRowSelection,
             changeVisibleColumns,
-            //exclude: ["multiApprove", "multiReject"],
-            exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+            changeRowSelection,
+            clearFilters,
+            clearRowSelection,
+            exclude: [],
+            exportUrl: `${apiUrl}?scope=users&limit=${data?.totalCount}&offset=${
               paginationModel?.page
-            }&view=__EXPORT__&sortsAndFilters=${encodeURI(
+            }&exportable=true&refines=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
             )}`,
             handleGetData,
+            newItemLabel: "Create",
             isExporting,
             isLoading,
-            search: {
-              fields: "Id, Username, Dealer, Names, Phone etc ...",
-              width: 450,
-            },
+            searchPlaceholder: "Code, Name, Country, Client",
             setIsExporting,
             stats,
             changeStats,
-            setIsAddItemOpen,
-            extraActions: (
-              <>
-                <Button variant="secondary" size="icon">
-                  <EllipsisHorizontalIcon data-icon="inline-start" />
-                </Button>
-                <Button variant="secondary" size="icon">
-                  <EllipsisHorizontalIcon data-icon="inline-start" />
-                </Button>
-              </>
-            ),
+            setIsNewItemOpen,
           })}
           slotProps={DataGridSlotProps}
-          sx={DataGridStyles}
+          sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}
         />
 
         <DataGridPagination
-          data={data}
-          paginationModel={paginationModel!}
+          count={data?.totalCount}
+          paginationModel={paginationModel}
           changePagination={changePagination}
         />
       </div>

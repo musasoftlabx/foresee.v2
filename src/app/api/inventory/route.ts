@@ -1,5 +1,5 @@
 // * Server
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
@@ -7,14 +7,14 @@ import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
 
 // * Hooks
-import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
+import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 import useQueryRefiner from "@/hooks/useQueryRefiner";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
 
 // * Types
-import { Created, Modified } from "@/types";
+import type { Created, Modified } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -51,14 +51,17 @@ export async function GET(req: NextRequest) {
 
   for (const row of rows) {
     dataset.push({
-      ...row,
+      ...row.attributes,
+      id: row.id,
+      barcode: row.barcode,
+      storeId: row.storeId,
       added: {
         ...(row.added as unknown as Created),
-        on: useDayjsDayFormatter((row.added as any).on),
+        on: dayjsDayFormatter((row.added as any).on),
       },
       modified: {
         ...(row.modified as unknown as Modified),
-        on: useDayjsDayFormatter((row.modified as any).on),
+        on: dayjsDayFormatter(row.modified.on),
       },
     });
   }

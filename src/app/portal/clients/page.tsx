@@ -56,13 +56,12 @@ const apiUrl = "clients";
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 import useJWT from "@/hooks/useJWT";
 
-import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
 import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
-import { useDialogStore } from "@/store/useAlertDialogStore";
+// * Store
+import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
+
 import { Box } from "@mui/material";
-import { ScrollArea } from "@/components/ui/shadcn/scroll-area";
-import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
 import { dateFilter, textFilter } from "@/components/DataTable/DataGridFilters";
 
 type TResponse = {
@@ -98,7 +97,7 @@ export default function Clients() {
   // ? Refs
   const apiRef = useGridApiRef();
 
-  const showConfirm = useDialogStore((state) => state.confirm);
+  const confirm = useConfirmDialogStore((state) => state.confirm);
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
@@ -391,7 +390,7 @@ export default function Clients() {
             clearRowSelection,
             changeVisibleColumns,
             //exclude: ["multiApprove", "multiReject"],
-            exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+            exportUrl: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
               paginationModel?.page
             }&view=__EXPORT__&options=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
@@ -407,16 +406,6 @@ export default function Clients() {
             stats,
             changeStats,
             setIsAddItemOpen: setIsAddClientOpen,
-            extraActions: (
-              <>
-                <ButtonShadCN variant="secondary" size="icon">
-                  <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadCN>
-                <ButtonShadCN variant="secondary" size="icon">
-                  <EllipsisHorizontalIcon data-icon="inline-start" />
-                </ButtonShadCN>
-              </>
-            ),
           })}
           // <Button
           //   size="small"
@@ -427,11 +416,11 @@ export default function Clients() {
           //   Manage Roles
           // </Button>
           slotProps={DataGridSlotProps}
-          sx={DataGridStyles}
+          sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}
         />
 
         <DataGridPagination
-          data={data}
+          count={data?.totalCount}
           paginationModel={paginationModel!}
           changePagination={changePagination}
         />

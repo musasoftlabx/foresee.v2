@@ -1,5 +1,5 @@
 // * Node
-import { unlinkSync, writeFileSync } from "fs";
+import { unlinkSync, writeFileSync } from "node:fs";
 
 // * Next
 import { type NextRequest, NextResponse } from "next/server";

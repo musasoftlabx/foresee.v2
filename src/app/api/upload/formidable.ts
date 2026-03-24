@@ -10,7 +10,7 @@ import {
   unlinkSync,
   statSync,
   writeFileSync,
-} from "fs";
+} from "node:fs";
 
 // * NPM
 import dayjs from "dayjs";
@@ -18,7 +18,7 @@ import formidable, { errors as formidableErrors } from "formidable";
 import { join } from "path";
 
 // * Helpers
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { ballotsPath, tempPath } from "@/helpers/configurePaths";
 import next from "next";
 import mime from "mime";
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
   if (!file) {
     return NextResponse.json(
       { error: "File blob is required." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       const path = `${ballotsPath}/${context}`;
       // ? Create filename
       const filename = `${alias}-${dayjs().format(
-        "YYYY.MM.DD-HH.mm.ss"
+        "YYYY.MM.DD-HH.mm.ss",
       )}.${files.file?.newFilename.split(".").pop().toLowerCase()}`;
       // ? Check if directory exists. If not, create it.
       !existsSync(path) && mkdirSync(path, { recursive: true });
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       // ? Move file from temp folder to respective context definition.
       renameSync(
         `${uploadDir}/${files.file?.newFilename}`,
-        `${path}/${filename}`
+        `${path}/${filename}`,
       );
       // ? Send response to client.
       NextResponse.json(filename, { status: 201 });
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
               error.message ??
               "An error occurred while attempting to upload the file",
           },
-          { status: 500 }
+          { status: 500 },
         );
     }
   });
@@ -114,7 +114,7 @@ export async function DELETE(req: NextRequest) {
           subject: "Deletion failure!",
           body: error.message ?? "File was not deleted!",
         },
-        { status: 500 }
+        { status: 500 },
       );
   }
 }

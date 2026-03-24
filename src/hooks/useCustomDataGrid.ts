@@ -154,10 +154,8 @@ export default function useCustomDataGrid({
   };
 
   const changePagination = (model: GridPaginationModel) => {
-    localStorage.removeItem(`____${apiUrl}_pagination`);
-    localStorage.removeItem(`__${apiUrl}_pagination`);
-    localStorage.removeItem(`___${apiUrl}_pagination`);
     setPaginationModel(model);
+    localStorage.removeItem(`_${apiUrl}_pagination`);
     localStorage.setItem(`_${apiUrl}_pagination`, JSON.stringify(model));
   };
 

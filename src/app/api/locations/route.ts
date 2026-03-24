@@ -1,5 +1,5 @@
 // * Server
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
@@ -8,14 +8,14 @@ import dayjs from "dayjs";
 import padStart from "lodash/padStart";
 
 // * Hooks
-import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
+import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 import useQueryRefiner from "@/hooks/useQueryRefiner";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
 
 // * Types
-import { Created, Modified } from "@/types";
+import type { Created, Modified } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     searchParams.entries(),
   );
 
-  const { query, searchResults } = await useQueryRefiner({
+  const { query, searchResults, totalCount } = await useQueryRefiner({
     where: { auditId: Number(audit) },
     limit,
     offset,
@@ -64,16 +64,16 @@ export async function GET(req: NextRequest) {
       discrepancy: Math.abs(row.physicalCount - row.systemCount),
       created: {
         ...(row.created as unknown as Created),
-        on: useDayjsDayFormatter((row.created as any).on),
+        on: dayjsDayFormatter(row.created.on),
       },
       modified: {
         ...(row.modified as unknown as Modified),
-        on: useDayjsDayFormatter((row.modified as any).on),
+        on: dayjsDayFormatter(row.modified.on),
       },
     });
   }
 
-  return NextResponse.json({ count: dataset.length, dataset });
+  return NextResponse.json({ dataset, filtered: dataset.length, totalCount });
 }
 
 export async function POST(request: Request) {

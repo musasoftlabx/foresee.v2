@@ -1,4 +1,7 @@
+import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import type { GlobalOmitConfig } from "@/generated/prisma/internal/prismaNamespace";
 import { prisma } from "@/lib/prisma";
+import type { DefaultArgs } from "@prisma/client/runtime/client";
 
 export type QueryOptions = {
   filterModel: {
@@ -169,7 +172,14 @@ export default async function useQueryRefiner({
     }
   }
 
-  //console.log("Query: ", query);
+  const table = Prisma.raw(search.table).strings[0].toLocaleLowerCase();
+  const totalCount = await prisma[
+    table as keyof PrismaClient<
+      never,
+      GlobalOmitConfig | undefined,
+      DefaultArgs
+    >
+  ].count({ where: { ...where } });
 
-  return { query, searchResults };
+  return { query, searchResults, totalCount };
 }

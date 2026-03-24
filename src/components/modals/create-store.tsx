@@ -1,11 +1,5 @@
 // * React
-import {
-  type Dispatch,
-  type SetStateAction,
-  useEffect,
-  useState,
-  useRef,
-} from "react";
+import { type Dispatch, Fragment, type SetStateAction, useEffect } from "react";
 
 // * Next
 import Image from "next/image";
@@ -167,7 +161,7 @@ export default function CreateStore({
   });
 
   return (
-    <>
+    <Fragment>
       <DevTool control={control} />
 
       <ModalDialog
@@ -605,6 +599,6 @@ export default function CreateStore({
           </footer>
         </form>
       </ModalDialog>
-    </>
+    </Fragment>
   );
 }

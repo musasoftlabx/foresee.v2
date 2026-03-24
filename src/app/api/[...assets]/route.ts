@@ -1,8 +1,8 @@
 // * Node
-import { readFileSync } from "fs";
+import { readFileSync } from "node:fs";
 
 // * Next
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
 import mime from "mime";

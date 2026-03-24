@@ -1,5 +1,5 @@
 // * Server
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // * Schema
 import { accountCollection } from "@/db/schema";
@@ -10,13 +10,13 @@ import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
 
 // * Hooks
-import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
+import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
 
 // * Types
-import { Created, Modified } from "@/types";
+import type { Created, Modified } from "@/types";
 import { Organizations } from "@/generated/prisma/client";
 
 // * Extensions
@@ -46,11 +46,11 @@ export async function GET(req: NextRequest) {
         ...field,
         created: {
           ...(field.created as unknown as Created),
-          on: useDayjsDayFormatter((field.created as any).on),
+          on: dayjsDayFormatter((field.created as any).on),
         },
         modified: {
           ...(field.modified as unknown as Modified),
-          on: useDayjsDayFormatter((field.modified as any).on),
+          on: dayjsDayFormatter((field.modified as any).on),
         },
       })),
     });

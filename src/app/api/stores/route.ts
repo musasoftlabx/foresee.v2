@@ -1,18 +1,18 @@
 // * Server
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // * Node
-import { existsSync } from "fs";
+import { existsSync } from "node:fs";
 
 // * NPM
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
-import ExcelJS, { CellValue } from "@protobi/exceljs";
+import ExcelJS, { type CellValue } from "@protobi/exceljs";
 import padStart from "lodash/padStart";
 
 // * Hooks
-import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
+import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 import useQueryRefiner from "@/hooks/useQueryRefiner";
 
 // * Libs
@@ -22,7 +22,7 @@ import { prisma } from "@/lib/prisma";
 import { tempPath } from "@/helpers/configurePaths";
 
 // * Types
-import { Created, Modified } from "@/types";
+import type { Created, Modified } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -66,11 +66,11 @@ export async function GET(req: NextRequest) {
       }),
       created: {
         ...(row.created as unknown as Created),
-        on: useDayjsDayFormatter((row.created as any).on),
+        on: dayjsDayFormatter(row.created.on),
       },
       modified: {
         ...(row.modified as unknown as Modified),
-        on: useDayjsDayFormatter((row.modified as any).on),
+        on: dayjsDayFormatter(row.modified.on),
       },
     });
   }

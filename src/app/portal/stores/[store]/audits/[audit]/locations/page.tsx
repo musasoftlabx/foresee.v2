@@ -9,31 +9,24 @@ import { useParams } from "next/navigation";
 // * NPM
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import capitalize from "lodash/capitalize";
 import JsBarcode from "jsbarcode";
 
 // * HUI
 import { Avatar } from "@heroui/react";
 
-// * SCNUI
+// * SUI
 import { Button } from "@/components/ui/shadcn/button";
-
-// * RUI
-
-import CreateStore from "@/components/modals/create-store-heroui";
+import { Checkbox } from "@/components/ui/shadcn/checkbox";
 
 // * MUI
 import {
+  type GridRowModel,
+  type GridPreProcessEditCellProps,
+  type GridState,
   DataGridPro,
   GRID_CHECKBOX_SELECTION_COL_DEF,
-  gridDimensionsSelector,
-  GridPreProcessEditCellProps,
-  GridRowModel,
-  GridRowParams,
-  GridState,
-  GridValidRowModel,
-  useGridApiContext,
   useGridApiRef,
-  useGridSelector,
 } from "@mui/x-data-grid-pro";
 
 // * Components
@@ -41,39 +34,38 @@ import {
   DataGridSlotProps,
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
+import { dateFilter } from "@/components/DataTable/DataGridFilters";
+import CreateAudit from "@/components/modals/create-audit";
+import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
 // * Icons
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
-// * Constants
-const apiUrl = "locations";
-
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 
-import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
-import DataGridPagination from "@/components/DataTable/DataGridPagination";
+// * Store
+import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
 
-import { useDialogStore } from "@/store/useAlertDialogStore";
-import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
-import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import { Checkbox } from "@/components/ui/shadcn/checkbox";
-import AddLocations from "@/components/modals/add-locations";
+// * Icons
+import { Trash2Icon } from "lucide-react";
 
-export default function Locations() {
-  // ? Hooks
+// * Prisma
+import type { Prisma } from "@/generated/prisma/client";
+
+export default function Audits({ apiUrl = "locations" }) {
+  // ? Refs
   const apiRef = useGridApiRef();
   const { audit } = useParams();
 
-  const showConfirm = useDialogStore((state) => state.confirm);
+  const confirm = useConfirmDialogStore((state) => state.confirm);
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isAddItemOpen, setIsNewItemOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
-    filters,
     filterModel,
     paginationModel,
     pinnedColumnsModel,
@@ -118,10 +110,18 @@ export default function Locations() {
       encodeURI(JSON.stringify({ filterModel, sortModel })),
     ],
     queryFn: ({ queryKey }) =>
-      axios<GridValidRowModel>(
+      axios(
         `${queryKey[0]}?audit=${audit}&limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
       ),
-    select: ({ data }) => data,
+    select: ({
+      data,
+    }: {
+      data: {
+        dataset: Prisma.LocationsModel[];
+        filtered: number;
+        totalCount: number;
+      };
+    }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
   });
 
@@ -137,16 +137,17 @@ export default function Locations() {
 
   return (
     <Fragment>
-      <AddLocations
-        isAddItemOpen={isAddItemOpen}
-        setIsAddItemOpen={setIsAddItemOpen}
+      <CreateAudit
+        isNewItemOpen={isAddItemOpen}
+        setIsNewItemOpen={setIsNewItemOpen}
       />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col h-[calc(100vh-585px)]">
         <DataGridPro
           apiRef={apiRef}
           rows={data?.dataset ?? []}
-          rowCount={data?.count ?? 0}
+          rowCount={data?.totalCount ?? 0}
+          autoPageSize
           initialState={initialState}
           columns={[
             {
@@ -212,7 +213,7 @@ export default function Locations() {
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 115,
+              minWidth: 125,
               flex: 1,
               preProcessEditCellProps: (
                 params: GridPreProcessEditCellProps,
@@ -232,7 +233,7 @@ export default function Locations() {
               hideable: false,
               pinnable: false,
               resizable: false,
-              minWidth: 110,
+              minWidth: 120,
               flex: 1,
             },
             {
@@ -285,11 +286,11 @@ export default function Locations() {
                   <Avatar
                     isBordered
                     radius="sm"
-                    size="sm"
+                    className="size-7"
                     src="https://i.pravatar.cc/150?u=a04258114e29026302d"
                   />
                   <div className="flex-col">
-                    <div>by {by}</div>
+                    <div className="text-sm">by {by}</div>
                     <div className="text-xs">on {on}</div>
                   </div>
                 </div>
@@ -316,11 +317,11 @@ export default function Locations() {
                   <Avatar
                     isBordered
                     radius="sm"
-                    size="sm"
+                    className="size-7"
                     src="https://i.pravatar.cc/150?u=a04258114e29026302d"
                   />
                   <div className="flex-col">
-                    <div>by {by}</div>
+                    <div className="text-sm">by {by}</div>
                     <div className="text-xs">on {on}</div>
                   </div>
                 </div>
@@ -346,12 +347,13 @@ export default function Locations() {
                       type: "include",
                       ids: new Set([row.id]),
                     });
-                    // showConfirm({
-                    //   operation: "delete",
-                    //   status: "info",
-                    //   subject: `Confirm deletion of ${row.name}`,
-                    //   body: `Are you sure you intend to delete this store?`,
-                    // });
+                    confirm({
+                      icon: <Trash2Icon />,
+                      status: "error",
+                      action: "delete",
+                      subject: "Confirm deletion",
+                      body: `Are you sure you intend to delete location ${row.code}?`,
+                    });
                   }}
                 >
                   <DeleteIcon />
@@ -377,10 +379,9 @@ export default function Locations() {
               filterOperators: dateFilter,
             },
           ]}
-          getRowHeight={() => "auto"}
+          //getRowHeight={() => 40}
           density="compact"
           pagination
-          checkboxSelection
           keepNonExistentRowsSelected
           disableRowSelectionOnClick
           disableRowSelectionExcludeModel
@@ -431,46 +432,36 @@ export default function Locations() {
           slots={DataGridSlots({
             apiRef,
             apiUrl: `${apiUrl}?scope=users`,
+            title: capitalize(apiUrl),
+            caption: `${data?.filtered} items displayed from a total of ${data?.totalCount}.`,
             changeFilters,
-            clearFilters,
-            changeRowSelection,
-            clearRowSelection,
             changeVisibleColumns,
-            //exclude: ["multiApprove", "multiReject"],
-            exportURL: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+            changeRowSelection,
+            clearFilters,
+            clearRowSelection,
+            exclude: [],
+            exportUrl: `${apiUrl}?scope=users&limit=${data?.filtered}&offset=${
               paginationModel?.page
-            }&view=__EXPORT__&sortsAndFilters=${encodeURI(
+            }&exportable=true&refines=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
             )}`,
             handleGetData,
+            newItemLabel: "Create",
             isExporting,
             isLoading,
-            search: {
-              fields: "Id, Username, Dealer, Names, Phone etc ...",
-              width: 450,
-            },
+            searchPlaceholder: "Code, Barcode",
             setIsExporting,
             stats,
             changeStats,
-            setIsAddItemOpen,
-            extraActions: (
-              <>
-                <Button variant="secondary" size="icon">
-                  <EllipsisHorizontalIcon data-icon="inline-start" />
-                </Button>
-                <Button variant="secondary" size="icon">
-                  <EllipsisHorizontalIcon data-icon="inline-start" />
-                </Button>
-              </>
-            ),
+            setIsNewItemOpen,
           })}
           slotProps={DataGridSlotProps}
-          sx={DataGridStyles}
+          sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}
         />
 
         <DataGridPagination
-          data={data}
-          paginationModel={paginationModel!}
+          count={data?.totalCount}
+          paginationModel={paginationModel}
           changePagination={changePagination}
         />
       </div>

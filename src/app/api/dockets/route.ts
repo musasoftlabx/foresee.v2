@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 // * Schema
 import { ballotsCollection } from "../../../db/schema";
-import { truncate } from "fs";
+import { truncate } from "node:fs";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;

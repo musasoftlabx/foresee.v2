@@ -1,5 +1,5 @@
 // * Node
-import { existsSync, mkdirSync, chmodSync } from "fs";
+import { existsSync, mkdirSync, chmodSync } from "node:fs";
 import subProcess from "child_process";
 
 // * NPM

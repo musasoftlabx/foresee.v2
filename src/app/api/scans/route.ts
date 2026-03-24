@@ -1,5 +1,5 @@
 // * Server
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
@@ -7,14 +7,14 @@ import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
 
 // * Hooks
-import { useDayjsDayFormatter } from "@/hooks/useDayjsDayFormatter";
+import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 import useQueryRefiner from "@/hooks/useQueryRefiner";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
 
 // * Types
-import { Created, Modified } from "@/types";
+import type { Created, Modified } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       ...row,
       scanned: {
         ...(row.scanned as unknown as Created),
-        on: useDayjsDayFormatter((row.scanned as any).on),
+        on: dayjsDayFormatter((row.scanned as any).on),
       },
     });
   }

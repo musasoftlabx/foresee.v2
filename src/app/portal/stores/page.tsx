@@ -418,6 +418,16 @@ export default function Stores({ apiUrl = "stores" }) {
             stats,
             changeStats,
             setIsNewItemOpen,
+            // extraActions: (
+            //   <>
+            //     <Button variant="secondary" size="icon">
+            //       <EllipsisHorizontalIcon data-icon="inline-start" />
+            //     </Button>
+            //     <Button variant="secondary" size="icon">
+            //       <EllipsisHorizontalIcon data-icon="inline-start" />
+            //     </Button>
+            //   </>
+            // ),
           })}
           slotProps={DataGridSlotProps}
           sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}

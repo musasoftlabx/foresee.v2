@@ -1,5 +1,5 @@
 // * Server
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
