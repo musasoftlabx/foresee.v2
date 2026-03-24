@@ -66,19 +66,9 @@ export default function FileUploader(
     setValue: UseFormSetValue<any>;
   },
 ) {
-  const {
-    allowOnly,
-    caption,
-    circular,
-    control,
-    register,
-    dimensions,
-    field,
-    stylePanelLayout,
-    setValue,
-  } = props;
+  const { allowOnly, caption, control, register, field: f, setValue } = props;
 
-  const { filename, sheetFields, systemFields, sheets } = field.value.file;
+  //const { filename, sheetFields, systemFields, sheets } = field.value.file;
 
   // ? Hooks
   const sheetFieldsWatcher = useWatch({
@@ -86,13 +76,14 @@ export default function FileUploader(
     name: "inventory.file.sheetFields",
   });
 
+  console.log(sheetFieldsWatcher);
+
   // ? State Actions
   const alert = useAlertDialogStore((state) => state.alert);
 
   // ? Mutations
   const { mutate: deleteFile } = useMutation({
-    mutationFn: (file) =>
-      axios.delete(`upload?file=${file}&context=${field.name}`),
+    mutationFn: (file) => axios.delete(`upload?file=${file}&context=${f.name}`),
   });
 
   let acceptedFileTypes = [];
@@ -121,7 +112,7 @@ export default function FileUploader(
     <Fragment>
       <style>
         {`
-          .filepond { border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 12px 18px; }
+          .filepond { border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 12px 18px; padding-top: 20px; }
           .filepond--root { color: var(--card-foreground) !important; border: 2px dashed var(--primary); border-radius: var(--radius-lg); overflow: hidden; }
           .filepond--drop-label { background-color: var(--sidebar); cursor: pointer; }
           .filepond--drop-label:hover { background-color: var(--sidebar-accent); }
@@ -189,11 +180,9 @@ export default function FileUploader(
       </style>
 
       <div className="filepond flex flex-col gap-3 p-2">
-        {field.value?.file && (
-          <div className="text-md font-bold text-center">
-            {field.value?.label}
-          </div>
-        )}
+        {/* {f.value?.file && (
+          <div className="text-md font-bold text-center">{f.value?.label}</div>
+        )} */}
 
         <FilePond
           {...props}
@@ -205,8 +194,8 @@ export default function FileUploader(
           onprocessfile={(_, file) => {
             const { serverId } = file;
             setValue(
-              field.name,
-              { ...field.value, file: serverId },
+              f.name,
+              { ...f.value, file: serverId },
               { shouldDirty: true, shouldTouch: true, shouldValidate: true },
             );
           }}
@@ -223,31 +212,28 @@ export default function FileUploader(
               timeout: 30000,
               withCredentials: false,
               ondata: (formData) => {
-                formData.append("context", field.name);
-                formData.append("template", field.name);
-                formData.append(
-                  "prefix",
-                  field.value.label!.replaceAll(" ", ""),
-                );
+                formData.append("context", f.name);
+                formData.append("template", f.name);
+                formData.append("prefix", f.value.label.replaceAll(" ", ""));
                 return formData;
               },
               onload: (data) => JSON.parse(data),
               onerror: (error) => {
-                if (error instanceof AxiosError)
-                  alert({
-                    status: "error",
-                    subject: error.response?.data.error,
-                    body: error.response?.data.message,
-                  });
+                if (error instanceof AxiosError) console.log("error");
+                // alert({
+                //   status: "error",
+                //   subject: error.response?.data.error,
+                //   body: error.response?.data.message,
+                // });
               },
             },
             revert: ({ filename }) =>
               deleteFile(filename, {
                 onSuccess: () =>
                   setValue(
-                    field.name,
+                    f.name,
                     {
-                      ...field.value,
+                      ...f.value,
                       file: { filename: "", sheetFields: [], systemFields: [] },
                     },
                     {
@@ -270,7 +256,7 @@ export default function FileUploader(
                         <div style="display: flex; justify-content: center; height: 35px; text-align: center">
                           <img src="/icons/filepond/${allowOnly}.png" style="filter: hue-rotate(${filterDegree}deg)" />
                         </div>
-                        <div style="font-size: 16px; font-weight: 600; color: var(--sidebar-primary); opacity: .9">Upload ${field.value.label ?? "Upload file"}</div>
+                        <div style="font-size: 16px; font-weight: 600; color: var(--sidebar-primary); opacity: .9">Upload ${f.value.label ?? "Upload file"}</div>
                         <div style="color: var(--sidebar-accent-foreground); font-size: 11px; font-weight: 600;">Only ${acceptedFileTypes.join(", ")} allowed</div>
                         <b style="color: var(--muted-foreground); font-size: 11px; margin-top: 2px">(Max of ${props.maxFileSize} allowed)</b>
                       </div>`}
@@ -335,7 +321,7 @@ export default function FileUploader(
                                     )
                                   }
                                 >
-                                  {systemFields.map(
+                                  {f.value.file.systemFields.map(
                                     ({ field }: { field: string }) => (
                                       <SelectItem key={field}>
                                         {field}

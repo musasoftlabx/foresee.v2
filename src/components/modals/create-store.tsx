@@ -1,5 +1,14 @@
 // * React
-import { type Dispatch, type SetStateAction, useEffect } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
+
+// * Next
+import Image from "next/image";
 
 // * NPM
 import * as z from "zod";
@@ -13,7 +22,6 @@ import axios, { AxiosError } from "axios";
 import Grid from "@mui/material/Grid";
 
 // * SUI
-import { DialogClose, DialogFooter } from "@/components/ui/shadcn/dialog";
 import {
   Field,
   FieldContent,
@@ -58,8 +66,14 @@ import ModalDialog from "@/components/modal-dialog";
 // * Utils
 import { cn } from "@/lib/utils";
 
+// * Store
+import { useAlertDialogStore } from "@/store/useAlertDialogStore";
+
 // * Assets
 import countries from "../../../public/data/countries.json";
+
+// * Icons
+import { StoreIcon } from "lucide-react";
 
 // * Schema
 const schema = z.object({
@@ -144,6 +158,9 @@ export default function CreateStore({
   // ? Effects
   useEffect(() => setFocus("name"), [setFocus]);
 
+  // ? State Actions
+  const alert = useAlertDialogStore((state) => state.alert);
+
   // ? Mutations
   const { mutate: createStore } = useMutation({
     mutationFn: (body: TSchema) => axios.post("stores", body),
@@ -163,18 +180,19 @@ export default function CreateStore({
           onSubmit={handleSubmit((formdata: TSchema) =>
             createStore(formdata, {
               onSuccess: () => {
-                // setIsNewItemOpen(false);
-                // queryClient.refetchQueries({
-                //   queryKey: ["stores"],
-                // });
+                setIsNewItemOpen(false);
+                queryClient.refetchQueries({
+                  queryKey: ["stores"],
+                });
               },
               onError: (error) => {
                 if (error instanceof AxiosError) {
-                  // showAlert({
-                  //   status: "error",
-                  //   error: error.response?.data.error,
-                  //   message: error.response?.data.message,
-                  // });
+                  alert({
+                    icon: <StoreIcon />,
+                    status: "error",
+                    subject: error.response?.data.error,
+                    body: error.response?.data.message,
+                  });
                 }
               },
             }),
@@ -217,12 +235,15 @@ export default function CreateStore({
                       variant="faded"
                       size="sm"
                       label="Country"
+                      popoverProps={{ className: "bg-sidebar" }}
                       defaultItems={countries}
                       endContent={
-                        <img
+                        <Image
                           src={`https://flagcdn.com/w20/${countries.find(({ country }) => country === value)?.code.toLowerCase()}.png`}
                           alt={value}
-                          width="20"
+                          width={20}
+                          height={20}
+                          className="-mt-0.5"
                         />
                       }
                       color={
@@ -265,9 +286,10 @@ export default function CreateStore({
                         <AutocompleteItem
                           key={code}
                           startContent={
-                            <img
+                            <Image
                               src={`https://flagcdn.com/w20/${code.toLowerCase()}.png`}
-                              width="20"
+                              width={20}
+                              height={20}
                               alt={country}
                               className="-mt-0.5"
                             />
@@ -377,7 +399,7 @@ export default function CreateStore({
                       <NumberField
                         {...register("audit.locations")}
                         onValueChange={(value) => {
-                          setValue("audit.locations", value!, {
+                          setValue("audit.locations", value as number, {
                             shouldDirty: true,
                             shouldTouch: true,
                             shouldValidate: true,
@@ -442,7 +464,7 @@ export default function CreateStore({
                       {
                         value: "strict",
                         title: "Strict barcodes",
-                        description: `Barcodes are strictly ${getValues().audit.barcode.characters[0]} characters.`,
+                        description: `Barcodes are strictly ${getValues().audit?.barcode.characters[0]} characters.`,
                       },
                       {
                         value: "variable",
@@ -557,36 +579,18 @@ export default function CreateStore({
                   />
                 )}
               />
-              {/* <Controller
-                control={control}
-                name="inventory"
-                render={({ field }) => (
-                  <FileUploader
-                    control={control}
-                    register={register}
-                    field={field}
-                    setValue={setValue}
-                    acceptedFileTypes={["XLSX","XSLB", "XLS", "CSV"]}
-                    caption="Store's inventory to be audited"
-                    maxFileSize="10MB"
-                    stylePanelLayout="integrated"
-                    stylePanelAspectRatio={"16:5"}
-                  />
-                )}
-              /> */}
             </div>
           </ScrollShadow>
 
-          <DialogFooter className="bg-sidebar-accent px-8 mx-0 mt-4">
-            <DialogClose>
-              <Button
-                variant="faded"
-                size="sm"
-                onPress={() => setIsNewItemOpen(false)}
-              >
-                Close
-              </Button>
-            </DialogClose>
+          <footer className="bg-sidebar-accent mx-0 mt-4 flex gap-2 rounded-b-xl border-t p-4 sm:flex-row sm:justify-end">
+            <Button
+              variant="faded"
+              size="sm"
+              onPress={() => setIsNewItemOpen(false)}
+            >
+              Close
+            </Button>
+
             <Button
               type="submit"
               variant={isSubmitting ? "flat" : "solid"}
@@ -598,7 +602,7 @@ export default function CreateStore({
             >
               Submit{isSubmitting ? "ting..." : ""}
             </Button>
-          </DialogFooter>
+          </footer>
         </form>
       </ModalDialog>
     </>

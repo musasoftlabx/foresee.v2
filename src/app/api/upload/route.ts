@@ -17,16 +17,19 @@ import { prisma } from "@/lib/prisma";
 // * Helpers
 import { tempPath } from "@/helpers/configurePaths";
 
-const MAX_FILE_SIZE: number = 5; //* 1024 * 1024;
+const MAX_FILE_SIZE: number = 10 * 1024 * 1024;
 const FILE_WHITELIST: string[] = [
   "png",
   "jpg",
+  "jpeg",
+  "gif",
   "pdf",
   "docx",
   "doc",
   "csv",
   "xls",
   "xlsx",
+  "xlsb",
 ];
 const SPREADSHEETS: string[] = ["csv", "xls", "xlsx"];
 
