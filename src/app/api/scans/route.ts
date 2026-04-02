@@ -14,12 +14,13 @@ import useQueryRefiner from "@/hooks/useQueryRefiner";
 import { prisma } from "@/lib/prisma";
 
 // * Types
-import type { Created, Modified } from "@/types";
+import type { ByOn } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
 
 const username = "mmuliro";
+const model = "scans";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -32,13 +33,13 @@ export async function GET(req: NextRequest) {
     limit,
     offset,
     refines,
-    search: { table: "Scans", fields: ["location", "barcode", "scanned"] },
+    search: { model, fields: ["location", "barcode", "scanned"] },
   });
 
   const rows =
     searchResults.length > 0
       ? searchResults
-      : await prisma.scans.findMany(query);
+      : await prisma[model].findMany(query);
 
   const dataset = [];
 
@@ -50,8 +51,8 @@ export async function GET(req: NextRequest) {
     dataset.push({
       ...row,
       scanned: {
-        ...(row.scanned as unknown as Created),
-        on: dayjsDayFormatter((row.scanned as any).on),
+        ...(row.scanned as unknown as ByOn),
+        on: dayjsDayFormatter(row.scanned.on),
       },
     });
   }
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
   const { audit: auditId, location, barcode, device } = await request.json();
   try {
     return NextResponse.json(
-      await prisma.scans.create({
+      await prisma[model].create({
         data: {
           auditId,
           location,
@@ -88,7 +89,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     return NextResponse.json(
-      await prisma.scans.deleteMany({ where: { id: { in: ids } } }),
+      await prisma[model].deleteMany({ where: { id: { in: ids } } }),
     );
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {

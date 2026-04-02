@@ -123,3 +123,10 @@ npx prisma migrate dev --name add_tsvector_column --create-only
 3. add line below to file (edit ip if necessary)
 > host all all 192.168.100.84/32 trust
 `````
+
+# Prisma reset autoincrement
+
+```js
+await prisma.$executeRaw`ALTER SEQUENCE "Organizations_id_seq" RESTART WITH 1;`;
+await prisma.$executeRaw`ALTER SEQUENCE "Clients_id_seq" RESTART WITH 1;`;
+```

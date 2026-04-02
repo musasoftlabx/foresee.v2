@@ -1,9 +1,6 @@
 // * Server
 import { type NextRequest, NextResponse } from "next/server";
 
-// * Schema
-import { accountCollection } from "@/db/schema";
-
 // * NPM
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import advancedFormat from "dayjs/plugin/advancedFormat";
@@ -16,7 +13,7 @@ import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 import { prisma } from "@/lib/prisma";
 
 // * Types
-import type { Created, Modified } from "@/types";
+import type { ByOn } from "@/types";
 import { Organizations } from "@/generated/prisma/client";
 
 // * Extensions
@@ -45,12 +42,12 @@ export async function GET(req: NextRequest) {
       dataset: dataset.map((field: Organizations) => ({
         ...field,
         created: {
-          ...(field.created as unknown as Created),
-          on: dayjsDayFormatter((field.created as any).on),
+          ...(field.created as unknown as ByOn),
+          on: dayjsDayFormatter(field.created.on),
         },
         modified: {
-          ...(field.modified as unknown as Modified),
-          on: dayjsDayFormatter((field.modified as any).on),
+          ...(field.modified as unknown as ByOn),
+          on: dayjsDayFormatter(field.modified.on),
         },
       })),
     });
@@ -88,32 +85,6 @@ export async function POST(request: Request) {
         { icon: "", error: error.name, message: error.message },
         { status: 500 },
       );
-    }
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const { scope } = Object.fromEntries(searchParams.entries());
-
-  if (scope === "editCell") {
-    const { _id, field, value } = await request.json();
-    try {
-      return NextResponse.json(
-        await accountCollection.findByIdAndUpdate(
-          { _id },
-          { [field]: value, modified: { by: "musa1", on: new Date() } },
-        ),
-        { status: 201 },
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        // logIt({code: 1, error: error.name, message: error.message})
-        return NextResponse.json(
-          { icon: "", error: error.name, message: error.message },
-          { status: 400 },
-        );
-      }
     }
   }
 }

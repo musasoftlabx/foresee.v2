@@ -105,7 +105,7 @@ export type TDataGridSlots = Partial<{
    * Fields included in the search criteria
    */
   searchPlaceholder?: string;
-  setIsNewItemOpen: Dispatch<React.SetStateAction<boolean>>;
+  setIsModalOpen: Dispatch<React.SetStateAction<boolean>>;
   stats?: boolean;
   changeStats?: (arg0: boolean) => void; //React.Dispatch<React.SetStateAction<boolean>>;
 }>;
@@ -128,7 +128,7 @@ export const DataGridSlots = ({
   isExporting,
   isLoading,
   setIsExporting,
-  setIsNewItemOpen,
+  setIsModalOpen,
   searchPlaceholder,
   stats,
   changeStats,
@@ -173,7 +173,7 @@ export const DataGridSlots = ({
       isExporting={isExporting}
       isLoading={isLoading}
       setIsExporting={setIsExporting}
-      setIsNewItemOpen={setIsNewItemOpen}
+      setIsModalOpen={setIsModalOpen}
       searchPlaceholder={searchPlaceholder}
       extraActions={extraActions}
       stats={stats}

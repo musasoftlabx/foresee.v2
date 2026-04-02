@@ -1,152 +1,132 @@
-// * Components
-import { Button as Batton } from "@/components/ui/button";
-import { Button } from "@heroui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/shadcn/dialog";
+// * React
+import { type Dispatch, Fragment, type SetStateAction, useEffect } from "react";
 
 // * NPM
 import * as z from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
-import { zPassword } from "@/utils/zodReusables";
+
+// * HUI
 import { Input } from "@heroui/react";
-import { SetStateAction, useEffect } from "react";
+
+// * Components
+import { HeaderFooter, ModalDialog } from "@/components/modal-dialog";
+
+// * Store
+import { useAlertDialogStore } from "@/store/useAlertDialogStore";
+
+// * Icons
+import { StoreIcon } from "lucide-react";
 
 // * Schema
-const ClientSchema = z.object({
-  client: z.string().min(2, "Client cannot be a single character"),
+const schema = z.object({
+  name: z.string().min(2, "Client cannot be a single character"),
 });
 
-type TClient = z.infer<typeof ClientSchema>;
+type Schema = z.infer<typeof schema>;
 
-export function AddClient({
-  isAddClientOpen,
-  setIsAddClientOpen,
+export default function AddClient({
+  isModalOpen,
+  setIsModalOpen,
 }: {
-  isAddClientOpen: boolean;
-  setIsAddClientOpen: React.Dispatch<SetStateAction<boolean>>;
+  isModalOpen: boolean;
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   const {
     control,
-    formState: { errors, isLoading, isValid, isSubmitting, dirtyFields: dirty },
+    formState: { errors, isValid, isSubmitting, dirtyFields: dirty },
     handleSubmit,
     register,
     setFocus,
-    getValues,
-    setValue,
-    watch,
     reset,
   } = useForm({
     mode: "onChange",
-    resolver: zodResolver(ClientSchema),
-    defaultValues: { client: "" },
+    resolver: zodResolver(schema),
+    defaultValues: { name: "" },
   });
 
+  // ? Hooks
   const queryClient = useQueryClient();
 
   // ? Effects
-  useEffect(() => setFocus("client"), [setFocus]);
+  useEffect(() => setFocus("name"), [setFocus]);
+
+  // ? State Actions
+  const alert = useAlertDialogStore((state) => state.alert);
 
   // ? Mutations
   const { mutate: addClient } = useMutation({
-    mutationFn: (body: TClient) => axios.post("clients", body),
+    mutationFn: (body: Schema) => axios.post("clients", body),
   });
 
   return (
-    <>
+    <Fragment>
       <DevTool control={control} />
 
-      <Dialog open={isAddClientOpen}>
-        {/* <DialogTrigger asChild>{children}</DialogTrigger> */}
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Client</DialogTitle>
-            <DialogDescription>Enter the client name.</DialogDescription>
-          </DialogHeader>
-
-          <form
-            className="flex flex-col gap-5"
-            onSubmit={handleSubmit((formdata: TClient) =>
-              addClient(formdata, {
-                onSuccess: () => {
-                  setIsAddClientOpen(false);
-                  queryClient.refetchQueries({
-                    queryKey: ["clients"],
+      <ModalDialog
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        title="Add Client"
+        caption="Enter the client name"
+      >
+        <form
+          onSubmit={handleSubmit((formdata: Schema) =>
+            addClient(formdata, {
+              onSuccess: () => {
+                reset();
+                setIsModalOpen(false);
+                queryClient.refetchQueries({
+                  queryKey: ["clients"],
+                });
+              },
+              onError: (error) => {
+                if (error instanceof AxiosError) {
+                  alert({
+                    icon: <StoreIcon />,
+                    status: "error",
+                    subject: error.response?.data.error,
+                    body: error.response?.data.message,
                   });
-                },
-                onError: (error) => {
-                  if (error instanceof AxiosError) {
-                    // showAlert({
-                    //   status: "error",
-                    //   error: error.response?.data.error,
-                    //   message: error.response?.data.message,
-                    // });
-                  }
-                },
-              }),
-            )}
+                }
+              },
+            }),
+          )}
+        >
+          <HeaderFooter
+            isSubmitting={isSubmitting}
+            isValid={isValid}
+            setIsModalOpen={setIsModalOpen}
+            hideFooter
           >
             <Controller
               control={control}
-              name="client"
+              name="name"
               render={() => (
                 <Input
-                  //className="md:w-1/2 lg:w-full"
                   label="Client Name"
-                  placeholder="Enter the client name"
                   size="sm"
                   maxLength={20}
                   isRequired
                   variant="faded"
-                  //startContent={<RiAccountPinBoxLine size={21} />}
                   color={
-                    dirty.client && !errors?.client
+                    dirty.name && !errors?.name
                       ? "success"
-                      : errors.client
+                      : errors.name
                         ? "danger"
                         : "default"
                   }
-                  isInvalid={dirty.client && Boolean(errors.client)}
-                  errorMessage={dirty.client && errors.client?.message}
-                  {...register("client")}
+                  isInvalid={dirty.name && Boolean(errors.name)}
+                  errorMessage={dirty.name && errors.name?.message}
+                  {...register("name")}
                 />
               )}
             />
-
-            <DialogFooter className="sm:justify-end">
-              <DialogClose asChild>
-                <Button
-                  variant="bordered"
-                  size="sm"
-                  onPress={() => setIsAddClientOpen(false)}
-                >
-                  Cancel
-                </Button>
-              </DialogClose>
-              <Button
-                type="submit"
-                variant="solid"
-                size="sm"
-                disabled={isLoading || isSubmitting || !isValid}
-              >
-                Submit
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
+          </HeaderFooter>
+        </form>
+      </ModalDialog>
+    </Fragment>
   );
 }

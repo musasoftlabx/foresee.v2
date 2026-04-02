@@ -11,8 +11,10 @@ import dayjs from "dayjs";
 import ExcelJS, { type CellValue } from "@protobi/exceljs";
 import padStart from "lodash/padStart";
 
-// * Hooks
+// * Helpers
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
+
+// * Hooks
 import useQueryRefiner from "@/hooks/useQueryRefiner";
 
 // * Libs
@@ -22,13 +24,14 @@ import { prisma } from "@/lib/prisma";
 import { tempPath } from "@/helpers/configurePaths";
 
 // * Types
-import type { Created, Modified } from "@/types";
+import type { ByOn } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
 
 const organizationId = 1;
 const username = "mmuliro";
+const model = "stores";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -36,13 +39,13 @@ export async function GET(req: NextRequest) {
     searchParams.entries(),
   );
 
-  const { query, searchResults } = await useQueryRefiner({
+  const { query, searchResults, totalCount } = await useQueryRefiner({
     where: { organizationId },
     limit,
     offset,
     refines,
     search: {
-      table: "Stores",
+      model,
       fields: ["code", "name", "country", "client", "created", "modified"],
     },
   });
@@ -50,7 +53,7 @@ export async function GET(req: NextRequest) {
   const rows =
     searchResults.length > 0
       ? searchResults
-      : await prisma.stores.findMany(query);
+      : await prisma[model].findMany(query);
 
   const dataset = [];
 
@@ -65,17 +68,17 @@ export async function GET(req: NextRequest) {
         where: { storeId: row.id },
       }),
       created: {
-        ...(row.created as unknown as Created),
+        ...(row.created as unknown as ByOn),
         on: dayjsDayFormatter(row.created.on),
       },
       modified: {
-        ...(row.modified as unknown as Modified),
+        ...(row.modified as unknown as ByOn),
         on: dayjsDayFormatter(row.modified.on),
       },
     });
   }
 
-  return NextResponse.json({ count: dataset.length, dataset });
+  return NextResponse.json({ dataset, filtered: dataset.length, totalCount });
 }
 
 export async function POST(request: Request) {
@@ -135,7 +138,7 @@ export async function POST(request: Request) {
       });
 
       // ? Get number of stores with similar country codes
-      const storeCount = await prisma.stores.count({
+      const storeCount = await prisma[model].count({
         where: { organizationId, code: { startsWith: code } },
       });
 
@@ -146,7 +149,7 @@ export async function POST(request: Request) {
       const storeCode = `${code}${padStart(storePadding.toString(), 2, "0")}`;
 
       // ? Create the store
-      const createdStore = await prisma.stores.create({
+      const createdStore = await prisma[model].create({
         data: {
           organizationId,
           code: storeCode,
@@ -159,7 +162,7 @@ export async function POST(request: Request) {
       });
 
       // ? Create inventory records based on the created store
-      const createInventory = await prisma.$transaction(
+      await prisma.$transaction(
         inventory.map((item: { barcode?: string }) => {
           const { barcode, ...attributes } = item;
           return prisma.inventory.createMany({
@@ -234,7 +237,7 @@ export async function PATCH(request: NextRequest) {
     const { id, field, value } = await request.json();
     try {
       return NextResponse.json(
-        await prisma.stores.update({
+        await prisma[model].update({
           where: { id },
           data: { [field]: value, modified: { by: username, on: new Date() } },
         }),
@@ -262,7 +265,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     return NextResponse.json(
-      await prisma.stores.deleteMany({ where: { id: { in: ids } } }),
+      await prisma[model].deleteMany({ where: { id: { in: ids } } }),
     );
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {

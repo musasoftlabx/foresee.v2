@@ -14,6 +14,10 @@ declare global {
 
       npm_package_name: string;
       MAX_FILE_SIZE: string;
+      GOOGLE_AUTH_TOKEN: string;
+      PASSCODE_EXPIRY: number;
+      NEXT_PUBLIC_MINIMUM_PASSWORD_LENGTH: number;
+      ACCESS_TOKEN_EXPIRY_IN_MINUTES: number;
     }
   }
 }

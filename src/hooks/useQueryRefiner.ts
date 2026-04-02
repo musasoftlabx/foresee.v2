@@ -1,7 +1,14 @@
-import { Prisma, type PrismaClient } from "@/generated/prisma/client";
+import { Prisma, PrismaClient } from "@/generated/prisma/client";
 import type { GlobalOmitConfig } from "@/generated/prisma/internal/prismaNamespace";
 import { prisma } from "@/lib/prisma";
 import type { DefaultArgs } from "@prisma/client/runtime/client";
+import capitalize from "lodash/capitalize";
+
+export type ModelKeys = {
+  [K in keyof PrismaClient]: PrismaClient[K] extends { count: Function }
+    ? K
+    : never;
+}[keyof PrismaClient];
 
 export type QueryOptions = {
   filterModel: {
@@ -24,7 +31,7 @@ export default async function useQueryRefiner({
   limit: string;
   offset: string;
   refines: string;
-  search: { table: string; fields: string[] };
+  search: { model: string; fields: string[] };
 }) {
   const queryOptions = <QueryOptions>JSON.parse(refines);
   const take = Number(limit);
@@ -152,13 +159,13 @@ export default async function useQueryRefiner({
     if (searchOptions?.length > 0) {
       searchResults = await prisma.$queryRawUnsafe(`
         SELECT id, ${search.fields.join(", ")}
-        FROM "${search.table}"
+        FROM "${capitalize(search.model)}"
         WHERE search_vector @@ to_tsquery('simple','${searchOptions[0]}')
         LIMIT ${take}
       `);
       // searchResults = await prisma.$queryRaw(Prisma.sql`
       //   SELECT id, ${search.fields.join(", ")}
-      //   FROM ${Prisma.raw(capitalize(search.table))} -- ${Prisma.raw(search.table).strings[0]}
+      //   FROM ${Prisma.raw(capitalize(search.model))} -- ${Prisma.raw(search.model).strings[0]}
       //   WHERE search_vector @@ to_tsquery('simple', 'opre')
       //   LIMIT ${take}
       // `);
@@ -172,14 +179,11 @@ export default async function useQueryRefiner({
     }
   }
 
-  const table = Prisma.raw(search.table).strings[0].toLocaleLowerCase();
-  const totalCount = await prisma[
-    table as keyof PrismaClient<
-      never,
-      GlobalOmitConfig | undefined,
-      DefaultArgs
-    >
-  ].count({ where: { ...where } });
+  const model = search.model as ModelKeys;
+
+  const totalCount = await (prisma[model] as any).count({
+    where: { ...where },
+  });
 
   return { query, searchResults, totalCount };
 }

@@ -1,8 +1,9 @@
 "use client";
 
-//import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react";
+// * Next
+import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/shadcn/button";
+// * SUI
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -10,8 +11,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/shadcn/sidebar";
-import { use } from "react";
-import { useRouter } from "next/navigation";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/shadcn/avatar";
+import { Separator } from "@/components/ui/shadcn/separator";
 
 export function NavMain({
   items,
@@ -28,24 +33,39 @@ export function NavMain({
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
-          <SidebarMenuItem className="flex items-center gap-2">
-            <SidebarMenuButton
-              tooltip="Quick Create"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-            >
-              {/* <IconCirclePlusFilled /> */}
-              <span>Quick Create</span>
-            </SidebarMenuButton>
-            <Button
-              size="icon"
-              className="size-8 group-data-[collapsible=icon]:opacity-0"
-              variant="outline"
-            >
-              {/* <IconMail /> */}
-              <span className="sr-only">Inbox</span>
-            </Button>
+          <SidebarMenuItem className="flex flex-col items-center gap-2">
+            <div className="group/avatar relative flex items-center justify-center">
+              {/* Animated Story Ring */}
+              <div className="absolute -inset-1 animate-[spin_3s_linear_infinite] rounded-full bg-linear-to-tr from-yellow-400 via-fuchsia-500 to-violet-600 opacity-75 blur-xs transition-all duration-500 group-hover/avatar:opacity-100 group-hover/avatar:blur-sm" />
+              {/* Main Avatar */}
+              <Avatar className="ring-background size-10 ring-2 transition-transform duration-500 group-hover/avatar:scale-95 h-16 w-16">
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="User Image"
+                />
+                <AvatarFallback className="text-white text-2xl bg-primary">
+                  MM
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            {/* <Avatar className="after:sidebar-primary dark:after:sidebar-primary h-16 w-16">
+              <AvatarFallback className="text-white text-2xl bg-primary">
+                MM
+              </AvatarFallback>
+            </Avatar> */}
+
+            <div className="flex flex-col justify-center items-center gap-0.5">
+              <span className="text-lg font-semibold">Musa Mutetwi</span>
+              <span className="text-xs text-muted-foreground text-center">
+                Signed in as role here
+              </span>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
+
+        <Separator className="my-3" />
+
         <SidebarMenu>
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>

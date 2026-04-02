@@ -62,7 +62,7 @@ export default function Audits({ apiUrl = "locations" }) {
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddItemOpen, setIsNewItemOpen] = useState(false);
+  const [isAddItemOpen, setIsModalOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -138,8 +138,8 @@ export default function Audits({ apiUrl = "locations" }) {
   return (
     <Fragment>
       <CreateAudit
-        isNewItemOpen={isAddItemOpen}
-        setIsNewItemOpen={setIsNewItemOpen}
+        isModalOpen={isAddItemOpen}
+        setIsModalOpen={setIsModalOpen}
       />
 
       <div className="flex flex-1 flex-col h-[calc(100vh-585px)]">
@@ -453,7 +453,7 @@ export default function Audits({ apiUrl = "locations" }) {
             setIsExporting,
             stats,
             changeStats,
-            setIsNewItemOpen,
+            setIsModalOpen,
           })}
           slotProps={DataGridSlotProps}
           sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}

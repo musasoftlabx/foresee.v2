@@ -1,112 +1,63 @@
 "use client";
 
-import Portal from "../layout";
-
 // * React
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 
 // * NPM
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
 // * HUI
-import { Avatar, Button } from "@heroui/react";
+import { Avatar } from "@heroui/react";
 
-// * SCNUI
-import { Button as ButtonShadCN } from "@/components/ui/shadcn/button";
-
-// * RUI
-//import { Button } from "@/components/ui/reui/button";
-import {
-  Card,
-  CardFooter,
-  CardHeader,
-  CardTable,
-  CardTitle,
-  CardToolbar,
-} from "@/components/ui/reui/card";
-import { AddClient } from "@/components/modals/add-client";
+// * SUI
+import { Button } from "@/components/ui/shadcn/button";
 
 // * MUI
+import { capitalize } from "@mui/material";
 import {
   DataGridPro,
-  DEFAULT_GRID_AUTOSIZE_OPTIONS,
-  GRID_CHECKBOX_SELECTION_COL_DEF,
-  GridPreProcessEditCellProps,
-  GridRowModel,
-  GridValidRowModel,
+  type GridPreProcessEditCellProps,
+  type GridRowModel,
   useGridApiRef,
 } from "@mui/x-data-grid-pro";
+
+// * Icons
+import { Trash2Icon } from "lucide-react";
+import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Components
 import {
   DataGridSlotProps,
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
-
-// * Icons
-import { Plus } from "lucide-react";
-import { FaUsersCog } from "react-icons/fa";
-import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
-
-// * Constants
-const apiUrl = "clients";
+import { dateFilter } from "@/components/DataTable/DataGridFilters";
+import DataGridPagination from "@/components/DataTable/DataGridPagination";
+import AddClient from "@/components/modals/add-client";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
-import useJWT from "@/hooks/useJWT";
-
-import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
 // * Store
 import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
 
-import { Box } from "@mui/material";
-import { dateFilter, textFilter } from "@/components/DataTable/DataGridFilters";
+// * Prisma
+import type { Prisma } from "@/generated/prisma/client";
 
-type TResponse = {
-  count: number;
-  dataset: {
-    _id: string;
-    client: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-};
+// * Types
+import { DataGridApiResponse } from "@/types";
 
-export default function Clients() {
-  // const { isLoading } = useQuery(
-  //   [
-  //     apiUrl,
-  //     paginationModel?.pageSize,
-  //     paginationModel?.page,
-  //     "display",
-  //     encodeURI(JSON.stringify({ filterModel, sortModel })),
-  //   ],
-  //   ({ queryKey }) =>
-  //     axios.get(
-  //       `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&options=${queryKey[4]}&scope=users`
-  //     ),
-  //   {
-  //     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
-  //     select: ({ data }) => data,
-  //     onSuccess: (data) => setData(data),
-  //   }
-  // );
-
-  // ? Refs
+export default function Clients({ apiUrl = "clients" }) {
+  // ? Hooks
   const apiRef = useGridApiRef();
-
   const confirm = useConfirmDialogStore((state) => state.confirm);
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddClientOpen, setIsAddClientOpen] = useState(false);
-  const [isManageUserRolesOpen, setIsManageUserRolesOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
-    filters,
     filterModel,
     paginationModel,
     pinnedColumnsModel,
@@ -129,34 +80,14 @@ export default function Clients() {
     apiRef,
     apiUrl,
     columnsToHide: [
-      "_id",
-      "added.by",
-      "added.on",
+      "id",
+      "created.by",
+      "created.on",
       "modified.by",
       "modified.on",
     ],
-    columnsToSort: [{ field: "_id", sort: "desc" }],
-    toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "_id"],
-      right: ["actions"],
-    },
-  });
-
-  // ? Queries
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      apiUrl,
-      paginationModel?.pageSize,
-      paginationModel?.page,
-      "__DISPLAY__",
-      encodeURI(JSON.stringify({ filterModel, sortModel })),
-    ],
-    queryFn: ({ queryKey }) =>
-      axios<GridValidRowModel>(
-        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&view=${queryKey[3]}&options=${queryKey[4]}&scope=__DEFAULT__`,
-      ),
-    select: ({ data }) => data,
-    enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
+    columnsToSort: [{ field: "id", sort: "desc" }],
+    toPin: { left: ["id"], right: ["actions"] },
   });
 
   // ? Effects
@@ -169,33 +100,39 @@ export default function Clients() {
     });
   });
 
+  // ? Queries
+  const { data, isLoading } = useQuery({
+    queryKey: [
+      apiUrl,
+      paginationModel?.pageSize,
+      paginationModel?.page,
+      encodeURI(JSON.stringify({ filterModel, sortModel })),
+    ],
+    queryFn: ({ queryKey }) =>
+      axios(
+        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
+      ),
+    select: ({
+      data,
+    }: {
+      data: DataGridApiResponse & { dataset: Prisma.ClientsModel[] };
+    }) => data,
+    enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
+  });
+
   return (
-    <Portal>
-      <AddClient
-        isAddClientOpen={isAddClientOpen}
-        setIsAddClientOpen={setIsAddClientOpen}
-      />
+    <Fragment>
+      <AddClient isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
 
       <div className="flex flex-1 flex-col">
         <DataGridPro
           apiRef={apiRef}
           rows={data?.dataset ?? []}
-          rowCount={data?.count ?? 0}
+          rowCount={data?.totalCount ?? 0}
           initialState={initialState}
           columns={[
             {
-              field: GRID_CHECKBOX_SELECTION_COL_DEF.field,
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              resizable: false,
-              sortable: false,
-              maxWidth: 40,
-            },
-            {
-              field: "_id",
+              field: "id",
               headerName: "Id.",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: false,
@@ -207,23 +144,22 @@ export default function Clients() {
               flex: 1,
             },
             {
-              field: "client",
-              headerName: "Client",
+              field: "name",
+              headerName: "Name",
               cellClassName: "vertical-center-cell",
               disableColumnMenu: true,
               editable: true,
               hideable: false,
               pinnable: false,
-              resizable: false,
+              resizable: true,
               minWidth: 250,
               flex: 1,
-              preProcessEditCellProps: (
-                params: GridPreProcessEditCellProps,
-              ) => ({
-                ...params.props,
-                error: !params.props.value || params.props.value.length > 50,
+              preProcessEditCellProps: ({
+                props,
+              }: GridPreProcessEditCellProps) => ({
+                ...props,
+                error: !props.value || props.value.length > 50,
               }),
-              //filterOperators: textFilter,
             },
             {
               field: "added",
@@ -246,11 +182,11 @@ export default function Clients() {
                   <Avatar
                     isBordered
                     radius="sm"
-                    size="sm"
+                    className="size-7"
                     src="https://i.pravatar.cc/150?u=a04258114e29026302d"
                   />
                   <div className="flex-col">
-                    <div>by {by}</div>
+                    <div className="text-sm">by {by}</div>
                     <div className="text-xs">on {on}</div>
                   </div>
                 </div>
@@ -277,11 +213,11 @@ export default function Clients() {
                   <Avatar
                     isBordered
                     radius="sm"
-                    size="sm"
+                    className="size-7"
                     src="https://i.pravatar.cc/150?u=a04258114e29026302d"
                   />
                   <div className="flex-col">
-                    <div>by {by}</div>
+                    <div className="text-sm">by {by}</div>
                     <div className="text-xs">on {on}</div>
                   </div>
                 </div>
@@ -298,31 +234,34 @@ export default function Clients() {
               pinnable: false,
               disableColumnMenu: true,
               width: 70,
-              renderCell: ({ row: { _id, client } }) => (
-                <Button
-                  isIconOnly
-                  isLoading={false}
-                  isDisabled={false}
-                  radius="full"
-                  className="flex flex-1 align-middle self-center align-center justify-center"
-                  onPress={() => {
-                    //changeRowSelection([_id]);
-                    showConfirm({
-                      operation: "delete",
-                      status: "info",
-                      subject: `Confirm deletion of ${client}`,
-                      body: `Are you sure you intend to delete this client?`,
-                    });
-                  }}
-                >
-                  <DeleteIcon size={20} />
-                </Button>
+              renderCell: ({ row }) => (
+                <div className="flex items-center justify-center gap-3 mt-0.5">
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={() => {
+                      changeRowSelection({
+                        type: "include",
+                        ids: new Set([row.id]),
+                      });
+                      confirm({
+                        icon: <Trash2Icon />,
+                        status: "error",
+                        action: "delete",
+                        subject: "Confirm deletion",
+                        body: `Are you sure you intend to delete client ${row.name}?`,
+                      });
+                    }}
+                  >
+                    <DeleteIcon />
+                  </Button>
+                </div>
               ),
             },
-            { field: "added.by", headerName: "Added By", hideable: false },
+            { field: "created.by", headerName: "Created By", hideable: false },
             {
-              field: "added.on",
-              headerName: "Added On",
+              field: "created.on",
+              headerName: "Created On",
               hideable: false,
               filterOperators: dateFilter,
             },
@@ -338,24 +277,11 @@ export default function Clients() {
               filterOperators: dateFilter,
             },
           ]}
-          getRowId={({ _id }) => _id}
-          getRowHeight={() => "auto"}
-          //isRowSelectable={({ row: { isActive } }) => isActive}
-          // autosizeOptions={{
-          //   columns: ["_id", "client", "added", "modified"],
-          //   includeOutliers: true,
-          //   includeHeaders: true,
-          //   expand: true,
-          //   outliersFactor: 1.5,
-          // }}
+          getRowHeight={() => 40}
           density="compact"
           pagination
-          checkboxSelection
-          keepNonExistentRowsSelected
-          disableRowSelectionOnClick
-          disableRowSelectionExcludeModel
-          showCellVerticalBorder={false}
-          showColumnVerticalBorder={false}
+          showCellVerticalBorder
+          showColumnVerticalBorder
           showToolbar
           hideFooter
           hideFooterPagination
@@ -384,47 +310,39 @@ export default function Clients() {
           slots={DataGridSlots({
             apiRef,
             apiUrl: `${apiUrl}?scope=users`,
+            title: capitalize(apiUrl),
+            caption: `${data?.filtered} items displayed from a total of ${data?.totalCount}.`,
             changeFilters,
-            clearFilters,
-            changeRowSelection,
-            clearRowSelection,
             changeVisibleColumns,
-            //exclude: ["multiApprove", "multiReject"],
-            exportUrl: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+            changeRowSelection,
+            clearFilters,
+            clearRowSelection,
+            exclude: [],
+            exportUrl: `${apiUrl}?scope=users&limit=${data?.filtered}&offset=${
               paginationModel?.page
-            }&view=__EXPORT__&options=${encodeURI(
+            }&exportable=true&refines=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
             )}`,
             handleGetData,
+            newItemLabel: "Create",
             isExporting,
             isLoading,
-            search: {
-              fields: "Id, Username, Dealer, Names, Phone etc ...",
-              width: 450,
-            },
+            searchPlaceholder: "Name",
             setIsExporting,
             stats,
             changeStats,
-            setIsAddItemOpen: setIsAddClientOpen,
+            setIsModalOpen,
           })}
-          // <Button
-          //   size="small"
-          //   startIcon={<FaUsersCog />}
-          //   onPress={() => setIsAddClientOpen(true)}
-          //   sx={sx}
-          // >
-          //   Manage Roles
-          // </Button>
           slotProps={DataGridSlotProps}
-          sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}
+          sx={(theme) => DataGridSlots({ hideRowBorders: true }).styles(theme)}
         />
 
         <DataGridPagination
           count={data?.totalCount}
-          paginationModel={paginationModel!}
+          paginationModel={paginationModel}
           changePagination={changePagination}
         />
       </div>
-    </Portal>
+    </Fragment>
   );
 }

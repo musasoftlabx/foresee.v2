@@ -14,12 +14,13 @@ import useQueryRefiner from "@/hooks/useQueryRefiner";
 import { prisma } from "@/lib/prisma";
 
 // * Types
-import type { Created, Modified } from "@/types";
+import type { ByOn } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
 
 const username = "mmuliro";
+const model = "inventory";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -27,13 +28,13 @@ export async function GET(req: NextRequest) {
     searchParams.entries(),
   );
 
-  const { query, searchResults } = await useQueryRefiner({
+  const { query, searchResults, totalCount } = await useQueryRefiner({
     where: { storeId: Number(store) },
     limit,
     offset,
     refines,
     search: {
-      table: "Inventory",
+      model,
       fields: ["barcode", "attributes", "added", "modified"],
     },
   });
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
   const rows =
     searchResults.length > 0
       ? searchResults
-      : await prisma.inventory.findMany(query);
+      : await prisma[model].findMany(query);
 
   const dataset = [];
 
@@ -56,17 +57,17 @@ export async function GET(req: NextRequest) {
       barcode: row.barcode,
       storeId: row.storeId,
       added: {
-        ...(row.added as unknown as Created),
-        on: dayjsDayFormatter((row.added as any).on),
+        ...(row.added as unknown as ByOn),
+        on: dayjsDayFormatter(row.added.on),
       },
       modified: {
-        ...(row.modified as unknown as Modified),
+        ...(row.modified as unknown as ByOn),
         on: dayjsDayFormatter(row.modified.on),
       },
     });
   }
 
-  return NextResponse.json({ count: dataset.length, dataset });
+  return NextResponse.json({ dataset, filtered: dataset.length, totalCount });
 }
 
 export async function DELETE(request: NextRequest) {
@@ -74,7 +75,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     return NextResponse.json(
-      await prisma.inventory.deleteMany({ where: { id: { in: ids } } }),
+      await prisma[model].deleteMany({ where: { id: { in: ids } } }),
     );
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {

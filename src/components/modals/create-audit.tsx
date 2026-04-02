@@ -39,13 +39,10 @@ import {
   NumberFieldScrubArea,
 } from "@/components/ui/reui/number-field";
 
-// * HUI
-import { Button, ScrollShadow } from "@heroui/react";
-
 // * Components
 import __DatePicker__ from "@/components/InputFields/__DatePicker__";
 import FileUploader from "@/components/InputFields/FileUploader";
-import ModalDialog from "@/components/modal-dialog";
+import { HeaderFooter, ModalDialog } from "@/components/modal-dialog";
 
 // * Utils
 import { cn } from "@/lib/utils";
@@ -82,14 +79,14 @@ const schema = z.object({
   }),
 });
 
-type TSchema = z.infer<typeof schema>;
+type Schema = z.infer<typeof schema>;
 
 export default function CreateStore({
-  isNewItemOpen,
-  setIsNewItemOpen,
+  isModalOpen,
+  setIsModalOpen,
 }: {
-  isNewItemOpen: boolean;
-  setIsNewItemOpen: Dispatch<SetStateAction<boolean>>;
+  isModalOpen: boolean;
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   const {
     control,
@@ -127,7 +124,7 @@ export default function CreateStore({
 
   // ? Mutations
   const { mutate: createAudit } = useMutation({
-    mutationFn: (body: TSchema) => axios.post("stores", body),
+    mutationFn: (body: Schema) => axios.post("stores", body),
   });
 
   return (
@@ -135,16 +132,16 @@ export default function CreateStore({
       <DevTool control={control} />
 
       <ModalDialog
-        isNewItemOpen={isNewItemOpen}
-        setIsNewItemOpen={setIsNewItemOpen}
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
         title="Create Audit"
         caption="Enter audit details"
       >
         <form
-          onSubmit={handleSubmit((formdata: TSchema) =>
+          onSubmit={handleSubmit((formdata: Schema) =>
             createAudit(formdata, {
               onSuccess: () => {
-                setIsNewItemOpen(false);
+                setIsModalOpen(false);
                 queryClient.refetchQueries({ queryKey: ["audits"] });
               },
               onError: (error) => {
@@ -160,235 +157,215 @@ export default function CreateStore({
             }),
           )}
         >
-          <ScrollShadow size={50} className="px-5 overflow-x-hidden">
-            <div className="flex flex-col gap-3 max-h-[50vh]">
-              <Grid container spacing={1}>
-                <Controller
-                  control={control}
-                  name="audit.date"
-                  render={({ field: { name } }) => (
-                    <__DatePicker__
-                      columnspan={{ xs: 12, md: 7.5 }}
-                      disablePast
-                      field={name}
-                      dirty={dirty}
-                      helperText="Date & time audit is meant to start"
-                      label="Audit date"
-                      setValue={setValue}
-                    />
-                  )}
-                />
-
-                <Controller
-                  control={control}
-                  name="audit.locations"
-                  render={() => (
-                    <Grid size={{ xs: 12, md: 4.5 }}>
-                      <NumberField
-                        {...register("audit.locations")}
-                        onValueChange={(value) => {
-                          setValue("audit.locations", value as number, {
-                            shouldDirty: true,
-                            shouldTouch: true,
-                            shouldValidate: true,
-                          });
-                        }}
-                        defaultValue={1}
-                        min={1}
-                        max={10000}
-                        size="lg"
-                      >
-                        <NumberFieldGroup className="h-12 rounded-md">
-                          <NumberFieldDecrement />
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <NumberFieldInput />
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                              <div className="px-1 py-2 max-w-48">
-                                <div className="text-small font-bold">
-                                  Locations to generate
-                                </div>
-                                <div className="text-tiny">
-                                  This will generate the number of locations
-                                  specified. It's important to know the
-                                  estimated loccations pre-hand. You can however
-                                  delete excess locations later.
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                          <NumberFieldIncrement />
-                        </NumberFieldGroup>
-                        <div className="flex items-center justify-end">
-                          <NumberFieldScrubArea
-                            label="Locations to generate"
-                            className="text-[2px] text-muted-foreground/80"
-                          />
-                        </div>
-                      </NumberField>
-                    </Grid>
-                  )}
-                />
-              </Grid>
-
+          <HeaderFooter
+            isSubmitting={isSubmitting}
+            isValid={isValid}
+            setIsModalOpen={setIsModalOpen}
+          >
+            <Grid container spacing={1}>
               <Controller
                 control={control}
-                name="audit.barcode.mode"
-                render={() => (
-                  <RadioGroup
-                    defaultValue="strict"
-                    className="flex mb-4"
-                    {...register(`audit.barcode.mode`)}
-                    onValueChange={(value) =>
-                      setValue("audit.barcode.mode", value, {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      })
-                    }
-                  >
-                    {[
-                      {
-                        value: "strict",
-                        title: "Strict barcodes",
-                        description: `Barcodes are strictly ${getValues().audit.barcode.characters[0]} characters.`,
-                      },
-                      {
-                        value: "varies",
-                        title: "Variable barcodes",
-                        description: "Barcodes have varying characters.",
-                      },
-                    ].map(({ title, value, description }) => (
-                      <FieldLabel key={value} htmlFor={value} className="w-1/2">
-                        <Field orientation="horizontal">
-                          <RadioGroupItem value={value} id={value} />
-                          <FieldContent>
-                            <FieldTitle className="flex items-center justify-between">
-                              <span>{title}</span>
-                            </FieldTitle>
-                            <FieldDescription>{description}</FieldDescription>
-                          </FieldContent>
-                        </Field>
-                      </FieldLabel>
-                    ))}
-                  </RadioGroup>
-                )}
-              />
-
-              {getValues().audit?.barcode.mode === "strict" && (
-                <Controller
-                  control={control}
-                  name="audit.barcode.characters"
-                  render={({ field: { value } }) => {
-                    return (
-                      <section className="border-0 rounded-md px-3 pt-2 pb-5">
-                        <Label className="text-sm font-medium">
-                          Barcode characters
-                        </Label>
-                        <div className="relative pt-7">
-                          <div
-                            className="bg-foreground text-background absolute -top-1 rounded px-2 py-0.5 text-xs font-semibold tabular-nums text-nowrap"
-                            style={{
-                              left: `${((value[0] - getValues().audit?.barcode.min) / (getValues().audit?.barcode.max - getValues().audit?.barcode.min)) * 100}%`,
-                              transform: "translateX(-50%)",
-                            }}
-                          >
-                            {`${value[0]} chars.`}
-                            <div className="bg-foreground absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rotate-45" />
-                          </div>
-                        </div>
-
-                        <Slider
-                          {...register("audit.barcode.characters")}
-                          onValueChange={(value) =>
-                            setValue("audit.barcode.characters", value, {
-                              shouldDirty: true,
-                              shouldTouch: true,
-                              shouldValidate: true,
-                            })
-                          }
-                          defaultValue={[13]}
-                          min={getValues().audit?.barcode.min}
-                          max={getValues().audit?.barcode.max}
-                          step={1}
-                        />
-
-                        <span
-                          aria-hidden="true"
-                          className="text-muted-foreground flex w-full items-center justify-between gap-1 px-2.5 text-xs font-medium"
-                        >
-                          {Array.from(
-                            { length: getValues().audit?.barcode.max + 1 },
-                            (_, i) => i,
-                          ).map((tick) => {
-                            return (
-                              <span
-                                key={tick}
-                                className="flex w-0 flex-col items-center justify-center gap-2"
-                              >
-                                <span
-                                  className={cn(
-                                    "bg-muted-foreground/70 h-1 w-px",
-                                    tick % 5 !== 0 && "h-0.5",
-                                  )}
-                                />
-                                <span
-                                  className={cn(tick % 5 !== 0 && "opacity-0")}
-                                >
-                                  {tick}
-                                </span>
-                              </span>
-                            );
-                          })}
-                        </span>
-                      </section>
-                    );
-                  }}
-                />
-              )}
-
-              <Controller
-                control={control}
-                name="inventory"
-                render={({ field }) => (
-                  <FileUploader
-                    control={control}
-                    register={register}
-                    field={field}
+                name="audit.date"
+                render={({ field: { name } }) => (
+                  <__DatePicker__
+                    columnspan={{ xs: 12, md: 7.5 }}
+                    disablePast
+                    field={name}
+                    dirty={dirty}
+                    helperText="Date & time audit is meant to start"
+                    label="Audit date"
                     setValue={setValue}
-                    allowOnly="spreadsheets"
-                    caption="We already have the inventory for this store. We will however update the current inventory with the new file you upload."
-                    maxFileSize="10MB"
-                    stylePanelLayout="integrated"
-                    stylePanelAspectRatio={"16:5"}
                   />
                 )}
               />
-            </div>
-          </ScrollShadow>
 
-          <footer className="bg-sidebar-accent mx-0 mt-4 flex gap-2 rounded-b-xl border-t p-4 sm:flex-row sm:justify-end">
-            <Button
-              variant="faded"
-              size="sm"
-              onPress={() => setIsNewItemOpen(false)}
-            >
-              Close
-            </Button>
+              <Controller
+                control={control}
+                name="audit.locations"
+                render={() => (
+                  <Grid size={{ xs: 12, md: 4.5 }}>
+                    <NumberField
+                      {...register("audit.locations")}
+                      onValueChange={(value) => {
+                        setValue("audit.locations", value as number, {
+                          shouldDirty: true,
+                          shouldTouch: true,
+                          shouldValidate: true,
+                        });
+                      }}
+                      defaultValue={1}
+                      min={1}
+                      max={10000}
+                      size="lg"
+                    >
+                      <NumberFieldGroup className="h-12 rounded-md">
+                        <NumberFieldDecrement />
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <NumberFieldInput />
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom">
+                            <div className="px-1 py-2 max-w-48">
+                              <div className="text-small font-bold">
+                                Locations to generate
+                              </div>
+                              <div className="text-tiny">
+                                This will generate the number of locations
+                                specified. It's important to know the estimated
+                                loccations pre-hand. You can however delete
+                                excess locations later.
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                        <NumberFieldIncrement />
+                      </NumberFieldGroup>
+                      <div className="flex items-center justify-end">
+                        <NumberFieldScrubArea
+                          label="Locations to generate"
+                          className="text-[2px] text-muted-foreground/80"
+                        />
+                      </div>
+                    </NumberField>
+                  </Grid>
+                )}
+              />
+            </Grid>
 
-            <Button
-              type="submit"
-              variant={isSubmitting ? "flat" : "solid"}
-              size="sm"
-              isLoading={isSubmitting}
-              isDisabled={isSubmitting || !isValid}
-              color="primary"
-              spinnerPlacement="end"
-            >
-              Submit{isSubmitting ? "ting..." : ""}
-            </Button>
-          </footer>
+            <Controller
+              control={control}
+              name="audit.barcode.mode"
+              render={() => (
+                <RadioGroup
+                  defaultValue="strict"
+                  className="flex mb-4"
+                  {...register(`audit.barcode.mode`)}
+                  onValueChange={(value) =>
+                    setValue("audit.barcode.mode", value, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  {[
+                    {
+                      value: "strict",
+                      title: "Strict barcodes",
+                      description: `Barcodes are strictly ${getValues().audit.barcode.characters?.[0]} characters.`,
+                    },
+                    {
+                      value: "varies",
+                      title: "Variable barcodes",
+                      description: "Barcodes have varying characters.",
+                    },
+                  ].map(({ title, value, description }) => (
+                    <FieldLabel key={value} htmlFor={value} className="w-1/2">
+                      <Field orientation="horizontal">
+                        <RadioGroupItem value={value} id={value} />
+                        <FieldContent>
+                          <FieldTitle className="flex items-center justify-between">
+                            <span>{title}</span>
+                          </FieldTitle>
+                          <FieldDescription>{description}</FieldDescription>
+                        </FieldContent>
+                      </Field>
+                    </FieldLabel>
+                  ))}
+                </RadioGroup>
+              )}
+            />
+
+            {getValues().audit?.barcode.mode === "strict" && (
+              <Controller
+                control={control}
+                name="audit.barcode.characters"
+                render={({ field: { value } }) => {
+                  return (
+                    <section className="border-0 rounded-md px-3 pt-2 pb-5">
+                      <Label className="text-sm font-medium">
+                        Barcode characters
+                      </Label>
+                      <div className="relative pt-7">
+                        <div
+                          className="bg-foreground text-background absolute -top-1 rounded px-2 py-0.5 text-xs font-semibold tabular-nums text-nowrap"
+                          style={{
+                            left: `${((value[0] - getValues().audit?.barcode.min) / (getValues().audit?.barcode.max - getValues().audit?.barcode.min)) * 100}%`,
+                            transform: "translateX(-50%)",
+                          }}
+                        >
+                          {`${value[0]} chars.`}
+                          <div className="bg-foreground absolute -bottom-1 left-1/2 size-2 -translate-x-1/2 rotate-45" />
+                        </div>
+                      </div>
+
+                      <Slider
+                        {...register("audit.barcode.characters")}
+                        onValueChange={(value) =>
+                          setValue("audit.barcode.characters", value, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                            shouldValidate: true,
+                          })
+                        }
+                        defaultValue={[13]}
+                        min={getValues().audit?.barcode.min}
+                        max={getValues().audit?.barcode.max}
+                        step={1}
+                      />
+
+                      <span
+                        aria-hidden="true"
+                        className="text-muted-foreground flex w-full items-center justify-between gap-1 px-2.5 text-xs font-medium"
+                      >
+                        {Array.from(
+                          { length: getValues().audit?.barcode.max + 1 },
+                          (_, i) => i,
+                        ).map((tick) => {
+                          return (
+                            <span
+                              key={tick}
+                              className="flex w-0 flex-col items-center justify-center gap-2"
+                            >
+                              <span
+                                className={cn(
+                                  "bg-muted-foreground/70 h-1 w-px",
+                                  tick % 5 !== 0 && "h-0.5",
+                                )}
+                              />
+                              <span
+                                className={cn(tick % 5 !== 0 && "opacity-0")}
+                              >
+                                {tick}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </span>
+                    </section>
+                  );
+                }}
+              />
+            )}
+
+            <Controller
+              control={control}
+              name="inventory"
+              render={({ field }) => (
+                <FileUploader
+                  control={control}
+                  register={register}
+                  field={field}
+                  setValue={setValue}
+                  allowOnly="spreadsheets"
+                  caption="We already have the inventory for this store. We will however update the current inventory with the new file you upload."
+                  maxFileSize="10MB"
+                  stylePanelLayout="integrated"
+                  stylePanelAspectRatio={"16:5"}
+                />
+              )}
+            />
+          </HeaderFooter>
         </form>
       </ModalDialog>
     </Fragment>

@@ -3,10 +3,14 @@
 // * React
 import { Fragment, useEffect, useState } from "react";
 
+// * Next
+import { useParams, useRouter } from "next/navigation";
+
 // * NPM
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import capitalize from "lodash/capitalize";
+import dayjs from "dayjs";
 
 // * HUI
 import { Avatar } from "@heroui/react";
@@ -26,23 +30,27 @@ import {
   DataGridSlotProps,
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
+import { dateFilter } from "@/components/DataTable/DataGridFilters";
+import CreateAudit from "@/components/modals/create-audit";
+import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
 // * Icons
+import { ExternalLink, Trash2Icon } from "lucide-react";
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
-import DataGridPagination from "@/components/DataTable/DataGridPagination";
+
+// * Store
 import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
-import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import { ExternalLink, Trash2Icon } from "lucide-react";
-import dayjs from "dayjs";
-import { useParams, useRouter } from "next/navigation";
+
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
-import CreateAudit from "@/components/modals/create-audit";
 
 // * Prisma
 import type { Prisma } from "@/generated/prisma/client";
+
+// * Types
+import { DataGridApiResponse } from "@/types";
 
 export default function Audits({ apiUrl = "audits" }) {
   // ? Refs
@@ -54,7 +62,7 @@ export default function Audits({ apiUrl = "audits" }) {
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddItemOpen, setIsNewItemOpen] = useState(false);
+  const [isAddItemOpen, setIsModalOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -106,11 +114,7 @@ export default function Audits({ apiUrl = "audits" }) {
     select: ({
       data,
     }: {
-      data: {
-        dataset: Prisma.AuditsModel[];
-        filtered: number;
-        totalCount: number;
-      };
+      data: DataGridApiResponse & { dataset: Prisma.AuditsModel[] };
     }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
   });
@@ -128,8 +132,8 @@ export default function Audits({ apiUrl = "audits" }) {
   return (
     <Fragment>
       <CreateAudit
-        isNewItemOpen={isAddItemOpen}
-        setIsNewItemOpen={setIsNewItemOpen}
+        isModalOpen={isAddItemOpen}
+        setIsModalOpen={setIsModalOpen}
       />
 
       <div className="flex flex-1 flex-col">
@@ -462,7 +466,7 @@ export default function Audits({ apiUrl = "audits" }) {
             setIsExporting,
             stats,
             changeStats,
-            setIsNewItemOpen,
+            setIsModalOpen,
           })}
           slotProps={DataGridSlotProps}
           sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}

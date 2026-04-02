@@ -19,9 +19,11 @@ import {
 
 // * HUI
 import {
+  Button,
   Modal,
   ModalContent,
   ModalHeader,
+  ScrollShadow,
   useDisclosure,
   useDraggable,
 } from "@heroui/react";
@@ -29,18 +31,51 @@ import {
 // * Utils
 import { cn } from "@/lib/utils";
 
-export default function ModalDialog({
+export function ModalDialog({
   children,
-  isNewItemOpen,
-  setIsNewItemOpen,
+  isModalOpen,
+  setIsModalOpen,
   title,
   caption,
+  centerHeader,
+  logo,
+  onClose,
 }: {
+  /**
+   * Child elements.
+   */
   children: ReactNode;
-  isNewItemOpen: boolean;
-  setIsNewItemOpen: Dispatch<SetStateAction<boolean>>;
+  /**
+   * Modal state.
+   * @default false
+   */
+  isModalOpen: boolean;
+  /**
+   * Sets modal state.
+   */
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
+  /**
+   * Modal title.
+   */
   title: string;
+  /**
+   * Modal caption.
+   */
   caption: string;
+  /**
+   * Center the contents of the modal header.
+   * @default false
+   */
+  centerHeader?: boolean;
+  /**
+   * Image to be presented on the modal header.
+   */
+  logo?: ReactNode;
+  /**
+   * Extra actions to perform on modal close, such as navigating back to the previous page.
+   * @default () => {}
+   */
+  onClose?: () => void;
 }) {
   const dialogRef = useRef(null);
 
@@ -60,8 +95,7 @@ export default function ModalDialog({
         ref={targetRef}
         backdrop="blur"
         shadow="lg"
-        isOpen={isNewItemOpen}
-        onClose={() => setIsNewItemOpen(false)}
+        isOpen={isModalOpen}
         onOpenChange={onOpenChange}
         draggable={false}
         isDismissable={false}
@@ -87,8 +121,10 @@ export default function ModalDialog({
             <Fragment>
               <ModalHeader
                 {...moveProps}
-                className="flex flex-col text-primary text-lg font-bold"
+                className={`flex flex-col text-primary text-lg font-bold ${centerHeader ? "items-center" : ""}`}
               >
+                {logo}
+
                 {title}
                 <p className="text-xs text-muted-foreground ml-0.5">
                   {caption}
@@ -97,7 +133,10 @@ export default function ModalDialog({
                 <button
                   type="button"
                   data-slot="dialog-close"
-                  onClick={() => setIsNewItemOpen(false)}
+                  onClick={() => {
+                    onClose?.();
+                    setIsModalOpen(false);
+                  }}
                   className="absolute bg-background dark:bg-primary/50 dark:text-white -top-6 -right-6 rounded-full shadow-2xl z-9999"
                 >
                   <div className="size-7 scale-75 hover:animate-[spin_0.5s_linear_0.5] transition-transform">
@@ -125,8 +164,8 @@ export default function ModalDialog({
 
   return (
     <Dialog
-      open={isNewItemOpen}
-      onOpenChange={() => setIsNewItemOpen(!isNewItemOpen)}
+      open={isModalOpen}
+      onOpenChange={() => setIsModalOpen(!isModalOpen)}
     >
       <DialogContent
         ref={dialogRef}
@@ -162,5 +201,87 @@ export default function ModalDialog({
         {children}
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function HeaderFooter({
+  children,
+  isSubmitting,
+  isValid,
+  hideFooter,
+  hideFooterCloseButton,
+  setIsModalOpen,
+  submitText,
+}: {
+  /**
+   * Child elements.
+   */
+  children: ReactNode;
+  /**
+   * Extends form submission state.
+   * @default false
+   */
+  isSubmitting: boolean;
+  /**
+   * Extends form valid state.
+   */
+  isValid: boolean;
+  /**
+   * Do not show the footer.
+   * @default false
+   */
+  hideFooter?: boolean;
+  /**
+   * Do not show the footer close button.
+   * @default false
+   */
+  hideFooterCloseButton?: boolean;
+  /**
+   * Sets modal state.
+   * @default false
+   */
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
+  /**
+   * The text to show on the submission button. If not provided, SUBMIT is used.
+   * @default 'Submit'
+   */
+  submitText?: string;
+}) {
+  return (
+    <>
+      <ScrollShadow size={50} className="px-5 overflow-x-hidden">
+        <div className="flex flex-col gap-3 max-h-[50vh]">{children}</div>
+      </ScrollShadow>
+
+      <footer
+        className={`${hideFooter ? "mt-2" : "bg-sidebar-accent border-t mt-4"} mx-0 flex gap-2 rounded-b-xl p-4 sm:flex-row ${hideFooterCloseButton ? "sm:justify-center" : "sm:justify-end"}`}
+      >
+        {!hideFooterCloseButton && (
+          <Button
+            variant="faded"
+            size="sm"
+            className="uppercase"
+            onPress={() => setIsModalOpen(false)}
+          >
+            Close
+          </Button>
+        )}
+
+        <Button
+          type="submit"
+          variant={isSubmitting ? "flat" : "solid"}
+          size="sm"
+          fullWidth={hideFooterCloseButton}
+          className="w-1/2 uppercase"
+          isLoading={isSubmitting}
+          isDisabled={isSubmitting || !isValid}
+          color="primary"
+          spinnerPlacement="end"
+        >
+          {submitText ? submitText : "Submit"}
+          {isSubmitting ? "ing..." : ""}
+        </Button>
+      </footer>
+    </>
   );
 }

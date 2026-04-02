@@ -67,7 +67,6 @@ model Organizations {
   modified Json
   Clients  Clients[]
   Stores   Stores[]
-  Users    Users[]
 }
 
 model Scans {
@@ -109,19 +108,45 @@ model Stores {
 }
 
 model Users {
-  id             Int           @id @default(autoincrement())
-  firstName      String        @db.VarChar(20)
-  lastName       String        @db.VarChar(20)
-  emailAddress   String        @db.VarChar(50)
-  password       String        @db.VarChar(50)
-  avatar         String
-  isActive       Boolean       @default(true)
-  roles          Json
-  added          Json
-  modified       Json
-  organizationId Int
-  activity       Json[]
-  Organizations  Organizations @relation(fields: [organizationId], references: [id])
+  id           Int      @id @default(autoincrement())
+  firstName    String   @db.VarChar(20)
+  lastName     String   @db.VarChar(20)
+  username     String?  @unique @db.VarChar(20)
+  emailAddress String   @unique @db.VarChar(50)
+  phoneNumber  String?  @db.VarChar(20)
+  password     String?  @db.VarChar(100)
+  passcode     Int?
+  avatar       String?
+  isActive     Boolean  @default(true)
+  isVerified   Boolean  @default(false)
+  added        Json
+  modified     Json
+  roles        Json[]
+  activities   Json[]
+  logins       Logins[]
 
   @@index([emailAddress])
+}
+
+model Logins {
+  id        Int      @id @default(autoincrement())
+  username  String   @db.VarChar(50)
+  device    Json
+  client    Json
+  os        Json
+  timestamp DateTime @default(now())
+  users     Users?   @relation(fields: [usersId], references: [id])
+  usersId   Int?
+
+  @@index([username])
+}
+
+model MailLogs {
+  id          Int      @id @default(autoincrement())
+  receipients Json[]
+  subject     String   @db.VarChar(50)
+  content     String   @db.Text
+  response    Json
+  isSent      Boolean  @default(false)
+  timestamp   DateTime @default(now())
 }

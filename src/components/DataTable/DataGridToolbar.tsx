@@ -348,7 +348,7 @@ export default function DataGridToolbar({
   isExporting,
   isLoading,
   setIsExporting,
-  setIsNewItemOpen,
+  setIsModalOpen,
   searchPlaceholder,
   stats,
   changeStats,
@@ -1449,7 +1449,9 @@ export default function DataGridToolbar({
         </Button>
         <div className="flex flex-col">
           <b className="text-lg">{title}</b>
-          <span className="text-xs -mt-1.5 ml-0.5">{caption}</span>
+          <span className="text-xs text-muted-foreground -mt-1 ml-0.5">
+            {caption}
+          </span>
         </div>
 
         <div className="flex-1" />
@@ -1563,7 +1565,7 @@ export default function DataGridToolbar({
           <ButtonGroup>
             {/* Create item */}
             {!exclude?.includes("creations") && (
-              <Button variant="outline" onClick={() => setIsNewItemOpen(true)}>
+              <Button variant="outline" onClick={() => setIsModalOpen(true)}>
                 <PlusIcon />
                 <Badge size="sm">{newItemLabel}</Badge>
               </Button>
@@ -1601,7 +1603,7 @@ export default function DataGridToolbar({
                     >
                       <SlidersHorizontalIcon />
                       <Badge
-                        color="primary"
+                        //color="primary"
                         content={`${filterModel.items.length}`}
                         size="sm"
                         variant="faded"

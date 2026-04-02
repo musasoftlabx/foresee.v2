@@ -52,6 +52,9 @@ import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
 // * Prisma
 import type { Prisma } from "@/generated/prisma/client";
 
+// * Types
+import { DataGridApiResponse } from "@/types";
+
 export default function Stores({ apiUrl = "stores" }) {
   // ? Hooks
   const apiRef = useGridApiRef();
@@ -60,7 +63,7 @@ export default function Stores({ apiUrl = "stores" }) {
 
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isNewItemOpen, setIsNewItemOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const {
     initialState,
     columnVisibilityModel,
@@ -123,23 +126,20 @@ export default function Stores({ apiUrl = "stores" }) {
     select: ({
       data,
     }: {
-      data: { count: number; dataset: Prisma.StoresModel[] };
+      data: DataGridApiResponse & { dataset: Prisma.StoresModel[] };
     }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
   });
 
   return (
     <Fragment>
-      <CreateStore
-        isNewItemOpen={isNewItemOpen}
-        setIsNewItemOpen={setIsNewItemOpen}
-      />
+      <CreateStore isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
 
       <div className="flex flex-1 flex-col">
         <DataGridPro
           apiRef={apiRef}
           rows={data?.dataset ?? []}
-          rowCount={data?.count ?? 0}
+          rowCount={data?.totalCount ?? 0}
           initialState={initialState}
           columns={[
             {
@@ -397,14 +397,14 @@ export default function Stores({ apiUrl = "stores" }) {
             apiRef,
             apiUrl: `${apiUrl}?scope=users`,
             title: capitalize(apiUrl),
-            caption: `${data?.count} items displayed from a total of ${data?.count}.`,
+            caption: `${data?.filtered} items displayed from a total of ${data?.totalCount}.`,
             changeFilters,
             changeVisibleColumns,
             changeRowSelection,
             clearFilters,
             clearRowSelection,
             exclude: [],
-            exportUrl: `${apiUrl}?scope=users&limit=${data?.count}&offset=${
+            exportUrl: `${apiUrl}?scope=users&limit=${data?.filtered}&offset=${
               paginationModel?.page
             }&exportable=true&refines=${encodeURI(
               JSON.stringify({ filterModel, sortModel }),
@@ -417,7 +417,7 @@ export default function Stores({ apiUrl = "stores" }) {
             setIsExporting,
             stats,
             changeStats,
-            setIsNewItemOpen,
+            setIsModalOpen,
             // extraActions: (
             //   <>
             //     <Button variant="secondary" size="icon">
@@ -434,7 +434,7 @@ export default function Stores({ apiUrl = "stores" }) {
         />
 
         <DataGridPagination
-          count={data?.count}
+          count={data?.totalCount}
           paginationModel={paginationModel}
           changePagination={changePagination}
         />

@@ -19,18 +19,20 @@ import { useRouter } from "next/navigation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createTheme, ThemeProvider } from "@mui/material";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { HeroUIProvider } from "@heroui/react";
 import { ToastProvider } from "@heroui/toast";
 import { TooltipProvider } from "@/components/ui/shadcn/tooltip";
-import { getCookie } from "cookies-next";
+import { getCookie, setCookie } from "cookies-next";
 import axios from "axios";
 
 // * Store
 import { useThemeStore } from "@/store/useThemeStore";
 
 // * Components
-import { SidebarProvider } from "@/components/ui/shadcn/sidebar";
+
 import AlertDialog from "@/components/alert-dialog";
+import { useAlertDialogStore } from "@/store/useAlertDialogStore";
 
 // * Axios config
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_API;
@@ -39,7 +41,7 @@ axios.defaults.headers.post["Content-Type"] = "application/json";
 axios.defaults.headers.post.Accept = "application/json";
 axios.interceptors.request.use(
   (req) => {
-    req.headers.Authorization = `Bearer ${getCookie("__foresee_aT")}`;
+    req.headers.Authorization = `Bearer ${getCookie("_foresee_aT")}`;
     return req;
   },
   (err) => Promise.reject(err),
@@ -66,6 +68,7 @@ export default function QueryProvider({
 
   // ? Hooks
   const router = useRouter();
+  const alert = useAlertDialogStore((state) => state.alert);
   const themeState = useThemeStore((state) => state.theme);
   const changeMode = useThemeStore((state) => state.changeMode);
 
@@ -81,6 +84,28 @@ export default function QueryProvider({
       changeMode(isSystemDark ? "dark" : "light");
   }, [isSystemDark, changeMode]);
 
+  useEffect(() => {
+    axios.interceptors.response.use(
+      (res) => {
+        res.data._foresee_aT && setCookie("_foresee_aT", res.data._foresee_aT);
+        return res;
+      },
+      (err) => {
+        if (err.code === "ERR_NETWORK") {
+          alert({
+            status: "error",
+            subject: err.message,
+            body: "We could not establish a connection to the server. Kindly ensure you are connected.",
+          });
+          return;
+        }
+
+        if (err.response.data.forceLogout) location.href = "/";
+        return Promise.reject(err);
+      },
+    );
+  }, [alert]);
+
   return (
     <NextThemeProvider
       attribute="class"
@@ -93,9 +118,12 @@ export default function QueryProvider({
           <AlertDialog />
           <ToastProvider />
           <QueryClientProvider client={queryClient}>
-            <SidebarProvider>
-              <TooltipProvider>{children}</TooltipProvider>
-            </SidebarProvider>
+            <TooltipProvider>
+              {/* <GoogleOAuthProvider clientId={process.env.GOOGLE_AUTH_TOKEN}> */}
+              <GoogleOAuthProvider clientId="798128308427-iic9ufku4dbhhlv67vvv000oedhfvkf2.apps.googleusercontent.com">
+                {children}
+              </GoogleOAuthProvider>
+            </TooltipProvider>
           </QueryClientProvider>
         </ThemeProvider>
       </HeroUIProvider>

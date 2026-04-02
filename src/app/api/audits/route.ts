@@ -22,12 +22,13 @@ import { prisma } from "@/lib/prisma";
 import { tempPath } from "@/helpers/configurePaths";
 
 // * Types
-import type { Created, Modified } from "@/types";
+import type { ByOn } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
 
 const username = "mmuliro";
+const model = "audits";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -35,13 +36,13 @@ export async function GET(req: NextRequest) {
     searchParams.entries(),
   );
 
-  const { query, searchResults } = await useQueryRefiner({
+  const { query, searchResults, totalCount } = await useQueryRefiner({
     where: { storeId: Number(store) },
     limit,
     offset,
     refines,
     search: {
-      table: "Audits",
+      model,
       fields: ["code", "barcode", "date", "created", "modified"],
     },
   });
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
   const rows =
     searchResults.length > 0
       ? searchResults
-      : await prisma.audits.findMany(query);
+      : await prisma[model].findMany(query);
 
   const dataset = [];
 
@@ -63,17 +64,17 @@ export async function GET(req: NextRequest) {
       locations: await prisma.locations.count({ where: { auditId: row.id } }),
       scans: await prisma.scans.count({ where: { auditId: row.id } }),
       created: {
-        ...(row.created as unknown as Created),
+        ...(row.created as unknown as ByOn),
         on: dayjsDayFormatter(row.created.on),
       },
       modified: {
-        ...(row.modified as unknown as Modified),
+        ...(row.modified as unknown as ByOn),
         on: dayjsDayFormatter(row.modified.on),
       },
     });
   }
 
-  return NextResponse.json({ count: dataset.length, dataset });
+  return NextResponse.json({ dataset, filtered: dataset.length, totalCount });
 }
 
 export async function POST(request: Request) {
@@ -145,13 +146,13 @@ export async function POST(request: Request) {
       );
 
       // ? Get number of audits
-      const auditCount = await prisma.audits.count({ where: { storeId } });
+      const auditCount = await prisma[model].count({ where: { storeId } });
 
       // ? If no audits, skip to 1 to start store count at 1
       const auditPadding = auditCount === 0 ? 1 : auditCount + 1;
 
       // ? Create an audit based on the created store
-      const createdAudit = await prisma.audits.create({
+      const createdAudit = await prisma[model].create({
         data: {
           storeId,
           code: `ADT${padStart(auditPadding.toString(), 5, "0")}`, // ? Add padding to audit count if less than 5 characters
@@ -200,7 +201,7 @@ export async function PATCH(request: NextRequest) {
     const { id, field, value } = await request.json();
     try {
       return NextResponse.json(
-        await prisma.audits.update({
+        await prisma[model].update({
           where: { id },
           data: { [field]: value, modified: { by: username, on: new Date() } },
         }),
@@ -228,7 +229,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     return NextResponse.json(
-      await prisma.audits.deleteMany({ where: { id: { in: ids } } }),
+      await prisma[model].deleteMany({ where: { id: { in: ids } } }),
     );
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {

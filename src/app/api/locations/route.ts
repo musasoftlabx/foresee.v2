@@ -15,12 +15,13 @@ import useQueryRefiner from "@/hooks/useQueryRefiner";
 import { prisma } from "@/lib/prisma";
 
 // * Types
-import type { Created, Modified } from "@/types";
+import type { ByOn } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
 
 const username = "mmuliro";
+const model = "locations";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
@@ -34,7 +35,7 @@ export async function GET(req: NextRequest) {
     offset,
     refines,
     search: {
-      table: "Locations",
+      model,
       fields: [
         "code",
         "barcode",
@@ -50,7 +51,7 @@ export async function GET(req: NextRequest) {
   const rows =
     searchResults.length > 0
       ? searchResults
-      : await prisma.locations.findMany(query);
+      : await prisma[model].findMany(query);
 
   const dataset = [];
 
@@ -63,11 +64,11 @@ export async function GET(req: NextRequest) {
       ...row,
       discrepancy: Math.abs(row.physicalCount - row.systemCount),
       created: {
-        ...(row.created as unknown as Created),
+        ...(row.created as unknown as ByOn),
         on: dayjsDayFormatter(row.created.on),
       },
       modified: {
-        ...(row.modified as unknown as Modified),
+        ...(row.modified as unknown as ByOn),
         on: dayjsDayFormatter(row.modified.on),
       },
     });
@@ -98,10 +99,10 @@ export async function POST(request: Request) {
     });
 
     // ? Get number of locations under the audit
-    const locationsCount = await prisma.locations.count({ where: { auditId } });
+    const locationsCount = await prisma[model].count({ where: { auditId } });
 
     // ? Create locations for the audit based on the created store
-    const createdLocations = await prisma.locations.createMany({
+    const createdLocations = await prisma[model].createMany({
       data: Array.from({ length: locations }).map((_, i) => ({
         auditId,
         code: `L${padStart((locationsCount + i + 1).toString(), 4, "0")}-${storeCode}-${dayjs(date).format("YYYYMMDD")}`,
@@ -129,7 +130,7 @@ export async function PATCH(request: NextRequest) {
     const { id, field, value } = await request.json();
     try {
       return NextResponse.json(
-        await prisma.locations.update({
+        await prisma[model].update({
           where: { id },
           data: { [field]: value, modified: { by: username, on: new Date() } },
         }),
@@ -151,7 +152,7 @@ export async function DELETE(request: NextRequest) {
 
   try {
     return NextResponse.json(
-      await prisma.locations.deleteMany({ where: { id: { in: ids } } }),
+      await prisma[model].deleteMany({ where: { id: { in: ids } } }),
     );
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
