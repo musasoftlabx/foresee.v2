@@ -1,4 +1,5 @@
 // * React
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { type Dispatch, Fragment, type SetStateAction, useEffect } from "react";
 
 // * NPM
@@ -99,7 +100,7 @@ export default function AddClient({
             isSubmitting={isSubmitting}
             isValid={isValid}
             setIsModalOpen={setIsModalOpen}
-            hideFooter
+            hideFooterCloseButton
           >
             <Controller
               control={control}

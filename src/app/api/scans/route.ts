@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 
 // * Hooks
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
-import useQueryRefiner from "@/hooks/useQueryRefiner";
+import QueryRefiner from "@/helpers/queryRefiner";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     searchParams.entries(),
   );
 
-  const { query, searchResults } = await useQueryRefiner({
+  const { query, searchResults } = await QueryRefiner({
     where: { auditId: Number(audit) },
     limit,
     offset,

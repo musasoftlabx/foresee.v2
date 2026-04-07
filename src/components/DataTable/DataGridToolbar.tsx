@@ -229,6 +229,8 @@ import { HomeIcon } from "../ui/lucide-animated/home";
 import { ArrowLeftIcon } from "../ui/lucide-animated/arrow-left";
 
 import ConfirmDialog from "@/components/confirm-dialog";
+import { AnimatedThemeToggler } from "../ui/magicui/animated-theme-toggler";
+import { SidebarTrigger } from "../ui/shadcn/sidebar";
 
 // Zod validation helper - wraps a Zod schema to return validation result with message
 function zodValidator<T extends z.ZodType>(schema: T) {
@@ -1431,6 +1433,15 @@ export default function DataGridToolbar({
       />
 
       <div className="flex items-center gap-2 px-3 mt-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <SidebarTrigger className="-ml-1" />
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Sidebar Trigger</TooltipContent>
+        </Tooltip>
+
+        <Separator orientation="vertical" className="ml-2 mr-3 my-2" />
+
         <Button
           variant="outline"
           size="icon-lg"
@@ -1439,6 +1450,7 @@ export default function DataGridToolbar({
         >
           <ArrowLeftIcon />
         </Button>
+
         <Button
           variant="secondary"
           size="icon-lg"
@@ -1447,11 +1459,9 @@ export default function DataGridToolbar({
         >
           <HomeIcon />
         </Button>
+
         <div className="flex flex-col">
           <b className="text-lg">{title}</b>
-          <span className="text-xs text-muted-foreground -mt-1 ml-0.5">
-            {caption}
-          </span>
         </div>
 
         <div className="flex-1" />
@@ -1527,6 +1537,13 @@ export default function DataGridToolbar({
           <CogIcon />
         </Button>
 
+        <Tooltip>
+          <TooltipTrigger>
+            <AnimatedThemeToggler className="ml-5 mt-1.5" />
+          </TooltipTrigger>
+          <TooltipContent side="bottom">Toggle Theme</TooltipContent>
+        </Tooltip>
+
         {/* <DropdownMenu>
           <DropdownMenuTrigger>
             <EllipsisVerticalIcon size={24} />
@@ -1567,7 +1584,7 @@ export default function DataGridToolbar({
             {!exclude?.includes("creations") && (
               <Button variant="outline" onClick={() => setIsModalOpen(true)}>
                 <PlusIcon />
-                <Badge size="sm">{newItemLabel}</Badge>
+                {newItemLabel}
               </Button>
             )}
 

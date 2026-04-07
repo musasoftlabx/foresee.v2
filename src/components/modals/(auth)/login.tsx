@@ -27,6 +27,7 @@ import { zPassword } from "../../../utils/zodReusables";
 
 // * Icons
 import { GalleryVerticalEnd } from "lucide-react";
+import { useAlertDialogStore } from "@/store/useAlertDialogStore";
 
 // * Schema
 const schema = z.object({
@@ -57,7 +58,7 @@ export default function Login({
   });
 
   // ? Hooks
-  const queryClient = useQueryClient();
+  const alert = useAlertDialogStore((state) => state.alert);
   const router = useRouter();
 
   const { theme } = useTheme();
@@ -68,6 +69,11 @@ export default function Login({
   // ? Mutations
   const { mutate: login } = useMutation({
     mutationFn: (body: Schema) => axios.post("login", body),
+  });
+
+  const { mutate: signInWithGoogle } = useMutation({
+    mutationFn: (token?: string) =>
+      axios.post("login", { type: "google", token }),
   });
 
   return (
@@ -115,12 +121,26 @@ export default function Login({
             hideFooterCloseButton
           >
             <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                console.log(credentialResponse);
+              onSuccess={({ credential }) => {
+                signInWithGoogle(credential, {
+                  onSuccess: () => router.push("/portal"),
+                  //onSuccess: () => {},
+                  onError: (error) => {
+                    if (error instanceof AxiosError) {
+                      alert({
+                        subject: "Google Sign-In Failed",
+                        body: "An error occurred during Google Sign-In. Please try again.",
+                      });
+                    }
+                  },
+                });
               }}
-              onError={() => {
-                console.log("Login Failed");
-              }}
+              onError={() =>
+                alert({
+                  subject: "Google Sign-In Failed",
+                  body: "An error occurred during Google Sign-In. Please try again.",
+                })
+              }
               useOneTap
               auto_select
               theme={theme === "dark" ? "filled_black" : "outline"}

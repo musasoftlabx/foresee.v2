@@ -15,7 +15,7 @@ import padStart from "lodash/padStart";
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 
 // * Hooks
-import useQueryRefiner from "@/hooks/useQueryRefiner";
+import QueryRefiner from "@/helpers/queryRefiner";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     searchParams.entries(),
   );
 
-  const { query, searchResults, totalCount } = await useQueryRefiner({
+  const { query, searchResults, totalCount } = await QueryRefiner({
     where: { organizationId },
     limit,
     offset,

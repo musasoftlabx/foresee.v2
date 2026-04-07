@@ -4,14 +4,18 @@ import { type NextRequest, NextResponse } from "next/server";
 // * NPM
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
-import JWT from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 // * Libs
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // * Helpers
 import { redis, redisCluster } from "@/helpers/configureRedis";
 import clientDetails from "@/helpers/clientDetails";
+
+// * Types
+import type { GoogleOAuthToken } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -19,7 +23,67 @@ dayjs.extend(advancedFormat);
 const configs: RedisConfigs = await redisCluster("DB");
 
 export async function POST(request: NextRequest) {
-  const { emailAddress, password: encoded } = await request.json();
+  const { type, token, emailAddress, password: encoded } = await request.json();
+
+  //return NextResponse.json(clientDetails(request).device, { status: 200 });
+
+  if (type === "google") {
+    const { email } = jwt.decode(token) as GoogleOAuthToken;
+
+    const user = await prisma.users.findUnique({
+      where: { emailAddress: email },
+    });
+
+    if (user) {
+      // ? ⚙️ Generate token
+      const accessToken = jwt.sign(
+        {
+          firstName: user.firstName,
+          lastName: user.lastName,
+          emailAddress: user.emailAddress,
+          roles: user.roles,
+          avatar: user.avatar,
+        },
+        `{configs.ACCESS_TOKEN}`,
+        { expiresIn: `10m` },
+      );
+
+      // ? 💾 Save to logins table
+      await prisma.logins.create({
+        data: {
+          emailAddress: user.emailAddress,
+          ip: clientDetails(request).ip,
+          client: clientDetails(request).client as unknown as Prisma.JsonObject,
+          device: clientDetails(request).device,
+        },
+      });
+
+      // ? 💾 Update activity logs
+      await prisma.users.update({
+        where: { emailAddress: email },
+        data: {
+          activities: [
+            ...(user.activities as string[]),
+            { activity: "Logged In", timestamp: new Date() },
+          ],
+        },
+      });
+
+      // ? 💾 Store the user in redis
+      await redis.set(`logged-in-users: ${email}`, accessToken, "EX", 600);
+
+      return NextResponse.json({ _foresee_aT: accessToken }, { status: 201 });
+    } else {
+      return NextResponse.json(
+        {
+          icon: "",
+          subject: "User not found!",
+          body: "The user provided does not exist.",
+        },
+        { status: 404 },
+      );
+    }
+  }
 
   if (emailAddress && encoded) {
     const password = encoded;
@@ -39,7 +103,7 @@ export async function POST(request: NextRequest) {
         roles: user.roles,
       };
 
-      const accessToken = JWT.sign(toSign, `${configs.ACCESS_TOKEN}`, {
+      const accessToken = jwt.sign(toSign, `${configs.ACCESS_TOKEN}`, {
         expiresIn: `${configs.ACCESS_TOKEN_EXPIRY_IN_MINUTES}m`,
       });
 

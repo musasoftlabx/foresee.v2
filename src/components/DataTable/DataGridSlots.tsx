@@ -1,7 +1,7 @@
 "use client";
 
 // * React
-import { Dispatch } from "react";
+import type { Dispatch } from "react";
 
 // * Next
 import Image from "next/image";
@@ -12,10 +12,11 @@ import {
   gridClasses,
   type GridColumnVisibilityModel,
   type GridFilterModel,
+  type GridPaginationModel,
   type GridRowSelectionModel,
   type GridSlotProps,
 } from "@mui/x-data-grid-pro";
-import { alpha, Theme } from "@mui/material";
+import { alpha, Pagination, type Theme } from "@mui/material";
 import { blue, red } from "@mui/material/colors";
 
 // * Components
@@ -52,6 +53,10 @@ export type TDataGridSlots = Partial<{
    */
   changeRowSelection: (arg0: GridRowSelectionModel) => void;
   /**
+   * Effects the pagination model to the table
+   */
+  changePagination: (arg0: GridPaginationModel) => void;
+  /**
    * Clears all filters
    */
   clearFilters: () => void;
@@ -73,7 +78,17 @@ export type TDataGridSlots = Partial<{
     rejections?: string,
     deletions?: string,
   ];
-
+  /**
+   * Total count of the dataset, used for pagination
+   */
+  totalServerCount: number;
+  /**
+   * Pagination model of the table
+   */
+  paginationModel: GridPaginationModel;
+  /**
+   * URL to send export request to. If not provided, the export button will trigger a download of the currently loaded dataset. If provided, the export button will trigger a request to the URL with the current filters, column visibility, and sort model as the request body, and handle the file download based on the response.
+   */
   exportUrl?: string;
   /**
    * Add extra functionalities to the toolbar
@@ -118,9 +133,12 @@ export const DataGridSlots = ({
   changeFilters,
   clearFilters,
   changeRowSelection,
+  changePagination,
   clearRowSelection,
   changeVisibleColumns,
   exclude,
+  totalServerCount,
+  paginationModel,
   exportUrl,
   hideRowBorders,
   handleGetData,
@@ -180,6 +198,33 @@ export const DataGridSlots = ({
       changeStats={changeStats}
     />
   ),
+  footer: () =>
+    totalServerCount &&
+    paginationModel && (
+      <div className="flex items-center justify-between p-3 border-t border-divider">
+        <div className="w-1/3 text-sm text-muted-foreground">{caption}</div>
+        {/* <Pagination
+          variant="bordered"
+          color="primary"
+          page={Number(paginationModel?.page + 1)}
+          total={Math.ceil(totalServerCount / paginationModel.pageSize)}
+          onChange={(page) =>
+            changePagination?.({ ...paginationModel, page: page - 1 })
+          }
+        /> */}
+        <Pagination
+          variant="outlined"
+          color="primary"
+          className="flex w-1/3 justify-center"
+          count={Math.ceil(totalServerCount / paginationModel.pageSize)}
+          page={Number(paginationModel?.page + 1)}
+          onChange={(_, page) =>
+            changePagination?.({ ...paginationModel, page: page - 1 })
+          }
+        />
+        <div className="w-1/3" />
+      </div>
+    ),
   styles: (theme: Theme) => ({
     borderRadius: 3,
     [`.${gridClasses.cell}`]: hideRowBorders ? { borderTop: 0 } : {},

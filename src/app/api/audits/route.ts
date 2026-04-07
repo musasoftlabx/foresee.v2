@@ -8,12 +8,12 @@ import { existsSync } from "node:fs";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
-import ExcelJS, { CellValue } from "@protobi/exceljs";
+import ExcelJS, { type CellValue } from "@protobi/exceljs";
 import padStart from "lodash/padStart";
 
 // * Hooks
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
-import useQueryRefiner from "@/hooks/useQueryRefiner";
+import QueryRefiner from "@/helpers/queryRefiner";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     searchParams.entries(),
   );
 
-  const { query, searchResults, totalCount } = await useQueryRefiner({
+  const { query, searchResults, totalCount } = await QueryRefiner({
     where: { storeId: Number(store) },
     limit,
     offset,

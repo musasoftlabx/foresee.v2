@@ -129,16 +129,16 @@ model Users {
 }
 
 model Logins {
-  id        Int      @id @default(autoincrement())
-  username  String   @db.VarChar(50)
-  device    Json
-  client    Json
-  os        Json
-  timestamp DateTime @default(now())
-  users     Users?   @relation(fields: [usersId], references: [id])
-  usersId   Int?
+  id           Int      @id @default(autoincrement())
+  emailAddress String   @db.VarChar(50)
+  ip           String   @db.VarChar(20)
+  client       Json
+  device       Json
+  timestamp    DateTime @default(now())
+  users        Users?   @relation(fields: [userId], references: [id])
+  userId       Int?
 
-  @@index([username])
+  @@index([emailAddress])
 }
 
 model MailLogs {

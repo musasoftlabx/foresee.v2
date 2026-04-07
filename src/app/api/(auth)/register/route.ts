@@ -13,8 +13,9 @@ import { prisma } from "@/lib/prisma";
 // * Helpers
 import { redis } from "@/helpers/configureRedis";
 import sendMail from "@/helpers/sendEmail";
-import { GoogleOAuthToken } from "@/types";
-import { avatar } from "@heroui/react";
+
+// * Types
+import type { GoogleOAuthToken } from "@/types";
 
 const model = "users";
 

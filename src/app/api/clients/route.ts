@@ -1,4 +1,5 @@
 // * Server
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
@@ -7,9 +8,9 @@ import advancedFormat from "dayjs/plugin/advancedFormat";
 import capitalize from "lodash/capitalize";
 import dayjs from "dayjs";
 
-// * Hooks
+// * Helpers
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
-import useQueryRefiner from "@/hooks/useQueryRefiner";
+import QueryRefiner from "@/helpers/queryRefiner";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
       ).map(({ name }) => name),
     );
   else {
-    const { query, searchResults, totalCount } = await useQueryRefiner({
+    const { query, searchResults, totalCount } = await QueryRefiner({
       where: { organizationId },
       limit,
       offset,
@@ -63,11 +64,11 @@ export async function GET(req: NextRequest) {
       dataset.push({
         ...row,
         added: {
-          ...(row.added as unknown as ByOn),
+          ...row.added,
           on: dayjsDayFormatter(row.added.on),
         },
         modified: {
-          ...(row.modified as unknown as ByOn),
+          ...row.modified,
           on: dayjsDayFormatter(row.modified.on),
         },
       });
@@ -112,11 +113,16 @@ export async function PATCH(request: NextRequest) {
   if (scope === "editCell") {
     const { id, field, value } = await request.json();
     try {
+      const {
+        modified: { by, on },
+      } = (await prisma[model].update({
+        where: { id },
+        data: { [field]: value, modified: { by: username, on: new Date() } },
+        select: { modified: true },
+      })) as unknown as { modified: ByOn };
+
       return NextResponse.json(
-        await prisma[model].update({
-          where: { id },
-          data: { [field]: value, modified: { by: username, on: new Date() } },
-        }),
+        { by, on: dayjsDayFormatter(on) },
         { status: 201 },
       );
     } catch (error) {
@@ -128,11 +134,6 @@ export async function PATCH(request: NextRequest) {
       }
     }
   }
-}
-
-export async function PUT(request: Request) {
-  const body = await request.json();
-  return NextResponse.json(body, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest) {

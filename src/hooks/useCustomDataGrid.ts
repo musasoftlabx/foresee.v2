@@ -20,6 +20,7 @@ import {
   GridRowModel,
   GridRowSelectionModel,
   GridSortModel,
+  GridValidRowModel,
 } from "@mui/x-data-grid-pro";
 import { addToast } from "@heroui/react";
 ///models/gridStatePro
@@ -191,9 +192,10 @@ export default function useCustomDataGrid({
     });
   };
 
-  const updateCell = ({ newRow, oldRow, url }: TUpdateCell) => {
+  const updateCell = async ({ newRow, oldRow, url }: TUpdateCell) => {
     const id = newRow.id;
-    let field, value;
+    let field = "",
+      value = "";
 
     Object.values(newRow).forEach((val, i) => {
       if (val !== Object.values(oldRow)[i]) {
@@ -206,15 +208,30 @@ export default function useCustomDataGrid({
       updateData(
         { id, field, value, url },
         {
-          onSuccess: () =>
+          onSuccess: ({ data }) => {
             addToast({
               title: "Success",
               description: "Update successful!",
               color: "success",
               variant: "flat",
-              //icon: <TbDatabaseEdit />,
               timeout: 3000,
-            }),
+            });
+
+            queryClient.setQueryData(
+              [
+                apiUrl,
+                paginationModel?.pageSize,
+                paginationModel?.page,
+                encodeURI(JSON.stringify({ filterModel, sortModel })),
+              ],
+              (state: { data: { dataset: GridValidRowModel[] } }) => {
+                const dataset = state.data.dataset.map((row: GridRowModel) =>
+                  row.id === id ? { ...newRow, modified: data } : row,
+                );
+                return { ...state, data: { ...state.data, dataset } };
+              },
+            );
+          },
           onError: () =>
             addToast({
               title: "Error",
