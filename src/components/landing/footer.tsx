@@ -126,13 +126,14 @@ export function LandingFooter() {
                 className="flex items-center space-x-2 cursor-pointer"
               >
                 <Logo size={32} />
-                <span className="font-bold text-xl">ShadcnStore</span>
+                <span className="font-bold text-xl">Foresee Inc.</span>
               </a>
             </div>
             <p className="text-muted-foreground mb-6 max-lg:text-center max-lg:flex max-lg:justify-center">
-              Accelerating web development with curated blocks, templates,
-              landing pages, and admin dashboards designed for modern
-              developers.
+              Eliminate manual errors and time-consuming spreadsheets with
+              automated stock tracking, smart reconciliation tools, and
+              intuitive dashboards that give you instant insights into your
+              inventory levels
             </p>
             <div className="flex space-x-4 max-lg:justify-center">
               {socialLinks.map((social) => (
@@ -230,13 +231,11 @@ export function LandingFooter() {
                 target="_blank"
                 className="font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
               >
-                ShadcnStore
+                Foresee Inc.
               </a>
             </div>
             <span className="hidden sm:inline">•</span>
-            <span>
-              © {new Date().getFullYear()} for the developer community
-            </span>
+            <span>© {new Date().getFullYear()}</span>
           </div>
           <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-4 md:mt-0">
             <a

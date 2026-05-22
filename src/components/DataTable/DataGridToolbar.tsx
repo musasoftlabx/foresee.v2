@@ -535,7 +535,7 @@ export default function DataGridToolbar({
 
   const handleFiltersChange = useCallback((filter: Filter[]) => {
     setFilters(filter);
-    changeFilters({
+    changeFilters?.({
       ...filterModel,
       items: filter.map((f: any) => ({
         ...f,
@@ -654,28 +654,30 @@ export default function DataGridToolbar({
         >
           <ComboboxChips ref={anchor}>
             <ComboboxValue>
-              <Fragment>
-                {value.map((value: string, key) => (
-                  <ComboboxChip key={key} showRemove={false} className="pl-2">
-                    {value}
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      className="-ml-1 -mr-2 opacity-50 hover:opacity-100"
-                      onClick={() => {
-                        setValue(values[0].filter((v: string) => v !== value));
-                        debounceFilter(
-                          field,
-                          values[0].filter((v: string) => v !== value),
-                        );
-                      }}
-                    >
-                      <XIcon />
-                    </Button>
-                  </ComboboxChip>
-                ))}
-                <ComboboxChipsInput placeholder={field.placeholder} />
-              </Fragment>
+              {value.map((value: string, key) => (
+                <ComboboxChip
+                  key={key.toString()}
+                  showRemove={false}
+                  className="pl-2"
+                >
+                  {value}
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="-ml-1 -mr-2 opacity-50 hover:opacity-100"
+                    onClick={() => {
+                      setValue(values[0].filter((v: string) => v !== value));
+                      debounceFilter(
+                        field,
+                        values[0].filter((v: string) => v !== value),
+                      );
+                    }}
+                  >
+                    <XIcon />
+                  </Button>
+                </ComboboxChip>
+              ))}
+              <ComboboxChipsInput placeholder={field.placeholder} />
             </ComboboxValue>
           </ComboboxChips>
           <ComboboxContent anchor={anchor}>
@@ -1413,8 +1415,8 @@ export default function DataGridToolbar({
                     icon: <GoTrash size={25} />,
                     timeout: 3000,
                   });
-                  clearRowSelection();
-                  handleGetData();
+                  clearRowSelection?.();
+                  handleGetData?.();
                 },
                 onError: () =>
                   alert({
@@ -1427,7 +1429,7 @@ export default function DataGridToolbar({
               break;
           }
         }}
-        handleCancel={() => (clearRowSelection(), closeConfirm())}
+        handleCancel={() => (clearRowSelection?.(), closeConfirm())}
         okText="YES"
         cancelText="NO"
       />
@@ -1519,23 +1521,30 @@ export default function DataGridToolbar({
           />
         </QuickFilter>
 
-        <Button
-          size="icon"
-          variant="destructive"
-          onClick={() => {
-            localStorage.removeItem(`_${apiUrl}_filtered_columns`);
-            localStorage.removeItem(`_${apiUrl}_pagination`);
-            localStorage.removeItem(`_${apiUrl}_pinned_columns`);
-            localStorage.removeItem(`_${apiUrl}_selected_rows`);
-            localStorage.removeItem(`_${apiUrl}_sorted_columns`);
-            localStorage.removeItem(`_${apiUrl}_state`);
-            localStorage.removeItem(`_${apiUrl}_visible_columns`);
-            localStorage.removeItem(`_${apiUrl}_stats`);
-            location.reload();
-          }}
-        >
-          <CogIcon />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger>
+            <Button
+              size="icon"
+              variant="destructive"
+              onClick={() => {
+                localStorage.removeItem(`_${apiUrl}_filtered_columns`);
+                localStorage.removeItem(`_${apiUrl}_pagination`);
+                localStorage.removeItem(`_${apiUrl}_pinned_columns`);
+                localStorage.removeItem(`_${apiUrl}_selected_rows`);
+                localStorage.removeItem(`_${apiUrl}_sorted_columns`);
+                localStorage.removeItem(`_${apiUrl}_state`);
+                localStorage.removeItem(`_${apiUrl}_visible_columns`);
+                localStorage.removeItem(`_${apiUrl}_stats`);
+                location.reload();
+              }}
+            >
+              <CogIcon />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Reset table filters, sorting, pagination, columns, selections
+          </TooltipContent>
+        </Tooltip>
 
         <Tooltip>
           <TooltipTrigger>
@@ -1582,7 +1591,7 @@ export default function DataGridToolbar({
           <ButtonGroup>
             {/* Create item */}
             {!exclude?.includes("creations") && (
-              <Button variant="outline" onClick={() => setIsModalOpen(true)}>
+              <Button variant="outline" onClick={() => setIsModalOpen?.(true)}>
                 <PlusIcon />
                 {newItemLabel}
               </Button>
@@ -1863,11 +1872,11 @@ export default function DataGridToolbar({
                       (field, key) =>
                         field.hideable && (
                           <DropdownMenuCheckboxItem
-                            key={key}
+                            key={key.toString()}
                             checked={columns[field.field]}
                             onCheckedChange={(value) => {
                               setColumns({ ...columns, [field.field]: value });
-                              changeVisibleColumns({
+                              changeVisibleColumns?.({
                                 ...columns,
                                 [field.field]: value,
                               });
@@ -1916,15 +1925,15 @@ export default function DataGridToolbar({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => {
-                      setIsExporting(true);
+                      setIsExporting?.(true);
                       axios
                         .get(exportUrl)
                         .then(({ data }) => {
                           location.href = data;
-                          setIsExporting(false);
+                          setIsExporting?.(false);
                         })
                         .catch((e) => {
-                          setIsExporting(false);
+                          setIsExporting?.(false);
                           // showAlert({
                           //   status: "error",
                           //   subject: "Export error!",
@@ -1986,7 +1995,7 @@ export default function DataGridToolbar({
                             <div className="flex flex-col divide-y">
                               {rowSelections.map((row, key) => (
                                 <div
-                                  key={key}
+                                  key={key.toString()}
                                   className="flex flex-row items-center gap-2 py-2 text-sm"
                                 >
                                   <SquareCheckBig
@@ -2022,8 +2031,8 @@ export default function DataGridToolbar({
                             variant="ghost"
                             className="border-border flex-1 rounded-none p-0"
                             onClick={() =>
-                              showConfirm({
-                                operation: "approve",
+                              confirm({
+                                //operation: "approve",
                                 status: "info",
                                 subject: `Confirm approval`,
                                 body: `Are you sure you intend to approve the selected rows?`,
@@ -2037,8 +2046,8 @@ export default function DataGridToolbar({
                             variant="ghost"
                             className="border-border flex-1 rounded-l-none border-0 p-0"
                             onClick={() =>
-                              showConfirm({
-                                operation: "reject",
+                              confirm({
+                                //operation: "reject",
                                 status: "info",
                                 subject: `Confirm rejection`,
                                 body: `Are you sure you intend to reject the selected rows?`,
@@ -2054,8 +2063,8 @@ export default function DataGridToolbar({
                             variant="destructive"
                             className="border-border border-0"
                             onClick={() =>
-                              showConfirm({
-                                operation: "delete",
+                              confirm({
+                                //operation: "delete",
                                 status: "info",
                                 subject: `Confirm deletion`,
                                 body: `Are you sure you intend to delete the selected rows?`,
@@ -2077,7 +2086,7 @@ export default function DataGridToolbar({
 
               <Button
                 variant="destructive"
-                onClick={() => clearRowSelection()}
+                onClick={() => clearRowSelection?.()}
                 disabled={isLoading}
                 className="border-primary"
               >
@@ -2118,13 +2127,13 @@ export default function DataGridToolbar({
                       >
                         {operators.map((operator, key) =>
                           operator.type === "divider" ? (
-                            <DropdownMenuSeparator />
+                            <DropdownMenuSeparator key={key.toString()} />
                           ) : (
                             <DropdownMenuItem
-                              key={key}
+                              key={key.toString()}
                               onClick={() =>
                                 handleFiltersChange(
-                                  filters.map((filter: any) =>
+                                  filters.map((filter: { field: string }) =>
                                     filter.field === field.key
                                       ? { ...filter, operator: operator.value }
                                       : filter,
@@ -2169,7 +2178,7 @@ export default function DataGridToolbar({
                       className="text-primary"
                       disabled={i > 0}
                       onClick={() =>
-                        changeFilters({
+                        changeFilters?.({
                           ...filterModel,
                           logicOperator:
                             filterModel.logicOperator === GridLogicOperator.And
@@ -2191,7 +2200,7 @@ export default function DataGridToolbar({
               variant="destructive"
               onClick={() => {
                 setFilters([]);
-                clearFilters();
+                clearFilters?.();
               }}
             >
               <FunnelXIcon />

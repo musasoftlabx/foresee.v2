@@ -117,11 +117,11 @@ npx prisma migrate dev --name add_tsvector_column --create-only
 
 # Access Mac postgresDB from parallels windows navicat
 
-1. edit pg_hba.conf
+1. edit pg_hba.conf (/Users/mmuliro/Library/Application Support/Postgres/var-18/pg_hba.conf) or select from server settings on postgres app
 2. get mac ip address from terminal
 > ipconfig getifaddr en0
 3. add line below to file (edit ip if necessary)
-> host all all 192.168.100.84/32 trust
+> host all all 10.253.103.145/32 trust
 `````
 
 # Prisma reset autoincrement

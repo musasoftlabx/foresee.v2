@@ -24,17 +24,28 @@ import { NavSecondary } from "./nav-secondary";
 import {
   Building2Icon,
   LayoutDashboard,
+  Shield,
   Store,
   StoreIcon,
   Users,
   Warehouse,
   WarehouseIcon,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/shadcn/select";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "Foresee Technologies",
+    email: "musasoftlabx@gmail.com",
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
@@ -42,6 +53,11 @@ const data = {
       title: "Dashboard",
       url: "/portal/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      title: "Organizations",
+      url: "/portal/organizations",
+      icon: Building2Icon,
     },
     {
       title: "Clients",
@@ -55,7 +71,7 @@ const data = {
     },
     {
       title: "User Management",
-      url: "#",
+      url: "/portal/users",
       icon: Users,
     },
   ],
@@ -119,26 +135,54 @@ const data = {
       icon: GaugeIcon,
     },
     {
-      title: "Search",
-      url: "#",
+      title: "Configs",
+      url: "/portal/configs",
       icon: GaugeIcon,
     },
   ],
-  documents: [
+  audits: [
     {
-      name: "Data Library",
+      title: "Previous Audits",
       url: "#",
-      icon: GaugeIcon,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: GaugeIcon,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: GaugeIcon,
+      icon: Shield,
+      items: [
+        {
+          title: "Sign In 1",
+          url: "/sign-in",
+        },
+        {
+          title: "Sign In 2",
+          url: "/sign-in-2",
+        },
+        {
+          title: "Sign In 3",
+          url: "/sign-in-3",
+        },
+        {
+          title: "Sign Up 1",
+          url: "/sign-up",
+        },
+        {
+          title: "Sign Up 2",
+          url: "/sign-up-2",
+        },
+        {
+          title: "Sign Up 3",
+          url: "/sign-up-3",
+        },
+        {
+          title: "Forgot Password 1",
+          url: "/forgot-password",
+        },
+        {
+          title: "Forgot Password 2",
+          url: "/forgot-password-2",
+        },
+        {
+          title: "Forgot Password 3",
+          url: "/forgot-password-3",
+        },
+      ],
     },
   ],
 };
@@ -149,7 +193,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
+            {/* <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a fruit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {[
+                    { label: "Select a fruit", value: null },
+                    { label: "Foresee Inc.", value: "apple" },
+                    { label: "Banana", value: "banana" },
+                  ].map((item) => (
+                    <SelectItem key={item.value} value={item.value as string}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select> */}
+
+            {/* <SidebarMenuButton
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
@@ -157,13 +220,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <GaugeIcon className="size-5" />
                 <span className="text-base font-semibold">Foresee Inc.</span>
               </a>
-            </SidebarMenuButton>
+            </SidebarMenuButton> */}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        <NavDocuments items={data.audits} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

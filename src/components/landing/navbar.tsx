@@ -42,7 +42,7 @@ import { useParams, useRouter } from "next/navigation";
 const navigationItems = [
   { name: "Home", href: "#hero" },
   { name: "Features", href: "#features" },
-  { name: "Solutions", href: "#features", hasMegaMenu: true },
+  // { name: "Solutions", href: "#features", hasMegaMenu: true },
   { name: "Team", href: "#team" },
   { name: "Pricing", href: "#pricing" },
   { name: "FAQ", href: "#faq" },
@@ -97,7 +97,7 @@ export function LandingNavbar() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <Logo size={32} />
+            {/* <Logo size={32} /> */}
             <span className="font-bold">Foresee Inc.</span>
           </Link>
         </div>

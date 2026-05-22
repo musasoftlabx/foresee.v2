@@ -1,4 +1,5 @@
 // * Server
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
@@ -6,65 +7,80 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import dayjs from "dayjs";
 
-// * Hooks
+// * Helpers
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
 
-// * Types
-import type { ByOn } from "@/types";
-import { Organizations } from "@/generated/prisma/client";
-
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const organizationId = 1;
+const userId = 1;
 const username = "mmuliro";
+const model = "organizations";
 
-export async function GET(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams;
-  const { limit, offset, operation, exportable, refines } = Object.fromEntries(
-    searchParams.entries(),
-  );
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const { nameOnly } = Object.fromEntries(searchParams.entries());
 
-  const dataset = await prisma.organizations.findMany({
-    where: { id: organizationId },
-  });
+  if (nameOnly)
+    return NextResponse.json(
+      (
+        await prisma[model].findMany({
+          where: { userId },
+          select: { name: true },
+        })
+      ).map(({ name }) => name),
+    );
+  else {
+    const rows = await prisma[model].findMany({ where: { userId } });
 
-  if (exportable) {
-    return false;
-  }
+    const dataset = [];
 
-  try {
-    return NextResponse.json({
-      count: dataset.length,
-      dataset: dataset.map((field: Organizations) => ({
-        ...field,
+    for (const row of rows) {
+      dataset.push({
+        ...row,
+        details: [
+          {
+            label: "Stores",
+            value: await prisma.stores.count({
+              where: { organizationId: row.id },
+            }),
+          },
+          {
+            label: "Clients",
+            value: await prisma.clients.count({
+              where: { organizationId: row.id },
+            }),
+          },
+          { label: "Team", value: 15 },
+        ],
         created: {
-          ...(field.created as unknown as ByOn),
-          on: dayjsDayFormatter(field.created.on),
+          ...row.created,
+          on: dayjsDayFormatter(row.created.on),
         },
         modified: {
-          ...(field.modified as unknown as ByOn),
-          on: dayjsDayFormatter(field.modified.on),
+          ...row.modified,
+          on: dayjsDayFormatter(row.modified.on),
         },
-      })),
-    });
-  } catch (error) {
-    if (error instanceof Error)
-      return Response.json({ error: error.message }, { status: 500 });
+      });
+    }
+
+    return NextResponse.json(dataset);
   }
 }
 
 export async function POST(request: Request) {
-  const { name } = await request.json();
+  const { name, description } = await request.json();
 
   try {
     return NextResponse.json(
-      await prisma.organizations.create({
+      await prisma[model].create({
         data: {
+          userId,
           name,
+          description,
           created: { by: username, on: new Date() },
           modified: { by: username, on: new Date() },
         },
@@ -95,11 +111,11 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const { ids } = await request.json();
+  const { id } = await request.json();
 
   try {
     return NextResponse.json(
-      await prisma.organizations.deleteMany({ where: { id: { in: ids } } }),
+      await prisma.organizations.delete({ where: { id } }),
     );
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {

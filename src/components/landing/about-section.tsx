@@ -9,15 +9,15 @@ import { Github, Code, Palette, Layout, Crown } from "lucide-react";
 const values = [
   {
     icon: Code,
-    title: "Developer First",
+    title: "Customer First",
     description:
-      "Every component is built with the developer experience in mind, ensuring clean code and easy integration.",
+      "Our stock-taking application is built with a customer-first mindset, ensuring that every feature directly addresses real-world challenges faced by businesses managing inventory.",
   },
   {
     icon: Palette,
     title: "Design Excellence",
     description:
-      "We maintain the highest design standards, following shadcn/ui principles and modern UI patterns.",
+      "Built with performance and scalability in mind, the application delivers fast, reliable results even in high-volume environments.",
   },
   {
     icon: Layout,
@@ -40,21 +40,25 @@ export function AboutSection() {
         {/* Section Header */}
         <div className="mx-auto max-w-4xl text-center mb-16">
           <Badge variant="outline" className="mb-4">
-            About ShadcnStore
+            About Foresee Technologies
           </Badge>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">
-            Built for developers, by developers
+            Built for stock taking
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            We&apos;re passionate about creating the best marketplace for
-            shadcn/ui components and templates. Our mission is to accelerate
-            development and help developers build beautiful admin interfaces
-            faster.
+            Eliminate manual errors and time-consuming spreadsheets with
+            automated stock tracking, smart reconciliation tools, and intuitive
+            dashboards that give you instant insights into your inventory
+            levels. Whether you manage a single store or multiple locations, our
+            platform scales with your business—helping you reduce losses,
+            optimize stock levels, and make data-driven decisions with
+            confidence. Stay in control, improve efficiency, and transform the
+            way you manage inventory—all from one secure, cloud-based solution.
           </p>
         </div>
 
         {/* Modern Values Grid with Enhanced Design */}
-        <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 xl:grid-cols-4 mb-12">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 xl:grid-cols-4">
           {values.map((value, index) => (
             <Card key={index} className="group shadow-xs py-2">
               <CardContent className="p-8">
@@ -72,41 +76,6 @@ export function AboutSection() {
               </CardContent>
             </Card>
           ))}
-        </div>
-
-        {/* Call to Action */}
-        <div className="mt-16 text-center">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <span className="text-muted-foreground">
-              ❤️ Made with love for the developer community
-            </span>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="cursor-pointer" asChild>
-              <a
-                href="https://github.com/silicondeck/shadcn-dashboard-landing-template"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github className="mr-2 h-4 w-4" />
-                Star on GitHub
-              </a>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="cursor-pointer"
-              asChild
-            >
-              <a
-                href="https://discord.com/invite/XEQhPc9a6p"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Join Discord Community
-              </a>
-            </Button>
-          </div>
         </div>
       </div>
     </section>

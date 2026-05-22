@@ -4,31 +4,28 @@
 // biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { useEffect, useState } from "react";
 
-// * Next
-import { useParams } from "next/navigation";
-
 // * NPM
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import capitalize from "lodash/capitalize";
-import JsBarcode from "jsbarcode";
 
 // * HUI
 import { Avatar } from "@heroui/react";
 
 // * SUI
 import { Button } from "@/components/ui/shadcn/button";
-import { Checkbox } from "@/components/ui/shadcn/checkbox";
 
 // * MUI
+import { capitalize } from "@mui/material";
 import {
-  type GridRowModel,
-  type GridPreProcessEditCellProps,
-  type GridState,
   DataGridPro,
-  GRID_CHECKBOX_SELECTION_COL_DEF,
+  type GridPreProcessEditCellProps,
+  type GridRowModel,
   useGridApiRef,
 } from "@mui/x-data-grid-pro";
+
+// * Icons
+import { Trash2Icon } from "lucide-react";
+import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
 
 // * Components
 import {
@@ -36,10 +33,7 @@ import {
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import AddLocations from "@/components/modals/add-locations";
-
-// * Icons
-import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
+import AddClient from "@/components/modals/add-client";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -47,19 +41,18 @@ import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 // * Store
 import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
 
-// * Icons
-import { Trash2Icon } from "lucide-react";
-
 // * Prisma
 import type { Prisma } from "@/generated/prisma/client";
 
-export default function Audits({ apiUrl = "locations" }) {
+// * Types
+import type { DataGridApiResponse } from "@/types";
+
+export default function Users({ apiUrl = "users" }) {
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddItemOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // ? Hooks
-  const { audit } = useParams();
   const apiRef = useGridApiRef();
   const confirm = useConfirmDialogStore((state) => state.confirm);
   const {
@@ -88,40 +81,13 @@ export default function Audits({ apiUrl = "locations" }) {
     apiUrl,
     columnsToHide: [
       "id",
-      "created.by",
-      "created.on",
+      "added.by",
+      "added.on",
       "modified.by",
       "modified.on",
     ],
     columnsToSort: [{ field: "id", sort: "desc" }],
-    toPin: {
-      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "id", "code", "barcode"],
-      right: ["actions"],
-    },
-  });
-
-  // ? Queries
-  const { data, isLoading } = useQuery({
-    queryKey: [
-      apiUrl,
-      paginationModel?.pageSize,
-      paginationModel?.page,
-      encodeURI(JSON.stringify({ filterModel, sortModel })),
-    ],
-    queryFn: ({ queryKey }) =>
-      axios(
-        `${queryKey[0]}?audit=${audit}&limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
-      ),
-    select: ({
-      data,
-    }: {
-      data: {
-        dataset: Prisma.LocationsModel[];
-        filtered: number;
-        totalCount: number;
-      };
-    }) => data,
-    enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
+    toPin: { left: ["id"], right: ["actions"] },
   });
 
   // ? Effects
@@ -134,31 +100,36 @@ export default function Audits({ apiUrl = "locations" }) {
     });
   });
 
+  // ? Queries
+  const { data, isLoading } = useQuery({
+    queryKey: [
+      apiUrl,
+      paginationModel?.pageSize,
+      paginationModel?.page,
+      encodeURI(JSON.stringify({ filterModel, sortModel })),
+    ],
+    queryFn: ({ queryKey }) =>
+      axios(
+        `${queryKey[0]}?limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
+      ),
+    select: ({
+      data,
+    }: {
+      data: DataGridApiResponse & { dataset: Prisma.UsersModel[] };
+    }) => data,
+    enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
+  });
+
   return (
-    <div className="h-[calc(100vh-35px)]">
-      <AddLocations
-        isModalOpen={isAddItemOpen}
-        setIsModalOpen={setIsModalOpen}
-      />
+    <div className="flex flex-1">
+      <AddClient isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
 
       <DataGridPro
         apiRef={apiRef}
         rows={data?.dataset ?? []}
         rowCount={data?.totalCount ?? 0}
-        autoPageSize
         initialState={initialState}
         columns={[
-          {
-            field: GRID_CHECKBOX_SELECTION_COL_DEF.field,
-            align: "center",
-            cellClassName: "vertical-center-cell",
-            disableColumnMenu: true,
-            filterable: false,
-            hideable: false,
-            resizable: false,
-            sortable: false,
-            maxWidth: 40,
-          },
           {
             field: "id",
             headerName: "Id.",
@@ -168,102 +139,30 @@ export default function Audits({ apiUrl = "locations" }) {
             hideable: true,
             pinnable: false,
             resizable: false,
-            minWidth: 20,
+            minWidth: 220,
             flex: 1,
           },
           {
-            field: "code",
-            headerName: "Code",
+            field: "name",
+            headerName: "Name",
             cellClassName: "vertical-center-cell",
-            disableColumnMenu: true,
-            hideable: true,
-            pinnable: false,
-            resizable: false,
-            minWidth: 180,
-            flex: 1,
-          },
-          {
-            field: "barcode",
-            headerName: "Barcode",
-            headerAlign: "center",
-            align: "center",
-            cellClassName: "vertical-center-cell",
-            disableColumnMenu: false,
-            filterable: false,
-            hideable: true,
-            pinnable: true,
-            resizable: false,
-            minWidth: 100,
-            flex: 1,
-            renderCell: ({ row: { code } }) => (
-              <svg id={code} className="barcode-svg h-10" />
-            ),
-          },
-          {
-            field: "physicalCount",
-            headerName: "Physical Count",
-            headerAlign: "center",
-            align: "center",
-            cellClassName: "vertical-center-cell",
-            type: "number",
             disableColumnMenu: true,
             editable: true,
             hideable: false,
             pinnable: false,
-            resizable: false,
-            minWidth: 125,
+            resizable: true,
+            minWidth: 250,
             flex: 1,
-            preProcessEditCellProps: (params: GridPreProcessEditCellProps) => ({
-              ...params.props,
-              error: !params.props.value || params.props.value.length > 3,
+            preProcessEditCellProps: ({
+              props,
+            }: GridPreProcessEditCellProps) => ({
+              ...props,
+              error: !props.value || props.value.length > 50,
             }),
           },
           {
-            field: "systemCount",
-            headerName: "System Count",
-            headerAlign: "center",
-            align: "center",
-            cellClassName: "vertical-center-cell",
-            type: "number",
-            disableColumnMenu: true,
-            hideable: false,
-            pinnable: false,
-            resizable: false,
-            minWidth: 120,
-            flex: 1,
-          },
-          {
-            field: "discrepancy",
-            headerName: "Discrepancy",
-            headerAlign: "center",
-            align: "center",
-            cellClassName: "vertical-center-cell",
-            disableColumnMenu: true,
-            hideable: false,
-            pinnable: false,
-            resizable: false,
-            minWidth: 110,
-            flex: 1,
-          },
-          {
-            field: "isVerified",
-            headerName: "Is Verified?",
-            headerAlign: "center",
-            align: "center",
-            cellClassName: "vertical-center-cell",
-            disableColumnMenu: true,
-            hideable: false,
-            pinnable: false,
-            resizable: false,
-            minWidth: 100,
-            flex: 1,
-            renderCell: ({ row: { isVerified } }) => (
-              <Checkbox checked={isVerified} disabled />
-            ),
-          },
-          {
-            field: "created",
-            headerName: "Created",
+            field: "added",
+            headerName: "Added",
             cellClassName: "vertical-center-cell",
             disableColumnMenu: true,
             filterable: false,
@@ -275,7 +174,7 @@ export default function Audits({ apiUrl = "locations" }) {
             flex: 1,
             renderCell: ({
               row: {
-                created: { by, on },
+                added: { by, on },
               },
             }) => (
               <div className="flex gap-3 items-center">
@@ -335,31 +234,33 @@ export default function Audits({ apiUrl = "locations" }) {
             disableColumnMenu: true,
             width: 70,
             renderCell: ({ row }) => (
-              <Button
-                size="icon"
-                variant="destructive"
-                onClick={() => {
-                  changeRowSelection({
-                    type: "include",
-                    ids: new Set([row.id]),
-                  });
-                  confirm({
-                    icon: <Trash2Icon />,
-                    status: "error",
-                    action: "delete",
-                    subject: "Confirm deletion",
-                    body: `Are you sure you intend to delete location ${row.code}?`,
-                  });
-                }}
-              >
-                <DeleteIcon />
-              </Button>
+              <div className="flex items-center justify-center gap-3 mt-0.5">
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  onClick={() => {
+                    changeRowSelection({
+                      type: "include",
+                      ids: new Set([row.id]),
+                    });
+                    confirm({
+                      icon: <Trash2Icon />,
+                      status: "error",
+                      action: "delete",
+                      subject: "Confirm deletion",
+                      body: `Are you sure you intend to delete client ${row.name}?`,
+                    });
+                  }}
+                >
+                  <DeleteIcon />
+                </Button>
+              </div>
             ),
           },
-          { field: "created.by", headerName: "Created By", hideable: false },
+          { field: "added.by", headerName: "Added By", hideable: false },
           {
-            field: "created.on",
-            headerName: "Created On",
+            field: "added.on",
+            headerName: "Added On",
             hideable: false,
             filterOperators: dateFilter,
           },
@@ -375,12 +276,9 @@ export default function Audits({ apiUrl = "locations" }) {
             filterOperators: dateFilter,
           },
         ]}
-        //getRowHeight={() => 40}
+        getRowHeight={() => 40}
         density="compact"
         pagination
-        keepNonExistentRowsSelected
-        disableRowSelectionOnClick
-        disableRowSelectionExcludeModel
         showCellVerticalBorder
         showColumnVerticalBorder
         showToolbar
@@ -404,22 +302,6 @@ export default function Audits({ apiUrl = "locations" }) {
         onSortModelChange={(model) => changeSorting(model)}
         onColumnOrderChange={syncState}
         onColumnResize={syncState}
-        onStateChange={(state: GridState) => {
-          const elements = document.getElementsByClassName("barcode-svg");
-          if (elements.length > 0 && state.rows.totalRowCount > 0) {
-            setTimeout(() => {
-              Object.values(state.rows.dataRowIdToModelLookup).map(({ code }) =>
-                JsBarcode(`#${code}`, code.split("-")[0], {
-                  width: 1,
-                  height: 20,
-                  textPosition: "top",
-                  fontSize: 12,
-                  margin: 3,
-                }),
-              );
-            }, 500);
-          }
-        }}
         processRowUpdate={(newRow: GridRowModel, oldRow: GridRowModel) =>
           updateCell({ newRow, oldRow, url: `${apiUrl}?scope=editCell` })
         }
@@ -443,17 +325,17 @@ export default function Audits({ apiUrl = "locations" }) {
             JSON.stringify({ filterModel, sortModel }),
           )}`,
           handleGetData,
-          newItemLabel: "Create",
+          newItemLabel: "Add",
           isExporting,
           isLoading,
-          searchPlaceholder: "Code, Barcode",
+          searchPlaceholder: "Name",
           setIsExporting,
           stats,
           changeStats,
           setIsModalOpen,
         })}
         slotProps={DataGridSlotProps}
-        sx={(theme) => DataGridSlots({}).styles(theme)}
+        sx={(theme) => DataGridSlots({ hideRowBorders: true }).styles(theme)}
       />
     </div>
   );

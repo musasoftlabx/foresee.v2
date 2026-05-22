@@ -13,13 +13,9 @@ import QueryRefiner from "@/helpers/queryRefiner";
 // * Libs
 import { prisma } from "@/lib/prisma";
 
-// * Types
-import type { ByOn } from "@/types";
-
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const username = "mmuliro";
 const model = "inventory";
 
 export async function GET(req: NextRequest) {
@@ -57,11 +53,11 @@ export async function GET(req: NextRequest) {
       barcode: row.barcode,
       storeId: row.storeId,
       added: {
-        ...(row.added as unknown as ByOn),
+        ...row.added,
         on: dayjsDayFormatter(row.added.on),
       },
       modified: {
-        ...(row.modified as unknown as ByOn),
+        ...row.modified,
         on: dayjsDayFormatter(row.modified.on),
       },
     });

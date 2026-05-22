@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0 --port 3001",
     "build": "next build",
-    "start": "next start",
+    "start": "next start --port 3001",
     "lint": "biome check",
     "format": "biome format --write"
   },
@@ -22,7 +22,7 @@
     "@mui/x-date-pickers-pro": "^8.27.2",
     "@phosphor-icons/react": "^2.1.10",
     "@prisma/adapter-pg": "^7.6.0",
-    "@prisma/client": "^7.6.0",
+    "@prisma/client": "^7.8.0",
     "@protobi/exceljs": "^4.4.0-protobi.9",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-icons": "^1.3.2",
@@ -61,7 +61,7 @@
     "node-device-detector": "^2.2.5",
     "nodemailer": "^8.0.4",
     "pg": "^8.20.0",
-    "prisma": "^7.6.0",
+    "prisma": "^7.8.0",
     "puppeteer": "^24.39.1",
     "radix-ui": "^1.4.3",
     "react": "19.2.4",

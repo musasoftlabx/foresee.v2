@@ -1,4 +1,5 @@
 // * Server
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
@@ -64,11 +65,11 @@ export async function GET(req: NextRequest) {
       ...row,
       discrepancy: Math.abs(row.physicalCount - row.systemCount),
       created: {
-        ...(row.created as unknown as ByOn),
+        ...row.created,
         on: dayjsDayFormatter(row.created.on),
       },
       modified: {
-        ...(row.modified as unknown as ByOn),
+        ...row.modified,
         on: dayjsDayFormatter(row.modified.on),
       },
     });
@@ -129,11 +130,16 @@ export async function PATCH(request: NextRequest) {
   if (scope === "editCell") {
     const { id, field, value } = await request.json();
     try {
+      const {
+        modified: { by, on },
+      } = (await prisma[model].update({
+        where: { id },
+        data: { [field]: value, modified: { by: username, on: new Date() } },
+        select: { modified: true },
+      })) as unknown as { modified: ByOn };
+
       return NextResponse.json(
-        await prisma[model].update({
-          where: { id },
-          data: { [field]: value, modified: { by: username, on: new Date() } },
-        }),
+        { by, on: dayjsDayFormatter(on) },
         { status: 201 },
       );
     } catch (error) {

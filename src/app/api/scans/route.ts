@@ -1,4 +1,5 @@
 // * Server
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { type NextRequest, NextResponse } from "next/server";
 
 // * NPM
@@ -12,9 +13,6 @@ import QueryRefiner from "@/helpers/queryRefiner";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
-
-// * Types
-import type { ByOn } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -51,7 +49,7 @@ export async function GET(req: NextRequest) {
     dataset.push({
       ...row,
       scanned: {
-        ...(row.scanned as unknown as ByOn),
+        ...row.scanned,
         on: dayjsDayFormatter(row.scanned.on),
       },
     });

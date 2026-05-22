@@ -1,6 +1,7 @@
 "use client";
 
 // * React
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { useEffect, useState } from "react";
 
 // * Next
@@ -14,10 +15,8 @@ import capitalize from "lodash/capitalize";
 // * MUI
 import {
   type GridRowModel,
-  type GridState,
   DataGridPro,
   GRID_CHECKBOX_SELECTION_COL_DEF,
-  GridCellProps,
   useGridApiRef,
 } from "@mui/x-data-grid-pro";
 
@@ -26,24 +25,20 @@ import {
   DataGridSlotProps,
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
-import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 
 // * Prisma
 import type { Prisma } from "@/generated/prisma/client";
-import { GridColDefPro } from "@mui/x-data-grid-pro/typeOverloads";
 
 export default function Inventory({ apiUrl = "inventory" }) {
-  // ? Refs
-  const apiRef = useGridApiRef();
-  const { store } = useParams();
-
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [columns, setColumns] = useState<GridColDefPro>();
 
+  // ? Hooks
+  const { store } = useParams();
+  const apiRef = useGridApiRef();
   const {
     initialState,
     columnVisibilityModel,
@@ -117,7 +112,7 @@ export default function Inventory({ apiUrl = "inventory" }) {
   });
 
   return (
-    <div className="flex flex-1 flex-col h-[calc(100vh-585px)]">
+    <div className="flex flex-1 h-[calc(100vh-585px)]">
       <DataGridPro
         apiRef={apiRef}
         rows={data?.dataset ?? []}
@@ -220,7 +215,6 @@ export default function Inventory({ apiUrl = "inventory" }) {
         showCellVerticalBorder={false}
         showColumnVerticalBorder={false}
         showToolbar
-        hideFooter
         hideFooterPagination
         hideFooterSelectedRowCount
         filterMode="server"
@@ -252,8 +246,11 @@ export default function Inventory({ apiUrl = "inventory" }) {
           changeFilters,
           changeVisibleColumns,
           changeRowSelection,
+          changePagination,
           clearFilters,
           clearRowSelection,
+          totalServerCount: data?.totalCount,
+          paginationModel,
           exclude: [],
           exportUrl: `${apiUrl}?scope=users&limit=${data?.filtered}&offset=${
             paginationModel?.page
@@ -271,12 +268,6 @@ export default function Inventory({ apiUrl = "inventory" }) {
         })}
         slotProps={DataGridSlotProps}
         sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}
-      />
-
-      <DataGridPagination
-        count={data?.totalCount}
-        paginationModel={paginationModel}
-        changePagination={changePagination}
       />
     </div>
   );

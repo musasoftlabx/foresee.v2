@@ -20,10 +20,10 @@ export function CTASection() {
                 </Badge>
 
                 <div className="text-muted-foreground flex items-center gap-4 text-sm">
-                  <span className="flex items-center gap-1">
+                  {/* <span className="flex items-center gap-1">
                     <div className="size-2 rounded-full bg-green-500" />
                     150+ Blocks
-                  </span>
+                  </span> */}
                   <Separator orientation="vertical" className="!h-4" />
                   <span>25K+ Downloads</span>
                   <Separator orientation="vertical" className="!h-4" />
@@ -47,9 +47,12 @@ export function CTASection() {
                 </h1>
 
                 <p className="text-muted-foreground mx-auto max-w-2xl text-balance lg:text-xl">
-                  Stop building from scratch. Get production-ready components,
-                  templates and dashboards that integrate seamlessly with your
-                  shadcn/ui projects.
+                  Whether you manage a single store or multiple locations, our
+                  platform scales with your business—helping you reduce losses,
+                  optimize stock levels, and make data-driven decisions with
+                  confidence. Stay in control, improve efficiency, and transform
+                  the way you manage inventory—all from one secure, cloud-based
+                  solution.
                 </p>
               </div>
 
@@ -66,34 +69,13 @@ export function CTASection() {
                     rel="noopener noreferrer"
                   >
                     <Package className="me-2 size-5" />
-                    Browse Components
-                  </a>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="cursor-pointer px-8 py-6 text-lg font-medium group"
-                  asChild
-                >
-                  <a
-                    href="https://github.com/silicondeck/shadcn-dashboard-landing-template"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Github className="me-2 size-5" />
-                    View on GitHub
-                    <ArrowRight className="ms-2 size-4 transition-transform group-hover:translate-x-1" />
+                    Download the Mobile App
                   </a>
                 </Button>
               </div>
 
               {/* Trust Indicators */}
               <div className="text-muted-foreground flex flex-wrap items-center justify-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-green-600 dark:bg-green-400 me-1" />
-
-                  <span>Free components available</span>
-                </div>
                 <div className="flex items-center gap-2">
                   <div className="size-2 rounded-full bg-blue-600 dark:bg-blue-400 me-1" />
 

@@ -24,9 +24,9 @@ export function HeroSection() {
         <div className="mx-auto max-w-4xl text-center">
           {/* Announcement Badge */}
           <div className="mb-8 flex justify-center">
-            <Badge variant="outline" className="px-4 py-2 border-foreground">
+            <Badge variant="outline" className="px-4 py-4 border-foreground">
               <Star className="w-3 h-3 mr-2 fill-current" />
-              New: Premium Template Collection
+              Download our mobile scanner app
               <ArrowRight className="w-3 h-3 ml-2" />
             </Badge>
           </div>
@@ -43,9 +43,9 @@ export function HeroSection() {
 
           {/* Subheading */}
           <p className="mx-auto mb-10 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            Accelerate your development with our curated collection of blocks,
-            templates, landing pages, and admin dashboards. From free components
-            to complete solutions, built with shadcn/ui.
+            Eliminate manual errors and time-consuming spreadsheets with
+            automated stock tracking, smart reconciliation tools, and intuitive
+            dashboards that give you instant insights into your inventory levels
           </p>
 
           {/* CTA Buttons */}

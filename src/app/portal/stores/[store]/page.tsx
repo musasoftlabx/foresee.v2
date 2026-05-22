@@ -1,7 +1,8 @@
 "use client";
 
 // * React
-import { Fragment, useEffect, useState } from "react";
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
+import { useEffect, useState } from "react";
 
 // * Next
 import { useParams, useRouter } from "next/navigation";
@@ -32,7 +33,6 @@ import {
 } from "@/components/DataTable/DataGridSlots";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
 import CreateAudit from "@/components/modals/create-audit";
-import DataGridPagination from "@/components/DataTable/DataGridPagination";
 
 // * Icons
 import { ExternalLink, Trash2Icon } from "lucide-react";
@@ -44,29 +44,28 @@ import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 // * Store
 import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
 
+// * Helpers
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 
 // * Prisma
 import type { Prisma } from "@/generated/prisma/client";
 
 // * Types
-import { DataGridApiResponse } from "@/types";
+import type { DataGridApiResponse } from "@/types";
 
 export default function Audits({ apiUrl = "audits" }) {
-  // ? Refs
-  const apiRef = useGridApiRef();
-  const router = useRouter();
-  const { store } = useParams();
-
-  const confirm = useConfirmDialogStore((state) => state.confirm);
-
   // ? States
   const [isExporting, setIsExporting] = useState(false);
   const [isAddItemOpen, setIsModalOpen] = useState(false);
+
+  // ? Hooks
+  const { store } = useParams();
+  const apiRef = useGridApiRef();
+  const router = useRouter();
+  const confirm = useConfirmDialogStore((state) => state.confirm);
   const {
     initialState,
     columnVisibilityModel,
-    filters,
     filterModel,
     paginationModel,
     pinnedColumnsModel,
@@ -130,354 +129,345 @@ export default function Audits({ apiUrl = "audits" }) {
   });
 
   return (
-    <Fragment>
+    <div className="h-[calc(100vh-35px)]">
       <CreateAudit
         isModalOpen={isAddItemOpen}
         setIsModalOpen={setIsModalOpen}
       />
 
-      <div className="flex flex-1 flex-col">
-        <DataGridPro
-          apiRef={apiRef}
-          rows={data?.dataset ?? []}
-          rowCount={data?.totalCount ?? 0}
-          initialState={initialState}
-          columns={[
-            {
-              field: "id",
-              headerName: "Id.",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: false,
-              filterable: false,
-              hideable: true,
-              pinnable: false,
-              resizable: false,
-              minWidth: 20,
-              flex: 1,
-            },
-            {
-              field: "code",
-              headerName: "Code",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 90,
-              flex: 1,
-              renderCell: ({ row: { code } }) => (
-                <div className="font-bold">{code}</div>
-              ),
-            },
-            {
-              field: "locations",
-              headerName: "Locations",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: true,
-              resizable: false,
-              minWidth: 90,
-              flex: 1,
-              renderCell: ({ row: { id, locations } }) => (
+      <DataGridPro
+        apiRef={apiRef}
+        rows={data?.dataset ?? []}
+        rowCount={data?.totalCount ?? 0}
+        initialState={initialState}
+        columns={[
+          {
+            field: "id",
+            headerName: "Id.",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: false,
+            filterable: false,
+            hideable: true,
+            pinnable: false,
+            resizable: false,
+            minWidth: 20,
+            flex: 1,
+          },
+          {
+            field: "code",
+            headerName: "Code",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            hideable: false,
+            pinnable: false,
+            resizable: false,
+            minWidth: 90,
+            flex: 1,
+            renderCell: ({ row: { code } }) => (
+              <div className="font-bold">{code}</div>
+            ),
+          },
+          {
+            field: "locations",
+            headerName: "Locations",
+            headerAlign: "center",
+            align: "center",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            hideable: false,
+            pinnable: true,
+            resizable: false,
+            minWidth: 90,
+            flex: 1,
+            renderCell: ({ row: { id, locations } }) => (
+              <Button
+                variant="link"
+                onClick={() =>
+                  router.push(`/portal/stores/${store}/audits/${id}/locations`)
+                }
+              >
+                <span className="flex gap-1 underline decoration-dashed dark:text-chart-1">
+                  {locations}
+                  <ExternalLink size={8} />
+                </span>
+              </Button>
+            ),
+          },
+          {
+            field: "scans",
+            headerName: "Scans",
+            headerAlign: "center",
+            align: "center",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            hideable: false,
+            pinnable: true,
+            resizable: false,
+            minWidth: 90,
+            flex: 1,
+            renderCell: ({ row: { id, scans } }) => (
+              <Button
+                variant="link"
+                onClick={() =>
+                  router.push(`/portal/stores/${store}/audits/${id}/scans`)
+                }
+              >
+                <span className="flex gap-1 underline decoration-dashed dark:text-chart-1">
+                  {scans}
+                  <ExternalLink size={8} />
+                </span>
+              </Button>
+            ),
+          },
+          {
+            field: "date",
+            headerName: "Date of Audit",
+            headerAlign: "center",
+            align: "center",
+            cellClassName: "vertical-center-cell",
+            type: "dateTime",
+            disableColumnMenu: false,
+            editable: true,
+            hideable: false,
+            pinnable: true,
+            resizable: false,
+            minWidth: 220,
+            flex: 1,
+            valueGetter: ({ value }) => (value ? dayjs(value).toDate() : null),
+            renderCell: ({ row: { date } }) => (
+              <span className="text-xs">{dayjsDayFormatter(date)}</span>
+            ),
+          },
+          {
+            field: "barcode.mode",
+            headerAlign: "center",
+            align: "center",
+            cellClassName: "vertical-center-cell",
+            type: "singleSelect",
+            valueOptions: ["Strict", "Varies"],
+            disableColumnMenu: true,
+            editable: true,
+            hideable: false,
+            pinnable: false,
+            resizable: false,
+            minWidth: 90,
+            flex: 1,
+            renderHeader: () => (
+              <div className="flex flex-col items-center font-bold">
+                <div className="text-xs">Barcode</div>
+                <div className="text-xs">Mode</div>
+              </div>
+            ),
+            renderCell: ({
+              row: {
+                barcode: { mode },
+              },
+            }) => <div>{capitalize(mode)}</div>,
+          },
+          {
+            field: "barcode.characters",
+            headerAlign: "center",
+            align: "center",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            editable: true,
+            hideable: false,
+            pinnable: false,
+            resizable: false,
+            minWidth: 90,
+            flex: 1,
+            renderHeader: () => (
+              <div className="flex flex-col items-center font-bold">
+                <div className="text-xs">Barcode</div>
+                <div className="text-xs">Characters</div>
+              </div>
+            ),
+            renderCell: ({
+              row: {
+                barcode: { characters },
+              },
+            }) => <div>{characters}</div>,
+          },
+          {
+            field: "created",
+            headerName: "Created",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            filterable: false,
+            hideable: false,
+            pinnable: false,
+            resizable: false,
+            sortable: false,
+            minWidth: 300,
+            flex: 1,
+            renderCell: ({
+              row: {
+                created: { by, on },
+              },
+            }) => (
+              <div className="flex gap-3 items-center">
+                <Avatar
+                  isBordered
+                  radius="sm"
+                  className="size-7"
+                  src="https://i.pravatar.cc/150?u=a04258114e29026302d"
+                />
+                <div className="flex-col">
+                  <div className="text-sm">by {by}</div>
+                  <div className="text-xs">on {on}</div>
+                </div>
+              </div>
+            ),
+          },
+          {
+            field: "modified",
+            headerName: "Modified",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            filterable: false,
+            hideable: false,
+            pinnable: false,
+            resizable: false,
+            sortable: false,
+            minWidth: 300,
+            flex: 1,
+            renderCell: ({
+              row: {
+                modified: { by, on },
+              },
+            }) => (
+              <div className="flex gap-3 items-center">
+                <Avatar
+                  isBordered
+                  radius="sm"
+                  className="size-7"
+                  src="https://i.pravatar.cc/150?u=a04258114e29026302d"
+                />
+                <div className="flex-col">
+                  <div className="text-sm">by {by}</div>
+                  <div className="text-xs">on {on}</div>
+                </div>
+              </div>
+            ),
+          },
+          {
+            field: "actions",
+            headerName: "Delete",
+            headerAlign: "center",
+            align: "center",
+            sortable: false,
+            filterable: false,
+            hideable: false,
+            pinnable: false,
+            disableColumnMenu: true,
+            width: 70,
+            renderCell: ({ row }) => (
+              <div className="flex items-center justify-center gap-3 mt-0.5">
                 <Button
-                  variant="link"
-                  onClick={() =>
-                    router.push(
-                      `/portal/stores/${store}/audits/${id}/locations`,
-                    )
-                  }
+                  size="icon"
+                  variant="destructive"
+                  onClick={() => {
+                    changeRowSelection({
+                      type: "include",
+                      ids: new Set([row.id]),
+                    });
+                    confirm({
+                      icon: <Trash2Icon />,
+                      status: "error",
+                      action: "delete",
+                      subject: "Confirm deletion",
+                      body: `Are you sure you intend to delete audit ${row.code}?`,
+                    });
+                  }}
                 >
-                  <span className="flex gap-1 underline decoration-dashed">
-                    {locations}
-                    <ExternalLink size={8} />
-                  </span>
+                  <DeleteIcon />
                 </Button>
-              ),
-            },
-            {
-              field: "scans",
-              headerName: "Scans",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              hideable: false,
-              pinnable: true,
-              resizable: false,
-              minWidth: 90,
-              flex: 1,
-              renderCell: ({ row: { id, scans } }) => (
-                <Button
-                  variant="link"
-                  onClick={() =>
-                    router.push(`/portal/stores/${store}/audits/${id}/scans`)
-                  }
-                >
-                  <span className="flex gap-1 underline decoration-dashed">
-                    {scans}
-                    <ExternalLink size={8} />
-                  </span>
-                </Button>
-              ),
-            },
-            {
-              field: "date",
-              headerName: "Date of Audit",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              type: "dateTime",
-              disableColumnMenu: false,
-              editable: true,
-              hideable: false,
-              pinnable: true,
-              resizable: false,
-              minWidth: 220,
-              flex: 1,
-              valueGetter: ({ value }) =>
-                value ? dayjs(value).toDate() : null,
-              renderCell: ({ row: { date } }) => (
-                <span className="text-xs">{dayjsDayFormatter(date)}</span>
-              ),
-            },
-            {
-              field: "barcode.mode",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              type: "singleSelect",
-              valueOptions: ["Strict", "Varies"],
-              disableColumnMenu: true,
-              editable: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 90,
-              flex: 1,
-              renderHeader: () => (
-                <div className="flex flex-col items-center font-bold">
-                  <div className="text-xs">Barcode</div>
-                  <div className="text-xs">Mode</div>
-                </div>
-              ),
-              renderCell: ({
-                row: {
-                  barcode: { mode },
-                },
-              }) => <div>{capitalize(mode)}</div>,
-            },
-            {
-              field: "barcode.characters",
-              headerAlign: "center",
-              align: "center",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              editable: true,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              minWidth: 90,
-              flex: 1,
-              renderHeader: () => (
-                <div className="flex flex-col items-center font-bold">
-                  <div className="text-xs">Barcode</div>
-                  <div className="text-xs">Characters</div>
-                </div>
-              ),
-              renderCell: ({
-                row: {
-                  barcode: { characters },
-                },
-              }) => <div>{characters}</div>,
-            },
-            {
-              field: "created",
-              headerName: "Created",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              sortable: false,
-              minWidth: 300,
-              flex: 1,
-              renderCell: ({
-                row: {
-                  created: { by, on },
-                },
-              }) => (
-                <div className="flex gap-3 items-center">
-                  <Avatar
-                    isBordered
-                    radius="sm"
-                    className="size-7"
-                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
-                  />
-                  <div className="flex-col">
-                    <div className="text-sm">by {by}</div>
-                    <div className="text-xs">on {on}</div>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              field: "modified",
-              headerName: "Modified",
-              cellClassName: "vertical-center-cell",
-              disableColumnMenu: true,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
-              resizable: false,
-              sortable: false,
-              minWidth: 300,
-              flex: 1,
-              renderCell: ({
-                row: {
-                  modified: { by, on },
-                },
-              }) => (
-                <div className="flex gap-3 items-center">
-                  <Avatar
-                    isBordered
-                    radius="sm"
-                    className="size-7"
-                    src="https://i.pravatar.cc/150?u=a04258114e29026302d"
-                  />
-                  <div className="flex-col">
-                    <div className="text-sm">by {by}</div>
-                    <div className="text-xs">on {on}</div>
-                  </div>
-                </div>
-              ),
-            },
-            {
-              field: "actions",
-              headerName: "Delete",
-              headerAlign: "center",
-              align: "center",
-              sortable: false,
-              filterable: false,
-              hideable: false,
-              pinnable: false,
-              disableColumnMenu: true,
-              width: 70,
-              renderCell: ({ row }) => (
-                <div className="flex items-center justify-center gap-3 mt-0.5">
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    onClick={() => {
-                      changeRowSelection({
-                        type: "include",
-                        ids: new Set([row.id]),
-                      });
-                      confirm({
-                        icon: <Trash2Icon />,
-                        status: "error",
-                        action: "delete",
-                        subject: "Confirm deletion",
-                        body: `Are you sure you intend to delete audit ${row.code}?`,
-                      });
-                    }}
-                  >
-                    <DeleteIcon />
-                  </Button>
-                </div>
-              ),
-            },
-            { field: "created.by", headerName: "Created By", hideable: false },
-            {
-              field: "created.on",
-              headerName: "Created On",
-              hideable: false,
-              filterOperators: dateFilter,
-            },
-            {
-              field: "modified.by",
-              headerName: "Modified By",
-              hideable: false,
-            },
-            {
-              field: "modified.on",
-              headerName: "Modified On",
-              hideable: false,
-              filterOperators: dateFilter,
-            },
-          ]}
-          getRowHeight={() => 40}
-          density="compact"
-          pagination
-          keepNonExistentRowsSelected
-          disableRowSelectionOnClick
-          disableRowSelectionExcludeModel
-          showCellVerticalBorder={false}
-          showColumnVerticalBorder={false}
-          showToolbar
-          hideFooter
-          hideFooterPagination
-          hideFooterSelectedRowCount
-          filterMode="server"
-          paginationMode="server"
-          sortingMode="server"
-          loading={isLoading}
-          columnVisibilityModel={columnVisibilityModel}
-          onColumnVisibilityModelChange={(model) => changeVisibleColumns(model)}
-          filterModel={filterModel}
-          onFilterModelChange={(model) => changeFilters(model)}
-          paginationModel={paginationModel}
-          onPaginationModelChange={(model) => changePagination(model)}
-          pinnedColumns={pinnedColumnsModel}
-          onPinnedColumnsChange={(model) => changePinnedColumns(model)}
-          rowSelectionModel={rowSelectionModel}
-          onRowSelectionModelChange={(model) => changeRowSelection(model)}
-          sortModel={sortModel}
-          onSortModelChange={(model) => changeSorting(model)}
-          onColumnOrderChange={syncState}
-          onColumnResize={syncState}
-          processRowUpdate={(newRow: GridRowModel, oldRow: GridRowModel) =>
-            updateCell({ newRow, oldRow, url: `${apiUrl}?scope=editCell` })
-          }
-          slots={DataGridSlots({
-            apiRef,
-            apiUrl: `${apiUrl}?scope=users`,
-            title: capitalize(apiUrl),
-            caption: `${data?.filtered} items displayed from a total of ${data?.totalCount}.`,
-            changeFilters,
-            changeVisibleColumns,
-            changeRowSelection,
-            clearFilters,
-            clearRowSelection,
-            exclude: [],
-            exportUrl: `${apiUrl}?scope=users&limit=${data?.totalCount}&offset=${
-              paginationModel?.page
-            }&exportable=true&refines=${encodeURI(
-              JSON.stringify({ filterModel, sortModel }),
-            )}`,
-            handleGetData,
-            newItemLabel: "Create",
-            isExporting,
-            isLoading,
-            searchPlaceholder: "Code, Name, Country, Client",
-            setIsExporting,
-            stats,
-            changeStats,
-            setIsModalOpen,
-          })}
-          slotProps={DataGridSlotProps}
-          sx={(theme) => DataGridSlots({ hideRowBorders: false }).styles(theme)}
-        />
-
-        <DataGridPagination
-          count={data?.totalCount}
-          paginationModel={paginationModel}
-          changePagination={changePagination}
-        />
-      </div>
-    </Fragment>
+              </div>
+            ),
+          },
+          { field: "created.by", headerName: "Created By", hideable: false },
+          {
+            field: "created.on",
+            headerName: "Created On",
+            hideable: false,
+            filterOperators: dateFilter,
+          },
+          {
+            field: "modified.by",
+            headerName: "Modified By",
+            hideable: false,
+          },
+          {
+            field: "modified.on",
+            headerName: "Modified On",
+            hideable: false,
+            filterOperators: dateFilter,
+          },
+        ]}
+        getRowHeight={() => 40}
+        density="compact"
+        pagination
+        keepNonExistentRowsSelected
+        disableRowSelectionOnClick
+        disableRowSelectionExcludeModel
+        showCellVerticalBorder={false}
+        showColumnVerticalBorder={false}
+        showToolbar
+        hideFooterPagination
+        hideFooterSelectedRowCount
+        filterMode="server"
+        paginationMode="server"
+        sortingMode="server"
+        loading={isLoading}
+        columnVisibilityModel={columnVisibilityModel}
+        onColumnVisibilityModelChange={(model) => changeVisibleColumns(model)}
+        filterModel={filterModel}
+        onFilterModelChange={(model) => changeFilters(model)}
+        paginationModel={paginationModel}
+        onPaginationModelChange={(model) => changePagination(model)}
+        pinnedColumns={pinnedColumnsModel}
+        onPinnedColumnsChange={(model) => changePinnedColumns(model)}
+        rowSelectionModel={rowSelectionModel}
+        onRowSelectionModelChange={(model) => changeRowSelection(model)}
+        sortModel={sortModel}
+        onSortModelChange={(model) => changeSorting(model)}
+        onColumnOrderChange={syncState}
+        onColumnResize={syncState}
+        processRowUpdate={(newRow: GridRowModel, oldRow: GridRowModel) =>
+          updateCell({ newRow, oldRow, url: `${apiUrl}?scope=editCell` })
+        }
+        slots={DataGridSlots({
+          apiRef,
+          apiUrl: `${apiUrl}?scope=users`,
+          title: capitalize(apiUrl),
+          caption: `${data?.filtered} items displayed from a total of ${data?.totalCount}.`,
+          changeFilters,
+          changeVisibleColumns,
+          changeRowSelection,
+          changePagination,
+          clearFilters,
+          clearRowSelection,
+          totalServerCount: data?.totalCount,
+          paginationModel,
+          exclude: [],
+          exportUrl: `${apiUrl}?scope=users&limit=${data?.totalCount}&offset=${
+            paginationModel?.page
+          }&exportable=true&refines=${encodeURI(
+            JSON.stringify({ filterModel, sortModel }),
+          )}`,
+          handleGetData,
+          newItemLabel: "Create",
+          isExporting,
+          isLoading,
+          searchPlaceholder: "Code, Name, Country, Client",
+          setIsExporting,
+          stats,
+          changeStats,
+          setIsModalOpen,
+        })}
+        slotProps={DataGridSlotProps}
+        sx={(theme) => DataGridSlots({}).styles(theme)}
+      />
+    </div>
   );
 }

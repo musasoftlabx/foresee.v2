@@ -63,8 +63,14 @@ export default function QueryProvider({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const isSystemDark =
-    window && (matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false);
+  let isSystemDark = false;
+
+  if (typeof window !== "undefined")
+    isSystemDark =
+      window &&
+      (matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false);
+  //const isSystemDark = true;
+  //matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
 
   // ? Hooks
   const router = useRouter();

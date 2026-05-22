@@ -1,6 +1,7 @@
 // * Next
 import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
+//import localFont from "next/font/local";
 
 // * Main entry file
 import Main from "@/app/main";
@@ -18,6 +19,16 @@ export const metadata: Metadata = {
 };
 
 const rubik = Rubik({ subsets: ["latin"], variable: "--font-sans" });
+// const rubik = localFont({
+//   src: [
+//     {
+//       path: "../public/fonts/Rubik-Regular.woff2",
+//       weight: "400",
+//       style: "normal",
+//     },
+//   ],
+//   variable: "--font-sans",
+// });
 
 export default function RootLayout({
   children,

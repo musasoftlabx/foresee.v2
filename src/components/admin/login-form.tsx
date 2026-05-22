@@ -60,7 +60,7 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="m@usexample.com"
                   required
                 />
               </Field>

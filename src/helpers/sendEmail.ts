@@ -1,7 +1,9 @@
 // * NPM
-import { prisma } from "@/lib/prisma";
 import nodemailer, { type SentMessageInfo } from "nodemailer";
-import type SMTPTransport from "nodemailer/lib/smtp-transport";
+//import type SMTPTransport from "nodemailer/lib/smtp-transport";
+
+// * Libs
+import { prisma } from "@/lib/prisma";
 
 // * Helpers
 //import getRedisConfigs from "./getRedisConfigs";
@@ -33,7 +35,7 @@ export default async function SendEmail({
       // auth: { user: configs.AUTH_USER, pass: configs.AUTH_PASS },
     });
 
-    const response: SMTPTransport.SentMessageInfo = await transporter.sendMail({
+    const response: SentMessageInfo = await transporter.sendMail({
       from: '"Foresee Inc." <info@4c.co.ke>',
       to: receipients,
       subject,

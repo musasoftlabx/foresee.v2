@@ -1,4 +1,5 @@
 // * Server
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { type NextRequest, NextResponse } from "next/server";
 
 // * Node
@@ -32,49 +33,59 @@ const model = "audits";
 
 export async function GET(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
-  const { limit, offset, exportable, refines, store } = Object.fromEntries(
-    searchParams.entries(),
-  );
+  const { limit, offset, exportable, refines, store, nameOnly } =
+    Object.fromEntries(searchParams.entries());
 
-  const { query, searchResults, totalCount } = await QueryRefiner({
-    where: { storeId: Number(store) },
-    limit,
-    offset,
-    refines,
-    search: {
-      model,
-      fields: ["code", "barcode", "date", "created", "modified"],
-    },
-  });
-
-  const rows =
-    searchResults.length > 0
-      ? searchResults
-      : await prisma[model].findMany(query);
-
-  const dataset = [];
-
-  if (exportable) {
-    return false;
-  }
-
-  for (const row of rows) {
-    dataset.push({
-      ...row,
-      locations: await prisma.locations.count({ where: { auditId: row.id } }),
-      scans: await prisma.scans.count({ where: { auditId: row.id } }),
-      created: {
-        ...(row.created as unknown as ByOn),
-        on: dayjsDayFormatter(row.created.on),
-      },
-      modified: {
-        ...(row.modified as unknown as ByOn),
-        on: dayjsDayFormatter(row.modified.on),
+  if (nameOnly)
+    return NextResponse.json(
+      (
+        await prisma[model].findMany({
+          where: { userId },
+          select: { name: true },
+        })
+      ).map(({ name }) => name),
+    );
+  else {
+    const { query, searchResults, totalCount } = await QueryRefiner({
+      where: { storeId: Number(store) },
+      limit,
+      offset,
+      refines,
+      search: {
+        model,
+        fields: ["code", "barcode", "date", "created", "modified"],
       },
     });
-  }
 
-  return NextResponse.json({ dataset, filtered: dataset.length, totalCount });
+    const rows =
+      searchResults.length > 0
+        ? searchResults
+        : await prisma[model].findMany(query);
+
+    const dataset = [];
+
+    if (exportable) {
+      return false;
+    }
+
+    for (const row of rows) {
+      dataset.push({
+        ...row,
+        locations: await prisma.locations.count({ where: { auditId: row.id } }),
+        scans: await prisma.scans.count({ where: { auditId: row.id } }),
+        created: {
+          ...row.created,
+          on: dayjsDayFormatter(row.created.on),
+        },
+        modified: {
+          ...row.modified,
+          on: dayjsDayFormatter(row.modified.on),
+        },
+      });
+    }
+
+    return NextResponse.json({ dataset, filtered: dataset.length, totalCount });
+  }
 }
 
 export async function POST(request: Request) {
@@ -98,7 +109,7 @@ export async function POST(request: Request) {
       const workbookReader: ExcelJS.stream.xlsx.WorkbookReader =
         new ExcelJS.stream.xlsx.WorkbookReader(path, {});
 
-      let inventory = [];
+      const inventory = [];
 
       const fields = [
         "", // ? Included to align to excel's initial empty row cell
@@ -107,11 +118,11 @@ export async function POST(request: Request) {
 
       // ? Read through the workbook rows and map them to an object based on the fields from the request body. Then, push the mapped objects to an inventory array.
       for await (const worksheetReader of workbookReader) {
-        if ((worksheetReader as any).id === 1) {
+        if ((worksheetReader as unknown as { id: number }).id === 1) {
           for await (const row of worksheetReader) {
             if (row.number > 1) {
-              let obj: { [key: string]: CellValue } = {};
-              (row.values as CellValue[]).forEach(
+              const obj: { [key: string]: CellValue } = {};
+              (row.values as CellValue[]).map(
                 (cell: CellValue, i: number) => (obj[fields[i]] = cell),
               );
               inventory.push(obj);
@@ -127,7 +138,7 @@ export async function POST(request: Request) {
           return prisma.inventory.createMany({
             data: {
               storeId,
-              barcode: item.barcode!,
+              barcode: item.barcode as string,
               attributes,
               added: { by: username, on: new Date() },
               modified: { by: username, on: new Date() },
@@ -200,16 +211,20 @@ export async function PATCH(request: NextRequest) {
   if (scope === "editCell") {
     const { id, field, value } = await request.json();
     try {
+      const {
+        modified: { by, on },
+      } = (await prisma[model].update({
+        where: { id },
+        data: { [field]: value, modified: { by: username, on: new Date() } },
+        select: { modified: true },
+      })) as unknown as { modified: ByOn };
+
       return NextResponse.json(
-        await prisma[model].update({
-          where: { id },
-          data: { [field]: value, modified: { by: username, on: new Date() } },
-        }),
+        { by, on: dayjsDayFormatter(on) },
         { status: 201 },
       );
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        // logIt({code: 1, error: error.name, message: error.message})
         return NextResponse.json(
           { icon: "", error: error.name, message: error.message },
           { status: 400 },
@@ -217,11 +232,6 @@ export async function PATCH(request: NextRequest) {
       }
     }
   }
-}
-
-export async function PUT(request: Request) {
-  const body = await request.json();
-  return NextResponse.json(body, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest) {

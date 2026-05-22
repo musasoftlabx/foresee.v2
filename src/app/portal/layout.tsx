@@ -5,7 +5,7 @@ export default function Portal({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset className="p-2">{children}</SidebarInset>
+      <SidebarInset className="p-2 w-0">{children}</SidebarInset>
     </SidebarProvider>
   );
 }

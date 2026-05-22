@@ -1,6 +1,7 @@
 "use client";
 
 // * React
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { Fragment, useEffect, useState } from "react";
 
 // * Next
@@ -9,27 +10,19 @@ import { useParams } from "next/navigation";
 // * NPM
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import JsBarcode from "jsbarcode";
 
 // * HUI
 import { Avatar } from "@heroui/react";
 
-// * SCNUI
+// * SUI
 import { Button } from "@/components/ui/shadcn/button";
 
 // * MUI
 import {
+  type GridRowModel,
   DataGridPro,
   GRID_CHECKBOX_SELECTION_COL_DEF,
-  gridDimensionsSelector,
-  GridPreProcessEditCellProps,
-  GridRowModel,
-  GridRowParams,
-  GridState,
-  GridValidRowModel,
-  useGridApiContext,
   useGridApiRef,
-  useGridSelector,
 } from "@mui/x-data-grid-pro";
 
 // * Components
@@ -37,36 +30,32 @@ import {
   DataGridSlotProps,
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
+import { dateFilter } from "@/components/DataTable/DataGridFilters";
 
 // * Icons
+import { Trash2Icon } from "lucide-react";
 import { DeleteIcon } from "@/components/ui/lucide-animated/delete";
-
-// * Constants
-const apiUrl = "scans";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
 
-import { DataGridStyles } from "@/components/DataTable/DataGridStyles";
-import DataGridPagination from "@/components/DataTable/DataGridPagination";
-import { useDialogStore } from "@/store/useAlertDialogStore";
-import { EllipsisHorizontalIcon } from "@/components/ui/heroicons-animated/ellipsis-horizontal";
-import { dateFilter } from "@/components/DataTable/DataGridFilters";
+// * Store
+import { useConfirmDialogStore } from "@/store/useConfirmDialogStore";
 
-export default function Scans() {
-  // ? Hooks
-  const apiRef = useGridApiRef();
-  const { audit } = useParams();
+// * Prisma
+import type { Prisma } from "@/generated/prisma/client";
 
-  const showConfirm = useDialogStore((state) => state.confirm);
-
+export default function Scans({ apiUrl = "scans" }) {
   // ? States
   const [isExporting, setIsExporting] = useState(false);
-  const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+
+  // ? Hooks
+  const { store } = useParams();
+  const apiRef = useGridApiRef();
+  const confirm = useConfirmDialogStore((state) => state.confirm);
   const {
     initialState,
     columnVisibilityModel,
-    filters,
     filterModel,
     paginationModel,
     pinnedColumnsModel,
@@ -88,9 +77,12 @@ export default function Scans() {
   } = useCustomDataGrid({
     apiRef,
     apiUrl,
-    columnsToHide: [],
-    columnsToSort: [{ field: "quantity", sort: "desc" }],
-    toPin: { left: [], right: ["actions"] },
+    columnsToHide: ["id", "scanned.by", "scanned.on"],
+    columnsToSort: [{ field: "id", sort: "desc" }],
+    toPin: {
+      left: [GRID_CHECKBOX_SELECTION_COL_DEF.field, "id", "barcode"],
+      right: ["actions"],
+    },
   });
 
   // ? Queries
@@ -102,11 +94,29 @@ export default function Scans() {
       encodeURI(JSON.stringify({ filterModel, sortModel })),
     ],
     queryFn: ({ queryKey }) =>
-      axios<GridValidRowModel>(
-        `${queryKey[0]}?audit=${audit}&limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
+      axios(
+        `${queryKey[0]}?store=${store}&limit=${queryKey[1]}&offset=${queryKey[2]}&refines=${queryKey[3]}`,
       ),
-    select: ({ data }) => data,
+    select: ({
+      data,
+    }: {
+      data: {
+        dataset: Prisma.InventoryModel[];
+        filtered: number;
+        totalCount: number;
+      };
+    }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
+  });
+
+  // ? Effects
+  useEffect(() => {
+    apiRef.current?.restoreState({
+      columns: {
+        dimensions: initialState?.columns?.dimensions,
+        orderedFields: initialState?.columns?.orderedFields,
+      },
+    });
   });
 
   return (
@@ -303,26 +313,9 @@ export default function Scans() {
               setIsExporting,
               stats,
               changeStats,
-              setIsAddItemOpen,
-              extraActions: (
-                <>
-                  <Button variant="secondary" size="icon">
-                    <EllipsisHorizontalIcon data-icon="inline-start" />
-                  </Button>
-                  <Button variant="secondary" size="icon">
-                    <EllipsisHorizontalIcon data-icon="inline-start" />
-                  </Button>
-                </>
-              ),
+              setIsNewItemOpen,
             })}
             slotProps={DataGridSlotProps}
-            sx={DataGridStyles}
-          />
-
-          <DataGridPagination
-            data={data}
-            paginationModel={paginationModel!}
-            changePagination={changePagination}
           />
         </div>
 
@@ -417,7 +410,7 @@ export default function Scans() {
               setIsExporting,
               stats,
               changeStats,
-              setIsAddItemOpen,
+              setIsNewItemOpen,
               extraActions: (
                 <>
                   <Button variant="secondary" size="icon">
@@ -539,24 +532,27 @@ export default function Scans() {
               disableColumnMenu: true,
               width: 70,
               renderCell: ({ row }) => (
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  onClick={() => {
-                    changeRowSelection({
-                      type: "include",
-                      ids: new Set([row.id]),
-                    });
-                    // showConfirm({
-                    //   operation: "delete",
-                    //   status: "info",
-                    //   subject: `Confirm deletion of ${row.name}`,
-                    //   body: `Are you sure you intend to delete this store?`,
-                    // });
-                  }}
-                >
-                  <DeleteIcon />
-                </Button>
+                <div className="flex items-center justify-center gap-3 mt-0.5">
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={() => {
+                      changeRowSelection({
+                        type: "include",
+                        ids: new Set([row.id]),
+                      });
+                      confirm({
+                        icon: <Trash2Icon />,
+                        status: "error",
+                        action: "delete",
+                        subject: "Confirm deletion",
+                        body: `Are you sure you intend to delete audit ${row.code}?`,
+                      });
+                    }}
+                  >
+                    <DeleteIcon />
+                  </Button>
+                </div>
               ),
             },
             {
@@ -629,7 +625,7 @@ export default function Scans() {
             setIsExporting,
             stats,
             changeStats,
-            setIsAddItemOpen,
+            setIsNewItemOpen,
             extraActions: (
               <>
                 <Button variant="secondary" size="icon">
@@ -642,13 +638,7 @@ export default function Scans() {
             ),
           })}
           slotProps={DataGridSlotProps}
-          sx={DataGridStyles}
-        />
-
-        <DataGridPagination
-          data={data}
-          paginationModel={paginationModel!}
-          changePagination={changePagination}
+          sx={DataGridSlots}
         />
       </div>
     </Fragment>

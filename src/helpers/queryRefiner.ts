@@ -185,5 +185,7 @@ export default async function useQueryRefiner({
     where: { ...where },
   });
 
+  console.log(searchResults);
+
   return { query, searchResults, totalCount };
 }

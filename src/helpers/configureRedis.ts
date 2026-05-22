@@ -6,8 +6,6 @@ export const redis = new Redis({
   password: process.env.REDIS_DB_PASSWORD,
 });
 
-console.log(redis);
-
 export const redisCluster = async (
   service: string,
   environment?: "development" | "production" | "test",
@@ -19,7 +17,7 @@ export const redisCluster = async (
     `configs:${environment ?? process.env.NODE_ENV}:${service}:*`,
   )) as any;
 
-  let dataset = [];
+  const dataset = [];
 
   for (const config of configs) {
     const item = config.split(":");

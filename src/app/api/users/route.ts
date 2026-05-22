@@ -32,10 +32,10 @@ dayjs.extend(advancedFormat);
 
 const organizationId = 1;
 const username = "mmuliro";
-const model = "stores";
+const model = "users";
 
-export async function GET(req: NextRequest) {
-  const searchParams = req.nextUrl.searchParams;
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
   const { limit, offset, exportable, refines } = Object.fromEntries(
     searchParams.entries(),
   );
@@ -47,7 +47,15 @@ export async function GET(req: NextRequest) {
     refines,
     search: {
       model,
-      fields: ["code", "name", "country", "client", "created", "modified"],
+      fields: [
+        "firstName",
+        "lastName",
+        "username",
+        "emailAddress",
+        "phoneNumber",
+        "added",
+        "modified",
+      ],
     },
   });
 
@@ -65,12 +73,12 @@ export async function GET(req: NextRequest) {
   for (const row of rows) {
     dataset.push({
       ...row,
-      inventoryCount: await prisma.inventory.count({
-        where: { storeId: row.id },
-      }),
-      created: {
-        ...row.created,
-        on: dayjsDayFormatter(row.created.on),
+      // inventoryCount: await prisma.inventory.count({
+      //   where: { storeId: row.id },
+      // }),
+      added: {
+        ...row.added,
+        on: dayjsDayFormatter(row.added.on),
       },
       modified: {
         ...row.modified,

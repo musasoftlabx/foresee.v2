@@ -191,7 +191,7 @@ export function PricingSection() {
         </div>
 
         {/* Enterprise Note */}
-        <div className="mt-16 text-center">
+        {/* <div className="mt-16 text-center">
           <p className="text-muted-foreground">
             Need custom components or have questions?{" "}
             <Button
@@ -202,7 +202,7 @@ export function PricingSection() {
               <a href="#contact">Contact our team</a>
             </Button>
           </p>
-        </div>
+        </div> */}
       </div>
     </section>
   );

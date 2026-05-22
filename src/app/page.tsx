@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, Suspense, useEffect, useState } from "react";
 import { LandingNavbar } from "@/components/landing/navbar";
 import { HeroSection } from "@/components/landing/hero-section";
 import { LogoCarousel } from "@/components/landing/logo-carousel";
@@ -61,14 +61,14 @@ export default function LandingPage() {
             setIsCreateAccountOpen={setIsCreateAccountOpen}
           />
           <LogoCarousel />
-          <StatsSection />
+          {/* <StatsSection /> */}
           <AboutSection />
-          <FeaturesSection />
+          {/* <FeaturesSection /> */}
           <TeamSection />
           <PricingSection />
           <TestimonialsSection />
           {/* <BlogSection /> */}
-          <FaqSection />
+          {/* <FaqSection /> */}
           <CTASection />
           <ContactSection />
         </main>

@@ -101,6 +101,8 @@ export default function CreateStore({
   isModalOpen: boolean;
   setIsModalOpen: Dispatch<SetStateAction<boolean>>;
 }) {
+  const queryClient = useQueryClient();
+  const alert = useAlertDialogStore((state) => state.alert);
   const {
     control,
     formState: { errors, isLoading, isValid, isSubmitting, dirtyFields: dirty },
@@ -139,14 +141,8 @@ export default function CreateStore({
   // ? Form Watchers
   watch("audit.barcode.mode");
 
-  // ? Hooks
-  const queryClient = useQueryClient();
-
   // ? Effects
   useEffect(() => setFocus("name"), [setFocus]);
-
-  // ? State Actions
-  const alert = useAlertDialogStore((state) => state.alert);
 
   // ? Mutations
   const { mutate: createStore } = useMutation({

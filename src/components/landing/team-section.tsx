@@ -16,11 +16,10 @@ const team = [
     id: 1,
     name: "Zuhair Liaquat",
     role: "Founder & CEO",
-    description:
-      "Former co-founder of TechFlow. Early staff at Microsoft and Google.",
+    description: "Will add extra info here",
     image:
       "https://images.unsplash.com/photo-1494790108755-2616b612b786?q=60&w=150&auto=format&fit=crop",
-    fallback: "AC",
+    fallback: "ZL",
     social: {
       linkedin: "#",
       github: "#",
@@ -30,11 +29,10 @@ const team = [
   {
     id: 2,
     name: "Brian Kasavuli",
-    role: "Engineering Manager",
-    description: "Lead engineering teams at Stripe, Discord, and Meta Labs.",
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=60&w=150&auto=format&fit=crop",
-    fallback: "MR",
+    role: "Stock control manager",
+    description: "Will add extra info here",
+    image: "https://images.unsplash.com/photo-",
+    fallback: "BK",
     social: {
       linkedin: "#",
       github: "#",
@@ -44,11 +42,10 @@ const team = [
   {
     id: 3,
     name: "Muusa Mutetwi",
-    role: "Product Manager",
+    role: "Technical ",
     description: "Former PM for Linear, Lambda School, and On Deck.",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=60&w=150&auto=format&fit=crop",
-    fallback: "SL",
+    image: "https://images.unsplash.com/photo-",
+    fallback: "MM",
     social: {
       linkedin: "#",
       github: "#",
