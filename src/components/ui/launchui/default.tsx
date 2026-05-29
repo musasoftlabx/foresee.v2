@@ -2,8 +2,8 @@ import { User, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { PricingColumn, PricingColumnProps } from "../../ui/pricing-column";
-import { Section } from "../../ui/section";
+import { PricingColumn, PricingColumnProps } from "../pricing-column";
+import { Section } from "../section";
 
 interface PricingProps {
   title?: string | false;

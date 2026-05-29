@@ -13,6 +13,7 @@ import { Avatar } from "@heroui/react";
 
 // * SUI
 import { Button } from "@/components/ui/shadcn/button";
+import { Switch } from "@/components/ui/shadcn/switch";
 
 // * MUI
 import { capitalize } from "@mui/material";
@@ -33,7 +34,7 @@ import {
   DataGridSlots,
 } from "@/components/DataTable/DataGridSlots";
 import { dateFilter } from "@/components/DataTable/DataGridFilters";
-import AddClient from "@/components/modals/add-client";
+import AddMember from "@/components/modals/add-member";
 
 // * Hooks
 import useCustomDataGrid from "@/hooks/useCustomDataGrid";
@@ -47,7 +48,7 @@ import type { Prisma } from "@/generated/prisma/client";
 // * Types
 import type { DataGridApiResponse } from "@/types";
 
-export default function Users({ apiUrl = "users" }) {
+export default function Members({ apiUrl = "members" }) {
   // ? States
   const [isExporting, setIsExporting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -79,15 +80,9 @@ export default function Users({ apiUrl = "users" }) {
   } = useCustomDataGrid({
     apiRef,
     apiUrl,
-    columnsToHide: [
-      "id",
-      "added.by",
-      "added.on",
-      "modified.by",
-      "modified.on",
-    ],
+    columnsToHide: ["id", "added.by", "added.on", "modified.by", "modified.on"],
     columnsToSort: [{ field: "id", sort: "desc" }],
-    toPin: { left: ["id"], right: ["actions"] },
+    toPin: { left: ["id"], right: ["isActive", "actions"] },
   });
 
   // ? Effects
@@ -115,14 +110,14 @@ export default function Users({ apiUrl = "users" }) {
     select: ({
       data,
     }: {
-      data: DataGridApiResponse & { dataset: Prisma.UsersModel[] };
+      data: DataGridApiResponse & { dataset: Prisma.MembersModel[] };
     }) => data,
     enabled: JSON.stringify({ filterModel, sortModel }) !== "{}",
   });
 
   return (
     <div className="flex flex-1">
-      <AddClient isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
+      <AddMember isModalOpen={isModalOpen} setIsModalOpen={setIsModalOpen} />
 
       <DataGridPro
         apiRef={apiRef}
@@ -139,12 +134,48 @@ export default function Users({ apiUrl = "users" }) {
             hideable: true,
             pinnable: false,
             resizable: false,
-            minWidth: 220,
+            minWidth: 40,
             flex: 1,
           },
           {
-            field: "name",
-            headerName: "Name",
+            field: "firstName",
+            headerName: "First Name",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            editable: true,
+            hideable: false,
+            pinnable: false,
+            resizable: true,
+            minWidth: 200,
+            flex: 1,
+            preProcessEditCellProps: ({
+              props,
+            }: GridPreProcessEditCellProps) => ({
+              ...props,
+              error: !props.value || props.value.length > 50,
+            }),
+          },
+          {
+            field: "lastName",
+            headerName: "Last Name",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            editable: true,
+            hideable: false,
+            pinnable: false,
+            resizable: true,
+            minWidth: 200,
+            flex: 1,
+            preProcessEditCellProps: ({
+              props,
+            }: GridPreProcessEditCellProps) => ({
+              ...props,
+              error: !props.value || props.value.length > 50,
+            }),
+          },
+          {
+            field: "emailAddress",
+            headerName: "Email Address",
             cellClassName: "vertical-center-cell",
             disableColumnMenu: true,
             editable: true,
@@ -152,6 +183,24 @@ export default function Users({ apiUrl = "users" }) {
             pinnable: false,
             resizable: true,
             minWidth: 250,
+            flex: 1,
+            preProcessEditCellProps: ({
+              props,
+            }: GridPreProcessEditCellProps) => ({
+              ...props,
+              error: !props.value || props.value.length > 50,
+            }),
+          },
+          {
+            field: "phoneNumber",
+            headerName: "Phone Number",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            editable: true,
+            hideable: false,
+            pinnable: false,
+            resizable: true,
+            minWidth: 145,
             flex: 1,
             preProcessEditCellProps: ({
               props,
@@ -220,6 +269,22 @@ export default function Users({ apiUrl = "users" }) {
                   <div className="text-xs">on {on}</div>
                 </div>
               </div>
+            ),
+          },
+          {
+            field: "isActive",
+            headerName: "Is Active?",
+            headerAlign: "center",
+            align: "center",
+            cellClassName: "vertical-center-cell",
+            disableColumnMenu: true,
+            hideable: false,
+            pinnable: false,
+            resizable: false,
+            minWidth: 100,
+            flex: 1,
+            renderCell: ({ row: { isActive } }) => (
+              <Switch checked={isActive} />
             ),
           },
           {
@@ -307,7 +372,7 @@ export default function Users({ apiUrl = "users" }) {
         }
         slots={DataGridSlots({
           apiRef,
-          apiUrl: `${apiUrl}?scope=users`,
+          apiUrl: `${apiUrl}?scope=members`,
           title: capitalize(apiUrl),
           caption: `${data?.filtered} items displayed from a total of ${data?.totalCount}.`,
           changeFilters,
@@ -319,7 +384,7 @@ export default function Users({ apiUrl = "users" }) {
           totalServerCount: data?.totalCount,
           paginationModel,
           exclude: [],
-          exportUrl: `${apiUrl}?scope=users&limit=${data?.filtered}&offset=${
+          exportUrl: `${apiUrl}?scope=members&limit=${data?.filtered}&offset=${
             paginationModel?.page
           }&exportable=true&refines=${encodeURI(
             JSON.stringify({ filterModel, sortModel }),

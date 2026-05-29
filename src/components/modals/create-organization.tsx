@@ -43,6 +43,7 @@ export default function CreateOrganization({
     formState: { errors, isLoading, isValid, isSubmitting, dirtyFields: dirty },
     handleSubmit,
     register,
+    reset,
     setFocus,
   } = useForm({
     defaultValues: { name: "", description: "" },
@@ -72,10 +73,9 @@ export default function CreateOrganization({
           onSubmit={handleSubmit((formdata: Schema) =>
             createOrganization(formdata, {
               onSuccess: () => {
+                reset();
                 setIsModalOpen(false);
-                queryClient.refetchQueries({
-                  queryKey: ["organizations"],
-                });
+                queryClient.refetchQueries({ queryKey: ["organizations"] });
               },
               onError: (error) => {
                 if (error instanceof AxiosError) {

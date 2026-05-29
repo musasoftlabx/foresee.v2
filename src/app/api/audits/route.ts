@@ -36,56 +36,50 @@ export async function GET(req: NextRequest) {
   const { limit, offset, exportable, refines, store, nameOnly } =
     Object.fromEntries(searchParams.entries());
 
-  if (nameOnly)
-    return NextResponse.json(
-      (
-        await prisma[model].findMany({
-          where: { userId },
-          select: { name: true },
-        })
-      ).map(({ name }) => name),
-    );
-  else {
-    const { query, searchResults, totalCount } = await QueryRefiner({
-      where: { storeId: Number(store) },
-      limit,
-      offset,
-      refines,
-      search: {
-        model,
-        fields: ["code", "barcode", "date", "created", "modified"],
-      },
-    });
+  // if (nameOnly)
+  //   return NextResponse.json(
+  //     (
+  //       await prisma[model].findMany({
+  //         where: { userId },
+  //         select: { name: true },
+  //       })
+  //     ).map(({ name }) => name),
+  //   );
+  // else {
+  const { query, searchResults, totalCount } = await QueryRefiner({
+    where: { storeId: Number(store) },
+    limit,
+    offset,
+    refines,
+    search: {
+      model,
+      fields: ["code", "barcode", "date", "created", "modified"],
+    },
+  });
 
-    const rows =
-      searchResults.length > 0
-        ? searchResults
-        : await prisma[model].findMany(query);
+  const rows =
+    searchResults.length > 0
+      ? searchResults
+      : await prisma[model].findMany(query);
 
-    const dataset = [];
+  const dataset = [];
 
-    if (exportable) {
-      return false;
-    }
-
-    for (const row of rows) {
-      dataset.push({
-        ...row,
-        locations: await prisma.locations.count({ where: { auditId: row.id } }),
-        scans: await prisma.scans.count({ where: { auditId: row.id } }),
-        created: {
-          ...row.created,
-          on: dayjsDayFormatter(row.created.on),
-        },
-        modified: {
-          ...row.modified,
-          on: dayjsDayFormatter(row.modified.on),
-        },
-      });
-    }
-
-    return NextResponse.json({ dataset, filtered: dataset.length, totalCount });
+  if (exportable) {
+    return false;
   }
+
+  for (const row of rows) {
+    dataset.push({
+      ...row,
+      locations: await prisma.locations.count({ where: { auditId: row.id } }),
+      scans: await prisma.scans.count({ where: { auditId: row.id } }),
+      created: { ...row.created, on: dayjsDayFormatter(row.created.on) },
+      modified: { ...row.modified, on: dayjsDayFormatter(row.modified.on) },
+    });
+  }
+
+  return NextResponse.json({ dataset, filtered: dataset.length, totalCount });
+  //}
 }
 
 export async function POST(request: Request) {

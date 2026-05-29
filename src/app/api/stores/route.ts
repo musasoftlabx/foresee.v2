@@ -14,6 +14,7 @@ import padStart from "lodash/padStart";
 
 // * Helpers
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
+import getOrganizationId from "@/helpers/getOrganizationId";
 
 // * Hooks
 import QueryRefiner from "@/helpers/queryRefiner";
@@ -30,7 +31,6 @@ import type { ByOn } from "@/types";
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const organizationId = 1;
 const username = "mmuliro";
 const model = "stores";
 
@@ -39,6 +39,8 @@ export async function GET(req: NextRequest) {
   const { limit, offset, exportable, refines } = Object.fromEntries(
     searchParams.entries(),
   );
+
+  const organizationId = await getOrganizationId();
 
   const { query, searchResults, totalCount } = await QueryRefiner({
     where: { organizationId },
@@ -96,6 +98,8 @@ export async function POST(request: Request) {
       locations,
     },
   } = await request.json();
+
+  const organizationId = await getOrganizationId();
 
   const path = `${tempPath}/${filename}`;
 

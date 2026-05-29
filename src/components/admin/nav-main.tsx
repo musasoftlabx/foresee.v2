@@ -26,8 +26,9 @@ import {
   SelectValue,
 } from "../ui/shadcn/select";
 import { Field } from "../ui/shadcn/field";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { useState } from "react";
 
 export function NavMain({
   items,
@@ -39,11 +40,32 @@ export function NavMain({
   }[];
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const [currentOrganization, setCurrentOrganization] = useState<string>("");
 
   const { data: organizations, isLoading } = useQuery({
     queryKey: ["organizations-names"],
-    queryFn: () => axios(`organizations?nameOnly=true`),
-    select: ({ data }: { data: { name: string }[] }) => data,
+    queryFn: () =>
+      axios(`organizations?nameOnly=true`).then((res) => {
+        setCurrentOrganization(
+          res.data.find(
+            (org: { isActive: boolean; name: string }) =>
+              org.isActive && org.name,
+          ).name,
+        );
+        return res;
+      }),
+    select: ({
+      data,
+    }: {
+      data: { id: number; name: string; isActive: boolean }[];
+    }) => data,
+  });
+
+  const { mutate: updateOrganization } = useMutation({
+    mutationFn: ({ id }: { id: number }) =>
+      axios.patch("organizations", { id }),
   });
 
   return (
@@ -80,15 +102,29 @@ export function NavMain({
             </div>
 
             <Field className="max-w-xs">
-              <Select>
+              <Select
+                value={currentOrganization}
+                onValueChange={(value) => {
+                  setCurrentOrganization(value);
+                  updateOrganization(
+                    {
+                      id:
+                        organizations?.find((org) => org.name === value)?.id ??
+                        0,
+                    },
+                    //{ onSuccess: () => router.refresh() },
+                    { onSuccess: () => location.reload() },
+                  );
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select an organization" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {organizations?.map((organization) => (
-                      <SelectItem key={organization} value={organization}>
-                        {organization}
+                    {organizations?.map(({ id, name }) => (
+                      <SelectItem key={id} value={name}>
+                        {name}
                       </SelectItem>
                     ))}
                   </SelectGroup>

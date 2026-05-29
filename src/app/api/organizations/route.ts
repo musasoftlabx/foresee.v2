@@ -12,6 +12,7 @@ import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
 
 // * Libs
 import { prisma } from "@/lib/prisma";
+import { ByOn } from "@/types";
 
 // * Extensions
 dayjs.extend(advancedFormat);
@@ -29,12 +30,16 @@ export async function GET(request: NextRequest) {
       (
         await prisma[model].findMany({
           where: { userId },
-          select: { name: true },
+          select: { id: true, name: true, isActive: true },
+          orderBy: { id: "desc" },
         })
-      ).map(({ name }) => name),
+      ).map(({ id, name, isActive }) => ({ id, name, isActive })),
     );
   else {
-    const rows = await prisma[model].findMany({ where: { userId } });
+    const rows = await prisma[model].findMany({
+      where: { userId },
+      orderBy: { id: "desc" },
+    });
 
     const dataset = [];
 
@@ -81,6 +86,10 @@ export async function POST(request: Request) {
           userId,
           name,
           description,
+          isActive:
+            (await prisma[model].count({ where: { userId } })) === 0
+              ? true
+              : false,
           created: { by: username, on: new Date() },
           modified: { by: username, on: new Date() },
         },
@@ -105,9 +114,29 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
-  const body = await request.json();
-  return NextResponse.json(body, { status: 201 });
+export async function PATCH(request: NextRequest) {
+  const { id } = await request.json();
+
+  try {
+    await prisma[model].update({
+      data: { isActive: true, modified: { by: username, on: new Date() } },
+      where: { id },
+    });
+
+    await prisma[model].updateMany({
+      data: { isActive: false },
+      where: { AND: [{ id: { not: id }, userId }] },
+    });
+
+    return NextResponse.json({}, { status: 201 });
+  } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      return NextResponse.json(
+        { icon: "", error: error.name, message: error.message },
+        { status: 400 },
+      );
+    }
+  }
 }
 
 export async function DELETE(request: NextRequest) {

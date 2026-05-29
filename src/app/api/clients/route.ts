@@ -10,6 +10,7 @@ import dayjs from "dayjs";
 
 // * Helpers
 import { dayjsDayFormatter } from "@/helpers/dayjsDayFormatter";
+import getOrganizationId from "@/helpers/getOrganizationId";
 import QueryRefiner from "@/helpers/queryRefiner";
 
 // * Libs
@@ -21,7 +22,6 @@ import type { ByOn } from "@/types";
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const organizationId = 1;
 const username = "mmuliro";
 const model = "clients";
 
@@ -30,6 +30,8 @@ export async function GET(req: NextRequest) {
   const { limit, offset, exportable, refines, nameOnly } = Object.fromEntries(
     searchParams.entries(),
   );
+
+  const organizationId = await getOrganizationId();
 
   if (nameOnly)
     return NextResponse.json(
@@ -80,6 +82,8 @@ export async function GET(req: NextRequest) {
 
 export async function POST(request: Request) {
   const { name } = await request.json();
+
+  const organizationId = await getOrganizationId();
 
   try {
     // ? Insert only if the incoming client doesn't exists. Else, ignore, don't update

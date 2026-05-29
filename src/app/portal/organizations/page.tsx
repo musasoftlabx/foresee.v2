@@ -41,6 +41,15 @@ import { addToast } from "@heroui/react";
 
 import ConfirmDialog from "@/components/confirm-dialog";
 
+type TOrganizations = {
+  data: {
+    id: number;
+    name: string;
+    details: { label: string; value: string }[];
+    isActive: boolean;
+  }[];
+};
+
 export default function Organizations({ apiUrl = "organizations" }) {
   // ? States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,22 +67,18 @@ export default function Organizations({ apiUrl = "organizations" }) {
   const { data, isLoading } = useQuery({
     queryKey: [apiUrl],
     queryFn: ({ queryKey }) => axios(queryKey[0]),
-    select: ({
-      data,
-    }: {
-      data: {
-        id: number;
-        name: string;
-        details: { label: string; value: string }[];
-        isActive: boolean;
-      }[];
-    }) => data,
+    select: ({ data }: TOrganizations) => data,
   });
 
   // ? Mutations
   const { mutate: deleteOrganization } = useMutation({
     mutationFn: (body: { id: number }) =>
       axios.delete("organizations", { data: body }),
+  });
+
+  const { mutate: updateOrganization } = useMutation({
+    mutationFn: ({ id }: { id: number }) =>
+      axios.patch("organizations", { id }),
   });
 
   return (
@@ -92,6 +97,7 @@ export default function Organizations({ apiUrl = "organizations" }) {
                 { id: selectedOrganizationId as number },
                 {
                   onSuccess: () => {
+                    queryClient.refetchQueries({ queryKey: ["organizations"] });
                     addToast({
                       title: "Success",
                       description: `Organization deleted!`,
@@ -99,9 +105,6 @@ export default function Organizations({ apiUrl = "organizations" }) {
                       variant: "flat",
                       icon: <GoTrash size={25} />,
                       timeout: 3000,
-                    });
-                    queryClient.refetchQueries({
-                      queryKey: ["organizations"],
                     });
                   },
                   onError: () =>
@@ -214,9 +217,39 @@ export default function Organizations({ apiUrl = "organizations" }) {
                     <Field orientation="horizontal">
                       <FieldLabel htmlFor="switch-basic">Is Active?</FieldLabel>
                       <Switch
+                        disabled={isActive}
                         checked={isActive}
                         onCheckedChange={(value) => {
-                          console.log(value);
+                          queryClient.setQueryData<TOrganizations>(
+                            [apiUrl],
+                            (axiosResponse) => ({
+                              ...axiosResponse,
+                              data: axiosResponse?.data.map((organization) =>
+                                organization.id === id
+                                  ? {
+                                      ...organization,
+                                      isActive:
+                                        organization.id === id
+                                          ? value
+                                          : organization.isActive,
+                                    }
+                                  : organization,
+                              ) as TOrganizations["data"],
+                            }),
+                          );
+                          updateOrganization(
+                            { id },
+                            {
+                              onSuccess: () => {
+                                queryClient.refetchQueries({
+                                  queryKey: ["organizations"],
+                                });
+                                queryClient.refetchQueries({
+                                  queryKey: ["organizations-names"],
+                                });
+                              },
+                            },
+                          );
                         }}
                       />
                     </Field>

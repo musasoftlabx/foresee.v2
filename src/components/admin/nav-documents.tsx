@@ -35,6 +35,8 @@ import {
 import { usePathname } from "next/navigation";
 import { ChevronRight, LucideIcon } from "lucide-react";
 import Link from "next/link";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 
 export function NavDocuments({
   label,
@@ -62,6 +64,12 @@ export function NavDocuments({
     if (item.isActive) return true;
     return item.items?.some((subItem) => pathname === subItem.url) || false;
   };
+
+  const { data: audits, isLoading } = useQuery({
+    queryKey: ["organizations"],
+    queryFn: ({ queryKey }) => axios(`${queryKey[0]}?nameOnly=true`),
+    select: ({ data }: { data: { name: string }[] }) => data,
+  });
 
   return (
     <SidebarGroup>

@@ -17,7 +17,6 @@ import {
   SidebarRail,
 } from "@/components/ui/shadcn/sidebar";
 import { GaugeIcon } from "../ui/lucide-animated/gauge";
-import { UsersIcon } from "../ui/lucide-animated/users";
 import { TagIcon } from "../ui/heroicons-animated/tag";
 import { NavDocuments } from "./nav-documents";
 import { NavSecondary } from "./nav-secondary";
@@ -70,8 +69,8 @@ const data = {
       icon: Store,
     },
     {
-      title: "User Management",
-      url: "/portal/users",
+      title: "Members",
+      url: "/portal/members",
       icon: Users,
     },
   ],
