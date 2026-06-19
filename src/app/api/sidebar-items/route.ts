@@ -26,36 +26,50 @@ export async function GET(req: NextRequest) {
     searchParams.entries(),
   );
 
-  const { query, searchResults } = await QueryRefiner({
-    where: {},
-    limit,
-    offset,
-    refines,
-    search: { model, fields: ["name", "route", "added"] },
-  });
+  const { nameOnly } = Object.fromEntries(searchParams.entries());
 
-  const rows =
-    searchResults.length > 0
-      ? searchResults
-      : await prisma[model].findMany(query);
-
-  const dataset = [];
-
-  if (exportable) {
-    return false;
-  }
-
-  for (const row of rows) {
-    dataset.push({
-      ...row,
-      added: {
-        ...row.added,
-        on: dayjsDayFormatter(row.added.on),
-      },
+  if (nameOnly)
+    return NextResponse.json(
+      (
+        await prisma[model].findMany({
+          where: { isVisible: true },
+          select: { name: true },
+          orderBy: { id: "asc" },
+        })
+      ).map(({ name }) => name),
+    );
+  else {
+    const { query, searchResults } = await QueryRefiner({
+      where: {},
+      limit,
+      offset,
+      refines,
+      search: { model, fields: ["name", "route", "added"] },
     });
-  }
 
-  return NextResponse.json({ count: dataset.length, dataset });
+    const rows =
+      searchResults.length > 0
+        ? searchResults
+        : await prisma[model].findMany(query);
+
+    const dataset = [];
+
+    if (exportable) {
+      return false;
+    }
+
+    for (const row of rows) {
+      dataset.push({
+        ...row,
+        added: {
+          ...row.added,
+          on: dayjsDayFormatter(row.added.on),
+        },
+      });
+    }
+
+    return NextResponse.json({ count: dataset.length, dataset });
+  }
 }
 
 export async function POST(request: Request) {
@@ -97,6 +111,18 @@ export async function PUT(request: NextRequest) {
   }
 
   return new NextResponse("Updated!");
+}
+
+export async function PATCH(request: NextRequest) {
+  const { id, field, value } = await request.json();
+
+  return NextResponse.json(
+    await prisma[model].updateManyAndReturn({
+      where: { id },
+      data: { [field]: value, modified: { by: username, on: new Date() } },
+    }),
+    { status: 201 },
+  );
 }
 
 export async function DELETE(request: NextRequest) {

@@ -1,4 +1,5 @@
 // * React
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
 import { type Dispatch, Fragment, type SetStateAction, useEffect } from "react";
 
 // * NPM
@@ -52,7 +53,7 @@ const schema = z
       ctx.addIssue({
         code: "custom",
         path: ["childOf"],
-        message: "Kindly specify the parent.",
+        message: "Kindly specify the group.",
       });
     }
   });
@@ -70,7 +71,7 @@ export default function AddSidebarItem({
   const alert = useAlertDialogStore((state) => state.alert);
   const {
     control,
-    formState: { errors, isLoading, isValid, isSubmitting, dirtyFields: dirty },
+    formState: { errors, isValid, isSubmitting, dirtyFields: dirty },
     handleSubmit,
     register,
     getValues,
@@ -81,10 +82,9 @@ export default function AddSidebarItem({
   } = useForm({
     defaultValues: async () => ({
       // ? Pre-fetch groups
-      groups: ["eww", "ewfew", "ewfds"],
-      // groups: (await axios("groups?nameOnly=true").then(
-      //   ({ data }) => data,
-      // )) as Schema["groups"],
+      groups: (await axios("sidebar-items?nameOnly=true").then(
+        ({ data }) => data,
+      )) as Schema["groups"],
 
       // ? Form fields
       name: "",
@@ -172,7 +172,7 @@ export default function AddSidebarItem({
             <Controller
               control={control}
               name="isGroup"
-              render={({ field: { isGroup, isChild } }) => (
+              render={({ field: { value } }) => (
                 <FieldLabel>
                   <Field orientation="horizontal">
                     <FieldContent>
@@ -183,8 +183,7 @@ export default function AddSidebarItem({
                       </FieldDescription>
                     </FieldContent>
                     <Switch
-                      checked={isGroup}
-                      disabled={isChild}
+                      checked={value}
                       onCheckedChange={(checked: boolean) => {
                         setValue("isGroup", checked, {
                           shouldDirty: true,
@@ -233,7 +232,7 @@ export default function AddSidebarItem({
               <Controller
                 control={control}
                 name="isChild"
-                render={({ field: { isGroup, isChild } }) => (
+                render={({ field: { value } }) => (
                   <FieldLabel>
                     <Field orientation="horizontal">
                       <FieldContent>
@@ -243,8 +242,7 @@ export default function AddSidebarItem({
                         </FieldDescription>
                       </FieldContent>
                       <Switch
-                        checked={isChild}
-                        disabled={isGroup}
+                        checked={value}
                         onCheckedChange={(checked: boolean) => {
                           setValue("isChild", checked, {
                             shouldDirty: true,
@@ -261,14 +259,14 @@ export default function AddSidebarItem({
                       <Controller
                         control={control}
                         name="childOf"
-                        render={({ field: { childOf } }) => (
+                        render={({ field: { value } }) => (
                           <Select
                             className="px-2 pb-2 max-w-xs"
                             label="Child Of (Group Name)"
                             size="sm"
                             isRequired
                             placeholder="Select a group"
-                            selectedKeys={childOf}
+                            selectedKeys={value ? [value] : []}
                             variant="faded"
                             onChange={(e) =>
                               setValue(`childOf`, e.target.value, {

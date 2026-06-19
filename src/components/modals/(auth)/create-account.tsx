@@ -1,5 +1,6 @@
 // * React
-import { Dispatch, type SetStateAction, useEffect } from "react";
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
+import { type Dispatch, type SetStateAction, useEffect } from "react";
 
 // * Next
 import { useRouter } from "next/navigation";
@@ -73,7 +74,6 @@ export default function CreateAccount({
     handleSubmit,
     register,
     setFocus,
-    reset,
   } = useForm({
     defaultValues: {
       firstName: "",
@@ -273,7 +273,7 @@ export default function CreateAccount({
               <Controller
                 control={control}
                 name={`phoneNumber`}
-                render={({ field, fieldState }) => {
+                render={({ field }) => {
                   return (
                     <Grid size={{ xs: 12, md: 6 }}>
                       <HeroTelInput
@@ -357,8 +357,8 @@ export default function CreateAccount({
               />
 
               <FieldDescription className="pt-4 pb-2 px-6 text-center">
-                By signing up, you agree to our <a href="#">Terms of Service</a>{" "}
-                and <a href="#">Privacy Policy</a>.
+                By signing up, you agree to our <a href="/">Terms of Service</a>{" "}
+                and <a href="/">Privacy Policy</a>.
               </FieldDescription>
             </Grid>
           </HeaderFooter>

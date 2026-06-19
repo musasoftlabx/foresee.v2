@@ -1,5 +1,6 @@
 // * React
-import { Dispatch, SetStateAction, useEffect } from "react";
+// biome-ignore assist/source/organizeImports: <biome-ignore lint: false positive>
+import { type Dispatch, type SetStateAction, useEffect } from "react";
 
 // * Next
 import { useRouter } from "next/navigation";
@@ -58,7 +59,6 @@ export default function Login({
     handleSubmit,
     register,
     setFocus,
-    reset,
   } = useForm({
     defaultValues: { emailAddress: "", password: "" },
     mode: "onChange",
@@ -172,7 +172,6 @@ export default function Login({
                   theme={theme === "dark" ? "filled_black" : "outline"}
                   shape="pill"
                   logo_alignment="left"
-                  className="font-family: 'JetBrains Mono'"
                 />
 
                 <FieldSeparator className="[&>span]:bg-sidebar! my-3 text-transparent">

@@ -21,6 +21,7 @@ import { capitalize } from "@mui/material";
 import {
   DataGridPro,
   type GridPreProcessEditCellProps,
+  type GridRowId,
   type GridRowModel,
   type GridRowOrderChangeParams,
   useGridApiRef,
@@ -124,6 +125,11 @@ export default function Sidebar({ apiUrl = "sidebar-items" }) {
   const { mutate: reorder } = useMutation({
     mutationFn: (body: Prisma.SidebarLinksModel[]) =>
       axios.put("sidebar-items", body),
+  });
+
+  const { mutate: edit } = useMutation({
+    mutationFn: (body: { id: GridRowId; field: string; value: boolean }) =>
+      axios.patch("sidebar-items", body),
   });
 
   return (
@@ -237,11 +243,20 @@ export default function Sidebar({ apiUrl = "sidebar-items" }) {
                 <div className="text-xs">Expanded?</div>
               </div>
             ),
-            renderCell: ({ row: { isVerified } }) => (
-              <Checkbox checked={isVerified} disabled />
+            renderCell: ({ id, row: { isExpanded } }) => (
+              <Checkbox
+                checked={isExpanded}
+                onCheckedChange={(value: boolean) =>
+                  edit(
+                    { id, field: "isExpanded", value },
+                    { onSuccess: handleGetData },
+                  )
+                }
+              />
             ),
           },
           {
+            type: "boolean",
             field: "isVisible",
             headerAlign: "center",
             align: "center",
@@ -259,8 +274,16 @@ export default function Sidebar({ apiUrl = "sidebar-items" }) {
                 <div className="text-xs">Visible?</div>
               </div>
             ),
-            renderCell: ({ row: { isVerified } }) => (
-              <Checkbox checked={isVerified} disabled />
+            renderCell: ({ id, row: { isVisible } }) => (
+              <Checkbox
+                checked={isVisible}
+                onCheckedChange={(value: boolean) =>
+                  edit(
+                    { id, field: "isVisible", value },
+                    { onSuccess: handleGetData },
+                  )
+                }
+              />
             ),
           },
           {
