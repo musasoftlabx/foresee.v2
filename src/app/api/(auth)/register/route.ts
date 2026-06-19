@@ -13,6 +13,7 @@ import { prisma } from "@/lib/prisma";
 // * Helpers
 import { redis } from "@/helpers/configureRedis";
 import sendMail from "@/helpers/sendEmail";
+import GeneratePasscode from "@/helpers/generatePasscode";
 
 // * Types
 import type { GoogleOAuthToken } from "@/types";
@@ -116,9 +117,7 @@ export async function POST(request: NextRequest) {
         throw new Error("Email address included in password.");
 
       // ? ⚙️ Generate a passcode for email verification
-      const passcode = Number(
-        Math.floor(100000 + Math.random() * 900000).toString(),
-      );
+      const passcode = GeneratePasscode();
 
       // ? 💾 Store the passcode in redis
       await redis.set(

@@ -1,6 +1,7 @@
 // * Next
 import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 //import localFont from "next/font/local";
 
 // * Main entry file
@@ -18,7 +19,11 @@ export const metadata: Metadata = {
     "SASS application used to take and maintain stock records & inventories in warehouses.",
 };
 
-const rubik = Rubik({ subsets: ["latin"], variable: "--font-sans" });
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  //variable: "--font-mono",
+  variable: "--font-sans",
+});
 // const rubik = localFont({
 //   src: [
 //     {
@@ -39,7 +44,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("h-full", "antialiased", rubik.variable)}
+      className={cn("h-full", "antialiased", jetbrainsMono.variable)}
     >
       <body>
         <Main>{children}</Main>

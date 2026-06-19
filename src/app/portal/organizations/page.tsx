@@ -172,109 +172,107 @@ export default function Organizations({ apiUrl = "organizations" }) {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] justify-center gap-4 px-4">
-        {data
-          ? data.map(({ id, name, details, isActive }, index) => (
-              <Card key={index.toString()} className="overflow-hidden py-0">
-                <CardContent className="flex flex-col items-center p-0">
-                  <div className="flex w-full flex-col items-center justify-center pt-5">
-                    <div className="relative">
-                      <div className="absolute bg-fuchsia-400/10" />
-                      <SquareTerminalIcon
-                        aria-hidden="true"
-                        className="relative size-10 text-fuchsia-600"
-                        strokeWidth="1.5"
-                      />
-                    </div>
-                    <h3 className="text-foreground text-lg font-semibold">
-                      {name}
-                    </h3>
-                    <p className="text-muted-foreground text-sm">
-                      No info about organization.
-                    </p>
-                  </div>
-                  <div className="w-full space-y-1 px-4 pt-6">
-                    {details.map(({ label, value }, index: number) => (
-                      <div
-                        key={index.toString()}
-                        className={cn(
-                          "rounded-md flex items-center justify-between px-3 py-2.5",
-                          index % 2 === 0 && "bg-muted/40",
-                        )}
-                      >
-                        <span className="text-foreground text-sm font-medium">
-                          {label}
-                        </span>
-                        <span className="text-muted-foreground text-sm">
-                          {value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-
-                <CardFooter className="flex items-center justify-end p-4">
-                  <div>
-                    <Field orientation="horizontal">
-                      <FieldLabel htmlFor="switch-basic">Is Active?</FieldLabel>
-                      <Switch
-                        disabled={isActive}
-                        checked={isActive}
-                        onCheckedChange={(value) => {
-                          queryClient.setQueryData<TOrganizations>(
-                            [apiUrl],
-                            (axiosResponse) => ({
-                              ...axiosResponse,
-                              data: axiosResponse?.data.map((organization) =>
-                                organization.id === id
-                                  ? {
-                                      ...organization,
-                                      isActive:
-                                        organization.id === id
-                                          ? value
-                                          : organization.isActive,
-                                    }
-                                  : organization,
-                              ) as TOrganizations["data"],
-                            }),
-                          );
-                          updateOrganization(
-                            { id },
-                            {
-                              onSuccess: () => {
-                                queryClient.refetchQueries({
-                                  queryKey: ["organizations"],
-                                });
-                                queryClient.refetchQueries({
-                                  queryKey: ["organizations-names"],
-                                });
-                              },
-                            },
-                          );
-                        }}
-                      />
-                    </Field>
-                  </div>
-                  <div className="flex flex-1" />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedOrganizationId(id);
-                      confirm({
-                        icon: <Trash2Icon />,
-                        status: "error",
-                        action: "delete",
-                        subject: "Confirm deletion",
-                        body: `Are you sure you intend to delete organization ${name}?`,
-                      });
-                    }}
+        {data?.map(({ id, name, details, isActive }, index) => (
+          <Card key={index.toString()} className="overflow-hidden py-0">
+            <CardContent className="flex flex-col items-center p-0">
+              <div className="flex w-full flex-col items-center justify-center pt-5">
+                <div className="relative">
+                  <div className="absolute bg-fuchsia-400/10" />
+                  <SquareTerminalIcon
+                    aria-hidden="true"
+                    className="relative size-10 text-fuchsia-600"
+                    strokeWidth="1.5"
+                  />
+                </div>
+                <h3 className="text-foreground text-lg font-semibold">
+                  {name}
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  No info about organization.
+                </p>
+              </div>
+              <div className="w-full space-y-1 px-4 pt-6">
+                {details?.map(({ label, value }, index: number) => (
+                  <div
+                    key={index.toString()}
+                    className={cn(
+                      "rounded-md flex items-center justify-between px-3 py-2.5",
+                      index % 2 === 0 && "bg-muted/40",
+                    )}
                   >
-                    DELETE
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))
-          : null}
+                    <span className="text-foreground text-sm font-medium">
+                      {label}
+                    </span>
+                    <span className="text-muted-foreground text-sm">
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex items-center justify-end p-4">
+              <div>
+                <Field orientation="horizontal">
+                  <FieldLabel htmlFor="switch-basic">Is Active?</FieldLabel>
+                  <Switch
+                    disabled={isActive}
+                    checked={isActive}
+                    onCheckedChange={(value) => {
+                      queryClient.setQueryData<TOrganizations>(
+                        [apiUrl],
+                        (axiosResponse) => ({
+                          ...axiosResponse,
+                          data: axiosResponse?.data.map((organization) =>
+                            organization.id === id
+                              ? {
+                                  ...organization,
+                                  isActive:
+                                    organization.id === id
+                                      ? value
+                                      : organization.isActive,
+                                }
+                              : organization,
+                          ) as TOrganizations["data"],
+                        }),
+                      );
+                      updateOrganization(
+                        { id },
+                        {
+                          onSuccess: () => {
+                            queryClient.refetchQueries({
+                              queryKey: ["organizations"],
+                            });
+                            queryClient.refetchQueries({
+                              queryKey: ["organizations-names"],
+                            });
+                          },
+                        },
+                      );
+                    }}
+                  />
+                </Field>
+              </div>
+              <div className="flex flex-1" />
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  setSelectedOrganizationId(id);
+                  confirm({
+                    icon: <Trash2Icon />,
+                    status: "error",
+                    action: "delete",
+                    subject: "Confirm deletion",
+                    body: `Are you sure you intend to delete organization ${name}?`,
+                  });
+                }}
+              >
+                DELETE
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     </Fragment>
   );

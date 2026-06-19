@@ -3,9 +3,18 @@ import { Dispatch, SetStateAction, useEffect } from "react";
 
 // * Next
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // * HUI
 import { Input } from "@heroui/react";
+
+// * RUI
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/reui/tabs";
 
 // * NPM
 import * as z from "zod";
@@ -13,7 +22,7 @@ import { Controller, useForm } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
 import { GoogleLogin } from "@react-oauth/google";
 import { useTheme } from "next-themes";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import Grid from "@mui/material/Grid";
@@ -26,7 +35,6 @@ import { HeaderFooter, ModalDialog } from "../../modal-dialog";
 import { zPassword } from "../../../utils/zodReusables";
 
 // * Icons
-import { GalleryVerticalEnd } from "lucide-react";
 import { useAlertDialogStore } from "@/store/useAlertDialogStore";
 
 // * Schema
@@ -86,7 +94,15 @@ export default function Login({
         title="Login"
         caption="Welcome back! let's sign you in."
         centerHeader
-        logo={<GalleryVerticalEnd className="size-8 mb-1" />}
+        logo={
+          <Image
+            src="/logo.png"
+            alt="Logo"
+            width={50}
+            height={50}
+            className="invert mb-2"
+          />
+        }
         onClose={() => router.replace("/")}
       >
         <form
@@ -120,98 +136,179 @@ export default function Login({
             submitText="Login"
             hideFooterCloseButton
           >
-            <GoogleLogin
-              onSuccess={({ credential }) => {
-                signInWithGoogle(credential, {
-                  onSuccess: () => router.push("/portal"),
-                  //onSuccess: () => {},
-                  onError: (error) => {
-                    if (error instanceof AxiosError) {
-                      alert({
-                        subject: "Google Sign-In Failed",
-                        body: "An error occurred during Google Sign-In. Please try again.",
-                      });
-                    }
-                  },
-                });
-              }}
-              onError={() =>
-                alert({
-                  subject: "Google Sign-In Failed",
-                  body: "An error occurred during Google Sign-In. Please try again.",
-                })
-              }
-              useOneTap
-              auto_select
-              theme={theme === "dark" ? "filled_black" : "outline"}
-              shape="pill"
-              logo_alignment="left"
-            />
+            <Tabs
+              defaultValue="staff"
+              className="text-sm text-muted-foreground"
+            >
+              <TabsList className="grid w-full grid-cols-2 mb-5 border-1">
+                <TabsTrigger value="staff">Organization</TabsTrigger>
+                <TabsTrigger value="members">Members</TabsTrigger>
+              </TabsList>
 
-            <FieldSeparator className="[&>span]:bg-sidebar! my-3 text-transparent">
-              Or login by filling these details
-            </FieldSeparator>
+              <TabsContent value="staff">
+                <GoogleLogin
+                  onSuccess={({ credential }) => {
+                    signInWithGoogle(credential, {
+                      onSuccess: () => router.push("/portal"),
+                      //onSuccess: () => {},
+                      onError: (error) => {
+                        if (error instanceof AxiosError) {
+                          alert({
+                            subject: "Google Sign-In Failed",
+                            body: "An error occurred during Google Sign-In. Please try again.",
+                          });
+                        }
+                      },
+                    });
+                  }}
+                  onError={() =>
+                    alert({
+                      subject: "Google Sign-In Failed",
+                      body: "An error occurred during Google Sign-In. Please try again.",
+                    })
+                  }
+                  useOneTap
+                  auto_select
+                  theme={theme === "dark" ? "filled_black" : "outline"}
+                  shape="pill"
+                  logo_alignment="left"
+                  className="font-family: 'JetBrains Mono'"
+                />
 
-            <Grid container spacing={1}>
-              <Controller
-                control={control}
-                name="emailAddress"
-                render={() => (
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Input
-                      label="Email Address"
-                      size="sm"
-                      isRequired
-                      color={
-                        dirty.emailAddress && !errors?.emailAddress
-                          ? "success"
-                          : errors.emailAddress
-                            ? "danger"
-                            : "default"
-                      }
-                      isInvalid={
-                        dirty.emailAddress && Boolean(errors.emailAddress)
-                      }
-                      errorMessage={
-                        dirty.emailAddress && errors.emailAddress?.message
-                      }
-                      {...register("emailAddress")}
-                    />
-                  </Grid>
-                )}
-              />
+                <FieldSeparator className="[&>span]:bg-sidebar! my-3 text-transparent">
+                  Or login by filling these details
+                </FieldSeparator>
 
-              <Controller
-                control={control}
-                name="password"
-                render={() => (
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Input
-                      label="Password"
-                      variant="faded"
-                      maxLength={20}
-                      isRequired
-                      size="sm"
-                      color={
-                        dirty.password && !errors.password
-                          ? "success"
-                          : errors.password
-                            ? "danger"
-                            : "default"
-                      }
-                      isInvalid={dirty.password && Boolean(errors.password)}
-                      errorMessage={dirty.password && errors.password?.message}
-                      {...register(`password`)}
-                    />
-                  </Grid>
-                )}
-              />
+                <Grid container spacing={1}>
+                  <Controller
+                    control={control}
+                    name="emailAddress"
+                    render={() => (
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Input
+                          label="Email Address"
+                          size="sm"
+                          isRequired
+                          color={
+                            dirty.emailAddress && !errors?.emailAddress
+                              ? "success"
+                              : errors.emailAddress
+                                ? "danger"
+                                : "default"
+                          }
+                          isInvalid={
+                            dirty.emailAddress && Boolean(errors.emailAddress)
+                          }
+                          errorMessage={
+                            dirty.emailAddress && errors.emailAddress?.message
+                          }
+                          {...register("emailAddress")}
+                        />
+                      </Grid>
+                    )}
+                  />
 
-              <FieldDescription className="pt-4 pb-2 px-6 text-center">
-                By signing in, you agree to our <a href="/">Terms of Service</a>{" "}
-                and <a href="/">Privacy Policy</a>.
-              </FieldDescription>
-            </Grid>
+                  <Controller
+                    control={control}
+                    name="password"
+                    render={() => (
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Input
+                          label="Password"
+                          variant="faded"
+                          maxLength={20}
+                          isRequired
+                          size="sm"
+                          color={
+                            dirty.password && !errors.password
+                              ? "success"
+                              : errors.password
+                                ? "danger"
+                                : "default"
+                          }
+                          isInvalid={dirty.password && Boolean(errors.password)}
+                          errorMessage={
+                            dirty.password && errors.password?.message
+                          }
+                          {...register(`password`)}
+                        />
+                      </Grid>
+                    )}
+                  />
+
+                  <FieldDescription className="pt-4 pb-2 px-6 text-center">
+                    By signing in, you agree to our{" "}
+                    <a href="/">Terms of Service</a> and{" "}
+                    <a href="/">Privacy Policy</a>.
+                  </FieldDescription>
+                </Grid>
+              </TabsContent>
+              <TabsContent value="members">
+                <Grid container spacing={1}>
+                  <Controller
+                    control={control}
+                    name="emailAddress"
+                    render={() => (
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Input
+                          label="Email Address"
+                          size="sm"
+                          isRequired
+                          color={
+                            dirty.emailAddress && !errors?.emailAddress
+                              ? "success"
+                              : errors.emailAddress
+                                ? "danger"
+                                : "default"
+                          }
+                          isInvalid={
+                            dirty.emailAddress && Boolean(errors.emailAddress)
+                          }
+                          errorMessage={
+                            dirty.emailAddress && errors.emailAddress?.message
+                          }
+                          {...register("emailAddress")}
+                        />
+                      </Grid>
+                    )}
+                  />
+
+                  <Controller
+                    control={control}
+                    name="password"
+                    render={() => (
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Input
+                          label="Password"
+                          variant="faded"
+                          maxLength={20}
+                          isRequired
+                          size="sm"
+                          color={
+                            dirty.password && !errors.password
+                              ? "success"
+                              : errors.password
+                                ? "danger"
+                                : "default"
+                          }
+                          isInvalid={dirty.password && Boolean(errors.password)}
+                          errorMessage={
+                            dirty.password && errors.password?.message
+                          }
+                          {...register(`password`)}
+                        />
+                      </Grid>
+                    )}
+                  />
+
+                  <FieldDescription className="pt-4 pb-2 px-6 text-center">
+                    By signing in, you agree to our{" "}
+                    <a href="/">Terms of Service</a> and{" "}
+                    <a href="/">Privacy Policy</a>.
+                  </FieldDescription>
+                </Grid>
+              </TabsContent>
+            </Tabs>
           </HeaderFooter>
         </form>
       </ModalDialog>

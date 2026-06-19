@@ -91,6 +91,9 @@ export default heroui();
 15.
    bunx --bun shadcn@latest add "https://launchuicomponents.com/r/pricing" --path src/components/ui/launchui
 
+16. Add niko table
+bunx --bun shadcn@latest add "https://niko-table.com/r/data-table.json" "https://niko-table.com/r/data-table-virtualized.json" "https://niko-table.com/r/data-table-pagination.json" "https://niko-table.com/r/data-table-search-filter.json" "https://niko-table.com/r/data-table-sort-menu.json" "https://niko-table.com/r/data-table-view-menu.json" "https://niko-table.com/r/data-table-clear-filter.json" "https://niko-table.com/r/data-table-filter-menu.json" "https://niko-table.com/r/data-table-faceted-filter.json" "https://niko-table.com/r/data-table-inline-filter.json" "https://niko-table.com/r/data-table-slider-filter.json" "https://niko-table.com/r/data-table-date-filter.json" "https://niko-table.com/r/data-table-export-button.json" "https://niko-table.com/r/data-table-aside.json" "https://niko-table.com/r/data-table-selection-bar.json" "https://niko-table.com/r/data-table-column-sort.json" "https://niko-table.com/r/data-table-column-hide.json" "https://niko-table.com/r/data-table-column-pin.json" "https://niko-table.com/r/data-table-column-faceted-filter.json" "https://niko-table.com/r/data-table-column-slider-filter.json" "https://niko-table.com/r/data-table-column-date-filter.json" "https://niko-table.com/r/data-table-row-dnd.json" "https://niko-table.com/r/data-table-column-dnd.json" --path src/components/ui/nikoui
+
 
 bunx --bun shadcn@latest add "https://lucide-animated.com/r/refresh-cw.json" --path src/components/ui/lucide-animated
 bunx --bun shadcn@latest add @heroicons-animated/tag --path src/components/ui/heroicons-animated
@@ -114,6 +117,7 @@ psql -d foresee -U mmuliro -h localhost -p 5432
 # Add custom prisma migration
 
 npx prisma migrate dev --name add_tsvector_column --create-only
+npx prisma generate
 
 # Access Mac postgresDB from parallels windows navicat
 

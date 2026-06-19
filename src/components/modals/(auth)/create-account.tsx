@@ -3,6 +3,7 @@ import { Dispatch, type SetStateAction, useEffect } from "react";
 
 // * Next
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // * HUI
 import { Input } from "@heroui/react";
@@ -14,7 +15,7 @@ import { DevTool } from "@hookform/devtools";
 import { GoogleLogin } from "@react-oauth/google";
 import { HeroTelInput, matchIsValidTel } from "@hyperse/hero-tel-input";
 import { useTheme } from "next-themes";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import Grid from "@mui/material/Grid";
@@ -25,9 +26,6 @@ import { HeaderFooter, ModalDialog } from "../../modal-dialog";
 
 // * Utils
 import { zPassword } from "../../../utils/zodReusables";
-
-// * Icons
-import { GalleryVerticalEnd } from "lucide-react";
 
 // * Schema
 const schema = z
@@ -116,7 +114,15 @@ export default function CreateAccount({
         title="Create Account"
         caption="Enter account details"
         centerHeader
-        logo={<GalleryVerticalEnd className="size-8 mb-1" />}
+        logo={
+          <Image
+            src="/logo.png"
+            alt="Logo"
+            width={50}
+            height={50}
+            className="invert mb-2"
+          />
+        }
         onClose={() => router.replace("/")}
       >
         <form

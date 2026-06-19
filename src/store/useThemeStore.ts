@@ -13,11 +13,14 @@ export const useThemeStore = create<ThemeStore>((set) => ({
   theme: {
     cssVariables: { nativeColor: true },
     palette: {
-      DataGrid: { bg: "var(--sidebar)" },
+      DataGrid: { bg: "var(--sidebar)", fontFamily: "Arial" },
       background: { paper: "var(--sidebar)", paperChannel: undefined },
       divider: "var(--foreground)",
       dividerChannel: undefined,
       primary: { main: "var(--primary)" },
+    },
+    typography: {
+      fontFamily: "Jetbrains Mono",
     },
   },
   changeMode: (mode: PaletteMode) =>

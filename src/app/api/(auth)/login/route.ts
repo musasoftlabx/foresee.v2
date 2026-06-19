@@ -11,7 +11,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 // * Helpers
-import { redis, redisCluster } from "@/helpers/configureRedis";
+import { redis, RedisCluster } from "@/helpers/configureRedis";
 import clientDetails from "@/helpers/clientDetails";
 
 // * Types
@@ -20,7 +20,7 @@ import type { GoogleOAuthToken } from "@/types";
 // * Extensions
 dayjs.extend(advancedFormat);
 
-const configs: RedisConfigs = await redisCluster("DB");
+const configs: RedisConfigs = await RedisCluster("DB");
 
 export async function POST(request: NextRequest) {
   const { type, token, emailAddress, password: encoded } = await request.json();
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
           firstName: user.firstName,
           lastName: user.lastName,
           emailAddress: user.emailAddress,
+          phoneNumber: user.phoneNumber,
           roles: user.roles,
           avatar: user.avatar,
         },
@@ -51,10 +52,10 @@ export async function POST(request: NextRequest) {
       // ? 💾 Save to logins table
       await prisma.logins.create({
         data: {
-          emailAddress: user.emailAddress,
           ip: clientDetails(request).ip,
           client: clientDetails(request).client as unknown as Prisma.JsonObject,
           device: clientDetails(request).device,
+          userId: user.id,
         },
       });
 

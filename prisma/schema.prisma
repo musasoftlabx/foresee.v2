@@ -115,7 +115,6 @@ model Users {
   id            Int             @id @default(autoincrement())
   firstName     String          @db.VarChar(20)
   lastName      String          @db.VarChar(20)
-  username      String?         @unique @db.VarChar(20)
   emailAddress  String          @unique @db.VarChar(50)
   phoneNumber   String?         @db.VarChar(20)
   password      String?         @db.VarChar(100)
@@ -154,18 +153,15 @@ model Members {
 }
 
 model Logins {
-  id           Int      @id @default(autoincrement())
-  emailAddress String   @db.VarChar(50)
-  ip           String   @db.VarChar(20)
-  client       Json
-  device       Json
-  timestamp    DateTime @default(now())
-  users        Users?   @relation(fields: [userId], references: [id])
-  members      Members? @relation(fields: [memberId], references: [id])
-  userId       Int?
-  memberId     Int?
-
-  @@index([emailAddress])
+  id        Int      @id @default(autoincrement())
+  ip        String   @db.VarChar(20)
+  client    Json
+  device    Json
+  timestamp DateTime @default(now())
+  users     Users?   @relation(fields: [userId], references: [id])
+  members   Members? @relation(fields: [memberId], references: [id])
+  userId    Int?
+  memberId  Int?
 }
 
 model MailLogs {
@@ -185,4 +181,16 @@ model SmsLogs {
   response    Json
   isSent      Boolean  @default(false)
   timestamp   DateTime @default(now())
+}
+
+model SidebarLinks {
+  id         Int     @id @default(autoincrement())
+  name       String  @db.VarChar(50)
+  route      String? @db.VarChar(50)
+  childOf    String  @db.VarChar(50)
+  isExpanded Boolean @default(false)
+  isVisible  Boolean @default(false)
+  priority   Int?
+  added      Json
+  modified   Json
 }

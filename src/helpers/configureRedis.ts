@@ -6,7 +6,7 @@ export const redis = new Redis({
   password: process.env.REDIS_DB_PASSWORD,
 });
 
-export const redisCluster = async (
+export const RedisCluster = async (
   service: string,
   environment?: "development" | "production" | "test",
 ) => {

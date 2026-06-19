@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 
 // * Helpers
-import { redisCluster } from "./configureRedis";
+import { RedisCluster } from "./configureRedis";
 import got from "got";
 
 // * Types
@@ -20,7 +20,7 @@ type TSMSResponse = {
 };
 
 export default async function SendSMS(phoneNumber: string, message: string) {
-  const configs: RedisConfigs = await redisCluster("SMS");
+  const configs: RedisConfigs = await RedisCluster("SMS");
 
   try {
     const { responses }: TSMSResponse = await got
